@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+                <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+                <script>
+                        // Removed hardcoded Supabase URL/anon key initialization.
+                        if (!window.supabase && window.supabaseClient) window.supabase = window.supabaseClient;
+                        if (!window.supabase) {
+                                window.supabase = null;
+                                console.warn('Supabase client not initialized. Call initSupabaseClient(url, anonKey) from a secure runtime.');
+                        }
+                </script>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Admin Exchange</title>
+        <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
+        <style>
+                body {
+                        font-family: 'Roboto', sans-serif;
+                        background: linear-gradient(135deg, #232526 0%, #ffd54f 100%);
+                        margin: 0;
+                        padding: 0;
+                }
+                .exchange-panel {
+                        background: #232526;
+                        border-radius: 12px;
+                        box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+                        padding: 32px 24px;
+                        margin: 40px auto;
+                        max-width: 600px;
+                        color: #ffd54f;
+                }
+                h1 {
+                        text-align: center;
+                        color: #ffd54f;
+                        margin-bottom: 32px;
+                }
+                .exchange-btn {
+                        background: #ffd54f;
+                        color: #232526;
+                        border: none;
+                        padding: 12px 28px;
+                        border-radius: 6px;
+                        font-size: 1.05rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        margin-bottom: 8px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+                        transition: background 0.2s, color 0.2s;
+                }
+                .exchange-btn:hover {
+                        background: #232526;
+                        color: #ffd54f;
+                }
+                .code-gen-options {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
+                        margin-bottom: 8px;
+                }
+                .code-gen-btn {
+                        background: #232526;
+                        color: #ffd54f;
+                        border: none;
+                        padding: 10px 18px;
+                        border-radius: 5px;
+                        font-size: 1rem;
+                        font-weight: 500;
+                        cursor: pointer;
+                        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+                        transition: background 0.2s, color 0.2s;
+                }
+                .code-gen-btn:hover {
+                        background: #ffd54f;
+                        color: #232526;
+                }
+                .single-gen-form, .bulk-gen-form, .random-gen-form, .assign-code-panel {
+                        display: none;
+                        align-items: center;
+                        gap: 10px;
+                        margin: 10px 0 0 0;
+                }
+                .single-gen-form label, .bulk-gen-form label, .random-gen-form label, .assign-code-panel label {
+                        color: #ffd54f;
+                        font-weight: 500;
+                        margin-right: 6px;
+                }
+                .single-gen-form input, .bulk-gen-form input, .random-gen-form input, .assign-code-panel input {
+                        padding: 6px 12px;
+                        border-radius: 5px;
+                        border: none;
+                        background: #232526;
+                        color: #ffd54f;
+                        font-size: 1rem;
+                        width: 100px;
+                }
+                .codes-table-panel {
+                        margin: 24px auto;
+                        max-width: 800px;
+                        background: #232526;
+                        border-radius: 12px;
+                        box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+                        padding: 24px;
+                }
+                .codes-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        background: #232526;
+                }
+                .codes-table th, .codes-table td {
+                        border: 1px solid #ffd54f;
+                        padding: 10px 14px;
+                        color: #ffd54f;
+                        text-align: center;
+                }
+                .codes-table th {
+                        background: #232526;
+                        font-weight: 700;
+                        font-size: 1.05rem;
+                }
+                .codes-table td button {
+                        background: #ffd54f;
+                        color: #232526;
+                        border: none;
+                        border-radius: 5px;
+                        padding: 6px 14px;
+                        margin: 0 2px;
+                        font-size: 0.98rem;
+                        font-weight: 500;
+                        cursor: pointer;
+                        transition: background 0.2s, color 0.2s;
+                }
+                .codes-table td button:hover {
+                        background: #232526;
+                        color: #ffd54f;
+                }
+                /* Reset and Sync Buttons */
+                .system-btn {
+                        padding: 8px 18px;
+                        border-radius: 6px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        border: none;
+                        transition: background 0.2s, color 0.2s;
+                }
+                .btn-reset {
+                        background: #ff9800;
+                        color: #000;
+                }
+                .btn-sync {
+                        background: #2196f3;
+                        color: #fff;
+                }
+                .btn-reset:hover {
+                        background: #e68900;
+                }
+                .btn-sync:hover {
+                        background: #1976d2;
+                }
+                /* Modal Styles */
+                .admin-modal {
+                        display: none;
+                        position: fixed;
+                        z-index: 1000;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.8);
+                        justify-content: center;
+                        align-items: center;
+                }
+                .admin-modal-content {
+                        background: #232526;
+                        padding: 24px;
+                        border-radius: 8px;
+                        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+                        color: #ffd54f;
+                        max-width: 400px;
+                        width: 100%;
+                }
+                .admin-modal h2 {
+                        margin-top: 0;
+                }
+                .admin-modal input {
+                        padding: 10px;
+                        border-radius: 5px;
+                        border: none;
+                        background: #333;
+                        color: #ffd54f;
+                        width: calc(100% - 22px);
+                        margin-bottom: 16px;
+                }
+                .admin-modal button {
+                        padding: 10px 18px;
+                        border-radius: 5px;
+                        font-weight: 500;
+                        cursor: pointer;
+                        border: none;
+                        transition: background 0.2s, color 0.2s;
+                }
+                .admin-modal button:hover {
+                        background: #ffd54f;
+                        color: #232526;
+                }
+                /* Sync Status */
+                .sync-status {
+                        display: none;
+                        background: #232526;
+                        padding: 16px;
+                        border-radius: 8px;
+                        margin: 16px auto;
+                        max-width: 600px;
+                }
+                .sync-progress {
+                        height: 4px;
+                        background: #333;
+                        border-radius: 2px;
+                        margin: 8px 0;
+                }
+                .progress-bar {
+                        height: 100%;
+                        width: 0;
+                        background: #2196f3;
+                        border-radius: 2px;
+                        transition: width 0.3s;
+                }
+        </style>
+</head>
+<body>
+<!-- Custom Modal for Confirmations and Alerts -->
+<div id="customModal" class="admin-modal" style="display:none;">
+        <div class="admin-modal-content" id="customModalContent">
+                <div id="customModalMessage"></div>
+                <div style="margin-top:18px;display:flex;gap:12px;justify-content:flex-end;">
+                        <button class="system-btn btn-reset" id="customModalOkBtn" style="display:none;">OK</button>
+                        <button class="system-btn btn-reset" id="customModalYesBtn" style="display:none;">Yes</button>
+                        <button class="system-btn" id="customModalNoBtn" style="display:none;">No</button>
+                </div>
+        </div>
+</div>
+        <!-- Reset/Sync Buttons and Modal -->
+        <div style="margin: 24px 0 0 24px; display: flex; align-items: center; gap: 16px;">
+                <a href="Admin-panel.html" class="back-btn" style="background:#ffd54f;color:#232526;padding:8px 18px;border-radius:6px;text-decoration:none;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.10);transition:background 0.2s, color 0.2s;">&larr; Back to Admin Panel</a>
+                <button class="system-btn btn-reset" onclick="confirmSystemReset()" style="background:#ff9800;color:#000;padding:8px 18px;border-radius:6px;font-weight:600;">Reset</button>
+                <button class="system-btn btn-sync" onclick="syncChanges()" style="background:#2196f3;color:#fff;padding:8px 18px;border-radius:6px;font-weight:600;">Sync Changes</button>
+        </div>
+
+        <!-- Reset Confirmation Modal -->
+        <div id="resetConfirmModal" class="admin-modal" style="display:none;">
+                <div class="admin-modal-content">
+                        <h2>Confirm System Reset</h2>
+                        <p>This will reset the page and clear all local changes. Enter security key to confirm:</p>
+                        <input type="password" id="resetSecurityKey" placeholder="Security Key">
+                        <div style="margin-top:18px;display:flex;gap:12px;justify-content:flex-end;">
+                                <button class="system-btn btn-reset" onclick="executeSystemReset()">Confirm Reset</button>
+                                <button class="system-btn" onclick="closeAdminModal()">Cancel</button>
+                        </div>
+                </div>
+        </div>
+
+        <!-- Sync Status -->
+        <div class="sync-status" id="syncStatus" style="display:none;background:#232526;padding:16px;border-radius:8px;margin:16px auto;max-width:600px;">
+                <div class="sync-progress" style="height:4px;background:#333;border-radius:2px;margin:8px 0;">
+                        <div class="progress-bar" id="syncProgress" style="height:100%;width:0;background:#2196f3;border-radius:2px;transition:width 0.3s;"></div>
+                </div>
+                <p id="syncMessage"></p>
+        </div>
+
+        <h1>Admin Exchange Management</h1>
+        <!-- Global Admin Notification Bar -->
+        <div id="adminNotificationBar" style="background:#232526;padding:18px 22px;border-radius:10px;margin-bottom:24px;box-shadow:0 2px 8px rgba(255,213,79,0.08);color:#ffd54f;">
+                <h3 style="margin-top:0;margin-bottom:10px;color:#ffd54f;">Notifications</h3>
+                <ul id="adminNotificationList" style="list-style:none;padding:0;margin:0;"></ul>
+        </div>
+        <!-- Exchange Limit Banner -->
+        <div id="exchangeLimitBanner" style="display:none;background:rgba(78,205,196,0.07);border:1px solid rgba(78,205,196,0.25);border-radius:10px;padding:14px 18px;margin-bottom:18px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+                        <span style="color:#4ecdc4;font-weight:600;font-size:0.95rem;"><i class='fas fa-coins'></i> Your Exchange Generation Limit</span>
+                        <span id="exLimitText" style="color:#fff;font-size:0.9rem;font-weight:600;"></span>
+                </div>
+                <div style="height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;">
+                        <div id="exLimitBar" style="height:100%;width:0%;background:#4ecdc4;border-radius:4px;transition:width 0.4s;"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:0.8rem;color:rgba(255,255,255,0.45);">
+                        <span>Used: KES <span id="exUsedAmt">0</span></span>
+                        <span>Remaining: KES <span id="exRemainingAmt">-</span></span>
+                </div>
+        </div>
+<div class="exchange-panel">
+        <button class="exchange-btn">Code Generation</button>
+                <div class="code-gen-options">
+                        <button class="code-gen-btn" id="singleGenBtn">Single Code</button>
+                        <button class="code-gen-btn" id="bulkGenBtn">Bulk Codes</button>
+                        <button class="code-gen-btn" id="randomGenBtn">Random Codes</button>
+                        <button class="code-gen-btn" id="referralGenBtn">Referral Reward</button>
+                        <div id="referralGenForm" class="single-gen-form">
+                                <label>Amount (Ksh):</label>
+                                <input type="number" id="referralCodeAmount" min="1" value="50">
+                                <label>Expiry Date & Time:</label>
+                                <input type="datetime-local" id="referralCodeExpiry">
+                                <button id="referralGenSubmit" class="exchange-btn">Generate</button>
+                        </div>
+                        <div id="singleGenForm" class="single-gen-form">
+                                <label>Type:</label>
+                                <select id="singleCodeType">
+                                <option value="">Normal Reward</option>
+                                <option value="referral bonus">Referral Bonus</option>
+                                <option value="weekly salary">Weekly Salary</option>
+                                <option value="monthly salary">Monthly Salary</option>
+                                </select>
+                                <label>Amount (Ksh):</label>
+                                <input type="number" id="singleCodeAmount" min="1" value="100">
+                                <label>Expiry Date & Time:</label>
+                                <input type="datetime-local" id="singleCodeExpiry">
+                                <button id="singleGenSubmit" class="exchange-btn">Generate</button>
+                        </div>
+                        <div id="randomGenForm" class="random-gen-form">
+                                <label>Total Pool Amount (Ksh):</label>
+                                <input type="number" id="randomPoolAmount" min="1" value="1000">
+                                <label>Number of Users:</label>
+                                <input type="number" id="randomUserCount" min="1" value="5">
+                                <label>Highest Amount (Ksh):</label>
+                                <input type="number" id="randomMaxAmount" min="1" value="500">
+                                <label>Lowest Amount (Ksh):</label>
+                                <input type="number" id="randomMinAmount" min="1" value="50">
+                                <label>Expiry Date & Time:</label>
+                                <input type="datetime-local" id="randomCodeExpiry">
+                                <button id="randomGenSubmit" class="exchange-btn">Generate</button>
+                        </div>
+                        <div id="bulkGenForm" class="bulk-gen-form">
+                                <label>Type:</label>
+                                <select id="bulkCodeType">
+                                <option value="">Normal Reward</option>
+                                <option value="referral bonus">Referral Bonus</option>
+                                <option value="weekly salary">Weekly Salary</option>
+                                <option value="monthly salary">Monthly Salary</option>
+                                </select>
+                                <label>Number of Codes:</label>
+                                <input type="number" id="bulkCodeCount" min="1" value="10">
+                                <label>Amount (Ksh):</label>
+                                <input type="number" id="bulkCodeAmount" min="1" value="100">
+                                <label>Expiry Date & Time:</label>
+                                <input type="datetime-local" id="bulkCodeExpiry">
+                                <button id="bulkGenSubmit" class="exchange-btn">Generate</button>
+                        </div>
+                </div>
+                <button class="exchange-btn" id="viewCodesBtn">View Generated Codes</button>
+                <div id="codesTablePanel" class="codes-table-panel" style="display:none;">
+                        <table class="codes-table">
+                                <thead>
+                                        <tr>
+                                                <th>Code</th>
+                                                <th>Type</th>
+                                                <th>Amount/Pool</th>
+                                                <th>Expiry</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                        </tr>
+                                </thead>
+                                <tbody id="codesTableBody"></tbody>
+                        </table>
+                </div>
+                <button class="exchange-btn" id="assignCodeBtn">Assign Code to User</button>
+                <div id="assignCodePanel" class="assign-code-panel" style="display:none;">
+                        <label>User Name/ID:</label>
+                        <input type="text" id="assignUser" placeholder="Enter user name or ID">
+                        <label>Amount (Ksh):</label>
+                        <input type="number" id="assignAmount" min="1" value="100">
+                        <label>Expiry Date & Time:</label>
+                        <input type="datetime-local" id="assignExpiry">
+                        <button id="assignCodeSubmit" class="exchange-btn">Generate & Assign</button>
+                </div>
+        </div>
+        <script>
+function copyCodeText(btn) {
+	var span = btn.closest("td").querySelector(".copy-code-text");
+	if (!span) return;
+	var text = span.textContent.trim();
+	navigator.clipboard.writeText(text).then(function() {
+		var orig = btn.innerHTML;
+		btn.innerHTML = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#2ecc71\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"20 6 9 18 4 13\"></polyline></svg>";
+		setTimeout(function() { btn.innerHTML = orig; }, 1500);
+	}).catch(function() {
+		var ta = document.createElement("textarea");
+		ta.value = text;
+		document.body.appendChild(ta);
+		ta.select();
+		document.execCommand("copy");
+		document.body.removeChild(ta);
+	});
+}
+// --- Custom Modal Logic ---
+function showCustomAlert(message, callback) {
+        const modal = document.getElementById('customModal');
+        const msg = document.getElementById('customModalMessage');
+        const okBtn = document.getElementById('customModalOkBtn');
+        msg.innerHTML = message;
+        okBtn.style.display = 'inline-block';
+        document.getElementById('customModalYesBtn').style.display = 'none';
+        document.getElementById('customModalNoBtn').style.display = 'none';
+        modal.style.display = 'flex';
+        okBtn.onclick = function() {
+                modal.style.display = 'none';
+                if (callback) callback();
+        };
+}
+function showCustomConfirm(message, onYes, onNo) {
+        const modal = document.getElementById('customModal');
+        const msg = document.getElementById('customModalMessage');
+        const yesBtn = document.getElementById('customModalYesBtn');
+        const noBtn = document.getElementById('customModalNoBtn');
+        msg.innerHTML = message;
+        yesBtn.style.display = 'inline-block';
+        noBtn.style.display = 'inline-block';
+        document.getElementById('customModalOkBtn').style.display = 'none';
+        modal.style.display = 'flex';
+        yesBtn.onclick = function() {
+                modal.style.display = 'none';
+                if (onYes) onYes();
+        };
+        noBtn.onclick = function() {
+                modal.style.display = 'none';
+                if (onNo) onNo();
+        };
+}
+                
+// ── Exchange Limit Enforcement ─────────────────────────────────────────────
+var exchangeLimitData = { limit: 0, generated: 0, remaining: null, has_limit: false };
+
+function getAdminApiKey() {
+    try {
+        const d = JSON.parse(localStorage.getItem('adminData') || 'null');
+        return d && d.api_key ? d.api_key : '1540568e';
+    } catch(e) { return '1540568e'; }
+}
+
+async function saveCodesToDB(codes) {
+    const key = getAdminApiKey();
+    const res = await fetch('/api/admin/exchange-codes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': key },
+        body: JSON.stringify({ codes })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to save codes');
+    return data.codes;
+}
+
+async function loadExchangeLimit() {
+    const apiKey = getAdminApiKey();
+    if (!apiKey) return; // super admin has no limit
+    try {
+        const res = await fetch('/api/admin/exchange-limit', { headers: { 'x-admin-key': apiKey } });
+        if (!res.ok) return;
+        const d = await res.json();
+        exchangeLimitData = d;
+        updateLimitBanner(d);
+    } catch(e) {}
+}
+
+function updateLimitBanner(d) {
+    const banner = document.getElementById('exchangeLimitBanner');
+    if (!d.has_limit) { banner.style.display = 'none'; return; }
+    banner.style.display = 'block';
+    const pct = Math.min(100, (d.generated / d.limit) * 100);
+    const barColor = pct >= 90 ? '#ff6b6b' : pct >= 70 ? '#ffc107' : '#4ecdc4';
+    document.getElementById('exLimitBar').style.width = pct + '%';
+    document.getElementById('exLimitBar').style.background = barColor;
+    document.getElementById('exLimitText').textContent = 'KES ' + d.generated.toLocaleString() + ' of KES ' + d.limit.toLocaleString();
+    document.getElementById('exUsedAmt').textContent = d.generated.toLocaleString();
+    document.getElementById('exRemainingAmt').textContent = d.remaining.toLocaleString();
+}
+
+// Call this before generating any code. Returns true if allowed.
+async function checkAndRecordExchange(amountKES) {
+    const apiKey = getAdminApiKey();
+    if (!apiKey) return true; // super admin, no limit
+    if (!exchangeLimitData.has_limit) return true; // unlimited
+    const rem = exchangeLimitData.remaining;
+    if (amountKES > rem) {
+        showCustomAlert('Exchange limit exceeded! You can only generate KES ' + rem.toLocaleString() + ' more. Your limit is KES ' + exchangeLimitData.limit.toLocaleString() + '.');
+        return false;
+    }
+    try {
+        const res = await fetch('/api/admin/exchange-usage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-admin-key': apiKey },
+            body: JSON.stringify({ amount: amountKES })
+        });
+        const d = await res.json();
+        if (!res.ok) {
+            showCustomAlert(d.error || 'Exchange limit exceeded.');
+            return false;
+        }
+        exchangeLimitData.generated = d.generated;
+        exchangeLimitData.remaining = d.remaining;
+        updateLimitBanner({ ...exchangeLimitData, limit: exchangeLimitData.limit, has_limit: exchangeLimitData.has_limit });
+        return true;
+    } catch(e) {
+        showCustomAlert('Could not verify exchange limit. Please try again.');
+        return false;
+    }
+}
+
+loadExchangeLimit();
+
+// Show/hide forms
+                document.getElementById('bulkGenBtn').onclick = function() {
+                        document.getElementById('bulkGenForm').style.display = 'flex';
+                        document.getElementById('singleGenForm').style.display = 'none';
+                        document.getElementById('randomGenForm').style.display = 'none';
+                        document.getElementById('referralGenForm').style.display = 'none';
+                        document.getElementById('assignCodePanel').style.display = 'none';
+                };
+                document.getElementById('randomGenBtn').onclick = function() {
+                        document.getElementById('randomGenForm').style.display = 'flex';
+                        document.getElementById('singleGenForm').style.display = 'none';
+                        document.getElementById('bulkGenForm').style.display = 'none';
+                        document.getElementById('referralGenForm').style.display = 'none';
+                        document.getElementById('assignCodePanel').style.display = 'none';
+                };
+                document.getElementById('singleGenBtn').onclick = function() {
+                        document.getElementById('singleGenForm').style.display = 'flex';
+                        document.getElementById('bulkGenForm').style.display = 'none';
+                        document.getElementById('randomGenForm').style.display = 'none';
+                        document.getElementById('referralGenForm').style.display = 'none';
+                        document.getElementById('assignCodePanel').style.display = 'none';
+                };
+                document.getElementById('referralGenBtn').onclick = function() {
+                        document.getElementById('referralGenForm').style.display = 'flex';
+                        document.getElementById('singleGenForm').style.display = 'none';
+                        document.getElementById('bulkGenForm').style.display = 'none';
+                        document.getElementById('randomGenForm').style.display = 'none';
+                        document.getElementById('assignCodePanel').style.display = 'none';
+                };
+                document.getElementById('referralGenSubmit').onclick = async function() {
+                        const amount = parseInt(document.getElementById('referralCodeAmount').value);
+                        if (isNaN(amount) || amount <= 0) { showCustomAlert('Enter a valid amount.'); return; }
+                        if (!await checkAndRecordExchange(amount)) return;
+                        const expiry = document.getElementById('referralCodeExpiry').value;
+                        const code = 'RC-REF-' + generate8CharCode();
+                        try {
+                                await saveCodesToDB([{ code, type: 'referral', amount, expiry: expiry || null }]);
+                                showCustomAlert('Referral code generated: ' + code + ' for Ksh ' + amount);
+                                renderCodesTable();
+                        } catch(e) { showCustomAlert('Failed: ' + e.message); }
+                        document.getElementById('referralGenForm').style.display = 'none';
+                };
+                document.getElementById('assignCodeBtn').onclick = function() {
+                        document.getElementById('assignCodePanel').style.display = 'flex';
+                        document.getElementById('singleGenForm').style.display = 'none';
+                        document.getElementById('bulkGenForm').style.display = 'none';
+                        document.getElementById('randomGenForm').style.display = 'none';
+                };
+                // 8-character code generator
+                function generate8CharCode(type = 'mixed') {
+                        let chars = '';
+                        if (type === 'letters') chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+                        else if (type === 'digits') chars = '0123456789';
+                        else chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                        let code = '';
+                        for (let i = 0; i < 8; i++) {
+                                code += chars.charAt(Math.floor(Math.random() * chars.length));
+                        }
+                        return code;
+                }
+                function formatDateTime(dt) {
+                        if (!dt) return 'N/A';
+                        const d = new Date(dt);
+                        return d.toLocaleString();
+                }
+                function getStatus(code) {
+                        if (code.deactivated) return 'Deactivated';
+                        if (code.used) return 'Used';
+                        if (code.type === 'random' && code.redeemed && code.redeemed.length >= code.users) return 'Fully Redeemed';
+                        return 'Active';
+                }
+                function renderCodesTable() {
+                        const key = getAdminApiKey();
+                        const tbody = document.getElementById('codesTableBody');
+                        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;opacity:0.7;">Loading...</td></tr>';
+                        fetch('/api/admin/exchange-codes', { headers: { 'x-admin-key': key } })
+                        .then(r => r.json())
+                        .then(data => {
+                                const codes = data.codes || [];
+                                tbody.innerHTML = '';
+                                if (!codes.length) {
+                                        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;opacity:0.7;">No codes generated yet.</td></tr>';
+                                        return;
+                                }
+                                codes.forEach(code => {
+                                        let redeemedInfo = '';
+                                        if (code.redemptions && code.redemptions.length > 0) {
+                                                redeemedInfo = '<br><span style="font-size:0.9em;opacity:0.8;">';
+                                                code.redemptions.forEach(r => {
+                                                        redeemedInfo += 'User: ' + (r.username || r.user_id || 'N/A') + ' | Ksh ' + r.amount + ' | ' + formatDateTime(r.redeemed_at) + '<br>';
+                                                });
+                                                redeemedInfo += '</span>';
+                                        }
+                                        let status = code.deactivated ? 'Deactivated' : code.used ? 'Used' : 'Active';
+                                        if (code.type === 'random' && code.redemptions && code.users_count && code.redemptions.length > 0 && code.redemptions.length < code.users_count) status = 'Partially Used';
+                                        let codeTypeDisplay = code.type === 'single' ? (code.code_type || 'Reward') : code.type === 'random' ? 'Random Codes' : code.type === 'referral' ? 'Referral Reward' : code.type === 'user' ? 'User Assigned' : code.type;
+                                        const codeStr = code.code.replace(/^RC-/, '');
+                                        const amtDisplay = code.type === 'random' ? 'Pool: Ksh ' + code.pool_amount : 'Ksh ' + (code.amount || '-');
+                                        const tr = document.createElement('tr');
+                                        tr.innerHTML = `
+                                                <td style="position:relative;">
+                                                        Redemption code: <span class="copy-code-text">${codeStr}</span>
+                                                        <button class="copy-btn" title="Copy code" style="background:none;border:none;cursor:pointer;padding:0 0 0 6px;vertical-align:middle;" onclick="copyCodeText(this)">
+                                                                <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#ffd54f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='9' y='9' width='13' height='13' rx='2' ry='2'></rect><path d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'></path></svg>
+                                                        </button>
+                                                </td>
+                                                <td>${codeTypeDisplay}</td>
+                                                <td>${amtDisplay}${redeemedInfo}</td>
+                                                <td>${formatDateTime(code.expiry)}</td>
+                                                <td>${status}</td>
+                                                <td>
+                                                        <button onclick="deleteCode('${code.id}')">Delete</button>
+                                                        <button onclick="toggleCode('${code.id}', this)">${code.deactivated ? 'Activate' : 'Deactivate'}</button>
+                                                </td>
+                                        `;
+                                        tbody.appendChild(tr);
+                                });
+                        })
+                        .catch(e => { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ff6b6b;">Failed to load codes.</td></tr>'; });
+                }
+                document.getElementById('viewCodesBtn').onclick = function() {
+                        document.getElementById('codesTablePanel').style.display = 'block';
+                        renderCodesTable();
+                };
+
+                function editCode(id) {
+                        showCustomAlert('Edit code functionality coming soon.');
+                }
+                window.deleteCode = function(id) {
+                        const key = getAdminApiKey();
+                        showCustomConfirm('Delete this code?', function() {
+                                fetch('/api/admin/exchange-codes/' + id, { method: 'DELETE', headers: { 'x-admin-key': key } })
+                                .then(r => r.json())
+                                .then(() => renderCodesTable())
+                                .catch(e => showCustomAlert('Failed to delete: ' + e.message));
+                        });
+                };
+                window.toggleCode = function(id, btn) {
+                        const key = getAdminApiKey();
+                        fetch('/api/admin/exchange-codes/' + id + '/toggle', { method: 'PATCH', headers: { 'x-admin-key': key } })
+                        .then(r => r.json())
+                        .then(data => {
+                                if (data.code) {
+                                        btn.textContent = data.code.deactivated ? 'Activate' : 'Deactivate';
+                                        renderCodesTable();
+                                }
+                        })
+                        .catch(e => showCustomAlert('Failed: ' + e.message));
+                };
+                document.getElementById('singleGenSubmit').onclick = async function() {
+                        const amount = parseInt(document.getElementById('singleCodeAmount').value);
+                        if (isNaN(amount) || amount <= 0) { showCustomAlert('Enter a valid amount.'); return; }
+                        if (!await checkAndRecordExchange(amount)) return;
+                        const expiry = document.getElementById('singleCodeExpiry').value;
+                        const codeType = document.getElementById('singleCodeType').value;
+                        const code = 'RC-' + generate8CharCode();
+                        try {
+                                await saveCodesToDB([{ code, type: 'single', code_type: codeType, amount, expiry: expiry || null }]);
+                                let msg = 'Code generated: ' + code + ' for Ksh ' + amount;
+                                if (codeType) msg += ' (' + codeType + ')';
+                                showCustomAlert(msg);
+                                renderCodesTable();
+                        } catch(e) { showCustomAlert('Failed: ' + e.message); }
+                        document.getElementById('singleGenForm').style.display = 'none';
+                };
+                document.getElementById('bulkGenSubmit').onclick = async function() {
+                        var count = parseInt(document.getElementById('bulkCodeCount').value);
+                        var amount = parseInt(document.getElementById('bulkCodeAmount').value);
+                        if (isNaN(count) || count <= 0 || isNaN(amount) || amount <= 0) { showCustomAlert('Enter valid count and amount.'); return; }
+                        if (!await checkAndRecordExchange(count * amount)) return;
+                        var expiry = document.getElementById('bulkCodeExpiry').value;
+                        var codeType = document.getElementById('bulkCodeType').value;
+                        var codesToSave = [];
+                        var generated = [];
+                        for (var i = 0; i < count; i++) {
+                                var code = 'RC-' + generate8CharCode();
+                                codesToSave.push({ code, type: 'single', code_type: codeType, amount, expiry: expiry || null });
+                                generated.push(code);
+                        }
+                        try {
+                                await saveCodesToDB(codesToSave);
+                                let msg = count + ' codes generated for Ksh ' + amount;
+                                if (codeType) msg += ' (' + codeType + ')';
+                                msg += ': ' + generated.join(', ');
+                                showCustomAlert(msg);
+                                renderCodesTable();
+                        } catch(e) { showCustomAlert('Failed: ' + e.message); }
+                        document.getElementById('bulkGenForm').style.display = 'none';
+                };
+
+                document.getElementById('randomGenSubmit').onclick = async function() {
+                        var pool = parseInt(document.getElementById('randomPoolAmount').value);
+                        if (isNaN(pool) || pool <= 0) { showCustomAlert('Enter a valid pool amount.'); return; }
+                        if (!await checkAndRecordExchange(pool)) return;
+                        var users = parseInt(document.getElementById('randomUserCount').value);
+                        var max = parseInt(document.getElementById('randomMaxAmount').value);
+                        var min = parseInt(document.getElementById('randomMinAmount').value);
+                        var expiry = document.getElementById('randomCodeExpiry').value;
+                        if (min > max || users * min > pool || max > pool) { showCustomAlert('Invalid input. Please check your values.'); return; }
+                        var code = 'RC-RAND-' + generate8CharCode();
+                        try {
+                                await saveCodesToDB([{ code, type: 'random', pool_amount: pool, users_count: users, max_amount: max, min_amount: min, expiry: expiry || null }]);
+                                showCustomAlert('Random code generated: ' + code + '. Redeemable by ' + users + ' users for pool Ksh ' + pool);
+                                renderCodesTable();
+                        } catch(e) { showCustomAlert('Failed: ' + e.message); }
+                        document.getElementById('randomGenForm').style.display = 'none';
+                };
+                document.getElementById('assignCodeSubmit').onclick = async function() {
+                        const user = document.getElementById('assignUser').value.trim();
+                        const amount = parseInt(document.getElementById('assignAmount').value);
+                        const expiry = document.getElementById('assignExpiry').value;
+                        if (!user) { showCustomAlert('Please enter a user name or ID.'); return; }
+                        const code = 'RC-USER-' + generate8CharCode();
+                        try {
+                                await saveCodesToDB([{ code, type: 'user', amount, expiry: expiry || null, assigned_to: user }]);
+                                showCustomAlert('Code generated and assigned to ' + user + ': ' + code);
+                                renderCodesTable();
+                        } catch(e) { showCustomAlert('Failed: ' + e.message); }
+                        document.getElementById('assignCodePanel').style.display = 'none';
+                };
+
+                // --- Reset and Sync Logic ---
+                function confirmSystemReset() {
+  document.getElementById('resetConfirmModal').style.display = 'flex';
+}
+function closeAdminModal() {
+  document.getElementById('resetConfirmModal').style.display = 'none';
+}
+function executeSystemReset() {
+  const key = document.getElementById('resetSecurityKey').value;
+        if (key === '1540568e') {
+                // Clear localStorage and reload page
+                localStorage.clear();
+                sessionStorage.clear();
+                location.reload();
+        } else {
+                showCustomAlert('Incorrect security key.');
+        }
+}
+async function syncChanges() {
+  try {
+    const syncStatus = document.getElementById('syncStatus');
+    const syncProgress = document.getElementById('syncProgress');
+    const syncMessage = document.getElementById('syncMessage');
+    syncStatus.style.display = 'block';
+    syncMessage.textContent = 'Synchronizing changes...';
+    // Simulate sync progress
+    const steps = ['exchange'];
+    for (let i = 0; i < steps.length; i++) {
+      syncProgress.style.width = ((i + 1) / steps.length * 100) + '%';
+      syncMessage.textContent = `Syncing ${steps[i]}...`;
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    syncMessage.textContent = 'All changes synchronized!';
+    setTimeout(() => { syncStatus.style.display = 'none'; }, 2000);
+    // Optionally, reload exchange data here
+        } catch (error) {
+                showCustomAlert('Failed to sync changes. Please try again.');
+        }
+}
+        </script>
+
+<script>
+(function() {
+  if (localStorage.getItem('ab_sub_admin')) {
+    document.querySelectorAll('a[href="Admin-panel.html"]').forEach(function(a) {
+      a.href = 'sub-admin-panel.html';
+      var t = a.textContent.trim();
+      if (t.includes('Admin Panel') || t === 'Back') a.textContent = '← Back to Dashboard';
+    });
+  }
+})();
+</script>
+<script src="/js/admin-pin.js"></script>
+</body>
+                <script>
+                // --- Admin Notification Bar Logic ---
+                function renderAdminNotifications() {
+                        let notifications = [];
+                        try { notifications = JSON.parse(localStorage.getItem('adminDepositNotifications') || '[]'); } catch {}
+                        const list = document.getElementById('adminNotificationList');
+                        if (!list) return;
+                        if (!notifications.length) {
+                                list.innerHTML = '<li style="color:#aaa;">No notifications yet.</li>';
+                                return;
+                        }
+                        list.innerHTML = notifications.map(n => {
+                                let info = `<strong>${n.number || 'N/A'}</strong> tried to deposit <strong>KES ${n.amount || 'N/A'}</strong>`;
+                                if (n.txid) info += ` (TxID: <span style='color:#ffd54f;'>${n.txid}</span>)`;
+                                info += ` <span style='font-size:0.95em;color:#aaa;'>[${new Date(n.time).toLocaleString()}]</span>`;
+                                return `<li style='margin-bottom:8px;'>${info}</li>`;
+                        }).join('');
+                }
+                renderAdminNotifications();
+                setInterval(renderAdminNotifications, 5000);
+                </script>
+</html>

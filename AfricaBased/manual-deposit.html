@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Manual Deposit</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Segoe UI', sans-serif; }
+        body { background: #0f172a; color: #fff; min-height: 100vh; padding: 24px 16px 48px; }
+
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(78,205,196,0.1); border: 1px solid rgba(78,205,196,0.25);
+            color: #4ecdc4; padding: 9px 18px; border-radius: 10px;
+            font-weight: 600; font-size: 0.85rem; cursor: pointer; margin-bottom: 22px;
+            text-decoration: none; transition: background 0.2s;
+        }
+        .back-btn:hover { background: rgba(78,205,196,0.18); }
+
+        /* Instructions box — shown standalone only */
+        .instr-box {
+            background: rgba(255,213,79,0.07); border: 1px solid rgba(255,213,79,0.28);
+            border-radius: 12px; padding: 18px 20px; margin-bottom: 22px;
+        }
+        .instr-heading {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.88rem; font-weight: 700; color: #ffd54f; margin-bottom: 12px;
+        }
+        .instr-steps ol {
+            margin: 0; padding-left: 20px; list-style: decimal;
+        }
+        .instr-steps li {
+            font-size: 0.87rem; color: rgba(255,255,255,0.82); margin-bottom: 7px; line-height: 1.6;
+        }
+        .instr-steps li:last-child { margin-bottom: 0; }
+        .instr-plain { font-size: 0.87rem; color: rgba(255,255,255,0.8); line-height: 1.7; white-space: pre-wrap; }
+
+        /* Form card */
+        .card {
+            background: rgba(26,34,56,0.98); border-radius: 14px;
+            box-shadow: 0 6px 28px rgba(0,0,0,0.4); padding: 26px 22px;
+        }
+        .card-title {
+            font-size: 1.05rem; font-weight: 700; color: #fff;
+            display: flex; align-items: center; gap: 10px; margin-bottom: 22px;
+        }
+        .card-title i { color: #4ecdc4; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 0.82rem; font-weight: 600; color: rgba(255,255,255,0.65); margin-bottom: 7px; }
+        .form-row { display: flex; gap: 12px; }
+        .form-row .form-group { flex: 1; }
+
+        input[type=text], input[type=number], textarea {
+            width: 100%; padding: 12px 14px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px; color: #fff; font-size: 0.9rem; font-family: inherit;
+            outline: none; transition: border-color 0.2s;
+        }
+        input[type=text]:focus, input[type=number]:focus, textarea:focus {
+            border-color: #4ecdc4;
+        }
+        textarea { resize: vertical; line-height: 1.55; }
+        input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); }
+
+        .submit-btn {
+            width: 100%; padding: 14px;
+            background: linear-gradient(90deg, #4ecdc4, #3ab8b0);
+            border: none; border-radius: 12px;
+            color: #0f172a; font-weight: 800; font-size: 0.95rem;
+            cursor: pointer; margin-top: 8px; transition: opacity 0.2s, transform 0.15s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .submit-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .error-msg { color: #ff6b6b; font-size: 0.84rem; margin-top: 12px; display: none; }
+        .error-msg.show { display: block; }
+
+        /* Success overlay */
+        .overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7); z-index: 9999;
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        .overlay.show { display: flex; }
+        .success-card {
+            background: #1a2238; border: 1px solid rgba(78,205,196,0.3);
+            border-radius: 18px; padding: 36px 28px; max-width: 360px;
+            width: 100%; text-align: center;
+        }
+        .success-icon { font-size: 3.2rem; color: #4ecdc4; margin-bottom: 16px; }
+        .success-title { font-size: 1.2rem; font-weight: 700; color: #4ecdc4; margin-bottom: 8px; }
+        .success-body { font-size: 0.87rem; color: rgba(255,255,255,0.65); line-height: 1.6; margin-bottom: 22px; }
+        .ok-btn {
+            background: linear-gradient(90deg,#4ecdc4,#3ab8b0);
+            color: #0f172a; border: none; border-radius: 10px;
+            padding: 12px 32px; font-weight: 800; font-size: 0.92rem; cursor: pointer;
+        }
+    </style>
+<script src="/js/token.js"></script>
+</head>
+<body>
+
+    <a class="back-btn" onclick="window.top && window.top !== window ? window.top.location.href = '/home' : window.location.href = '/home'">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+
+    <!-- Instructions: only rendered when accessed as standalone page (not inside deposit.html iframe) -->
+    <div class="instr-box" id="instrBox" style="display:none;">
+        <div class="instr-heading"><i class="fas fa-info-circle"></i> Payment Instructions</div>
+        <div class="instr-steps" id="instrSteps"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-paper-plane"></i> Submit Deposit</div>
+
+        <form id="depositForm" autocomplete="off">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Your Phone / Account Number</label>
+                    <input type="text" id="fieldPhone" placeholder="e.g. 0712345678" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount (KES)</label>
+                    <input type="number" id="fieldAmount" placeholder="e.g. 500" min="10" step="1" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">M-Pesa Message</label>
+                <textarea id="fieldMpesa" rows="5"
+                    placeholder="Paste your full M-Pesa confirmation SMS here&#10;e.g. QHX1B3K9PL Confirmed. You have sent Ksh500 to AFRICABASED..."
+                    maxlength="600" required></textarea>
+            </div>
+
+            <div class="error-msg" id="errMsg"></div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <i class="fas fa-paper-plane"></i> Submit Deposit
+            </button>
+        </form>
+    </div>
+
+    <!-- Success modal -->
+    <div class="overlay" id="successOverlay">
+        <div class="success-card">
+            <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="success-title">Deposit Submitted!</div>
+            <div class="success-body" id="successBody">
+                Your deposit is under review. Your balance will be updated once confirmed.
+            </div>
+            <button class="ok-btn" onclick="onSuccessClose()">OK, Got It</button>
+        </div>
+    </div>
+
+    <script>
+        
+        
+
+        function showError(msg) {
+            const el = document.getElementById('errMsg');
+            el.textContent = msg;
+            el.classList.add('show');
+        }
+        function clearError() {
+            const el = document.getElementById('errMsg');
+            el.textContent = '';
+            el.classList.remove('show');
+        }
+
+        function onSuccessClose() {
+            document.getElementById('successOverlay').classList.remove('show');
+            document.getElementById('depositForm').reset();
+            clearError();
+            if (window !== window.parent) {
+                window.parent.location.href = '/home';
+            } else {
+                window.location.href = '/home';
+            }
+        }
+
+        // ── Load instructions (only when accessed standalone, not in iframe) ──
+        async function loadInstructions() {
+            if (window !== window.parent) return; // inside deposit.html iframe — parent already shows them
+            try {
+                const res = await fetch('/api/deposit/config');
+                const cfg = await res.json();
+                const text = (cfg.instructions || '').trim();
+                if (!text) return;
+                const box = document.getElementById('instrBox');
+                const steps = document.getElementById('instrSteps');
+                box.style.display = 'block';
+                // Format: if lines start with numbers, render as ordered list
+                const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                const isNumbered = lines.every(l => /^\d+[\.\)]\s/.test(l));
+                if (isNumbered) {
+                    steps.innerHTML = '<ol>' + lines.map(l => '<li>' + l.replace(/^\d+[\.\)]\s+/, '') + '</li>').join('') + '</ol>';
+                } else {
+                    // Check if any line starts with number
+                    const hasSomeNumbers = lines.some(l => /^\d+[\.\)]\s/.test(l));
+                    if (hasSomeNumbers) {
+                        steps.innerHTML = '<ol>' + lines.map(l => '<li>' + l.replace(/^\d+[\.\)]\s+/, '') + '</li>').join('') + '</ol>';
+                    } else {
+                        steps.innerHTML = '<div class="instr-plain">' + text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
+                    }
+                }
+            } catch(e) {}
+        }
+
+        // ── Form submission ──
+        document.getElementById('depositForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            clearError();
+
+            const token = getABToken();
+            if (!token) {
+                showError('You must be logged in to submit a deposit. Please log in and try again.');
+                return;
+            }
+
+            const phone = document.getElementById('fieldPhone').value.trim();
+            const amount = document.getElementById('fieldAmount').value.trim();
+            const mpesa_message = document.getElementById('fieldMpesa').value.trim();
+
+            if (!phone) { showError('Please enter your phone or account number.'); return; }
+            if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) < 10) {
+                showError('Please enter a valid amount (minimum KES 10).'); return;
+            }
+            if (!mpesa_message) { showError('Please paste your M-Pesa confirmation message.'); return; }
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…';
+
+            try {
+                const res = await fetch('/api/deposits/manual', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ amount, mpesa_message, phone_or_account: phone })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showError(data.error || 'Failed to submit deposit. Please try again.');
+                } else {
+                    document.getElementById('successBody').textContent = data.message || 'Your deposit is under review. Your balance will be updated once confirmed.';
+                    document.getElementById('successOverlay').classList.add('show');
+                }
+            } catch(err) {
+                showError('Network error. Please check your connection and try again.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Deposit';
+            }
+        });
+
+        loadInstructions();
+    </script>
+</body>
+</html>

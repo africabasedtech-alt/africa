@@ -1,0 +1,927 @@
+                        <script type="module">
+                                // ...existing code...
+
+                                // Populate deposit channel dropdown with all saved accounts from localStorage
+                                function updateDepositChannelDropdown() {
+                                    const depositChannel = document.getElementById('depositChannel');
+                                    depositChannel.innerHTML = '';
+                                    let tills = [], paybills = [], banks = [];
+                                    try { tills = JSON.parse(localStorage.getItem('depositTills') || '[]'); } catch {}
+                                    try { paybills = JSON.parse(localStorage.getItem('depositPaybills') || '[]'); } catch {}
+                                    try { banks = JSON.parse(localStorage.getItem('depositBanks') || '[]'); } catch {}
+                                    tills.forEach(till => {
+                                        const option = document.createElement('option');
+                                        option.value = 'till:' + till.till;
+                                        option.textContent = 'Mpesa Till: ' + till.till + (till.businessName ? ' (' + till.businessName + ')' : '');
+                                        depositChannel.appendChild(option);
+                                    });
+                                    paybills.forEach(paybill => {
+                                        const option = document.createElement('option');
+                                        option.value = 'paybill:' + paybill.paybillNum;
+                                        option.textContent = 'Paybill: ' + paybill.paybillNum + (paybill.accName ? ' (' + paybill.accName + ')' : '');
+                                        depositChannel.appendChild(option);
+                                    });
+                                    banks.forEach(bank => {
+                                        const option = document.createElement('option');
+                                        option.value = 'bank:' + bank.accountNumber;
+                                        option.textContent = 'Bank: ' + bank.bankName + ' (' + bank.accountNumber + ')';
+                                        depositChannel.appendChild(option);
+                                    });
+                                    if (!depositChannel.children.length) {
+                                        const option = document.createElement('option');
+                                        option.value = '';
+                                        option.textContent = 'No deposit channels/accounts saved';
+                                        depositChannel.appendChild(option);
+                                    }
+                                }
+
+                                // Save selected channel and mode to localStorage for use in manual/auto deposit pages
+                                function saveSelectedChannelAndMode() {
+                                    const depositChannel = document.getElementById('depositChannel');
+                                    const depositMode = document.getElementById('depositMode');
+                                    localStorage.setItem('manualDepositChannel', depositChannel.value);
+                                    localStorage.setItem('autoDepositChannel', depositChannel.value);
+                                    localStorage.setItem('manualDepositMode', depositMode.value);
+                                    localStorage.setItem('autoDepositMode', depositMode.value);
+                                }
+
+                                // Update dropdown on page load and after adding accounts
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    updateDepositChannelDropdown();
+                                    // Set dropdown to saved value if exists
+                                    const depositChannel = document.getElementById('depositChannel');
+                                    const saved = localStorage.getItem('manualDepositChannel');
+                                    if (saved) {
+                                        for (let i = 0; i < depositChannel.options.length; i++) {
+                                            if (depositChannel.options[i].value === saved) {
+                                                depositChannel.selectedIndex = i;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    depositChannel.addEventListener('change', saveSelectedChannelAndMode);
+                                    document.getElementById('switchDepositBtn').addEventListener('click', saveSelectedChannelAndMode);
+                                });
+
+                                // After adding any account, update dropdown
+                                function afterAccountAdded() {
+                                    updateDepositChannelDropdown();
+                                    saveSelectedChannel();
+                                }
+
+                                // Show/Hide Add Forms
+                                document.getElementById('addTillBtn').addEventListener('click', () => {
+                                    document.getElementById('addTillForm').style.display = 'block';
+                                });
+                                document.getElementById('cancelTillBtn').addEventListener('click', () => {
+                                    document.getElementById('addTillForm').style.display = 'none';
+                                });
+                                document.getElementById('addBankBtn').addEventListener('click', () => {
+                                    document.getElementById('addBankForm').style.display = 'block';
+                                });
+                                document.getElementById('cancelBankBtn').addEventListener('click', () => {
+                                    document.getElementById('addBankForm').style.display = 'none';
+                                });
+                                document.getElementById('addPaybillBtn').addEventListener('click', () => {
+                                    document.getElementById('addPaybillForm').style.display = 'block';
+                                });
+                                document.getElementById('cancelPaybillBtn').addEventListener('click', () => {
+                                    document.getElementById('addPaybillForm').style.display = 'none';
+                                });
+
+                                // Save Mpesa Till
+                                document.getElementById('saveTillBtn').addEventListener('click', () => {
+                                    const tillData = {
+                                        number: document.getElementById('tillNum').value,
+                                        business_name: document.getElementById('tillBusinessName').value,
+                                        shortcode: document.getElementById('tillShortcode').value
+                                    };
+                                    // Validate required fields
+                                    if (!tillData.number || !tillData.business_name || !tillData.shortcode) {
+                                        alert('Please fill in all required Mpesa Till fields.');
+                                        return;
+                                    }
+                                    let tills = [];
+                                    try { tills = JSON.parse(localStorage.getItem('depositTills') || '[]'); } catch {}
+                                    if (tills.some(t => t.till === tillData.number)) {
+                                        alert('This till number already exists.');
+                                        return;
+                                    }
+                                    tills.push({
+                                        till: tillData.number,
+                                        businessName: tillData.business_name,
+                                        shortcode: tillData.shortcode
+                                    });
+                                    localStorage.setItem('depositTills', JSON.stringify(tills));
+                                    document.getElementById('addTillForm').style.display = 'none';
+                                    afterAccountAdded();
+                                    const notificationList = document.getElementById('adminNotificationList');
+                                    const notification = document.createElement('li');
+                                    notification.textContent = 'Mpesa Till added successfully.';
+                                    notificationList.appendChild(notification);
+                                    setTimeout(() => notification.remove(), 4000);
+                                });
+
+                                // Save Bank Account
+                                document.getElementById('saveBankBtn').addEventListener('click', () => {
+                                    const bankData = {
+                                        name: document.getElementById('bankName').value,
+                                        account_number: document.getElementById('bankAcc').value,
+                                        account_name: document.getElementById('bankAccName').value
+                                    };
+                                    if (!bankData.name || !bankData.account_number || !bankData.account_name) {
+                                        alert('Please fill in all required Bank Account fields.');
+                                        return;
+                                    }
+                                    let banks = [];
+                                    try { banks = JSON.parse(localStorage.getItem('depositBanks') || '[]'); } catch {}
+                                    if (banks.some(b => b.accountNumber === bankData.account_number)) {
+                                        alert('This bank account number already exists.');
+                                        return;
+                                    }
+                                    banks.push({
+                                        bankName: bankData.name,
+                                        accountNumber: bankData.account_number,
+                                        accountName: bankData.account_name
+                                    });
+                                    localStorage.setItem('depositBanks', JSON.stringify(banks));
+                                    document.getElementById('addBankForm').style.display = 'none';
+                                    afterAccountAdded();
+                                    const notificationList = document.getElementById('adminNotificationList');
+                                    const notification = document.createElement('li');
+                                    notification.textContent = 'Bank Account added successfully.';
+                                    notificationList.appendChild(notification);
+                                    setTimeout(() => notification.remove(), 4000);
+                                });
+
+                                // Save Paybill Account
+                                document.getElementById('savePaybillBtn').addEventListener('click', () => {
+                                    const paybillData = {
+                                        number: document.getElementById('paybillNum').value,
+                                        account_number: document.getElementById('paybillAccNum').value,
+                                        account_name: document.getElementById('paybillAccName').value
+                                    };
+                                    if (!paybillData.number || !paybillData.account_number || !paybillData.account_name) {
+                                        alert('Please fill in all required Paybill fields.');
+                                        return;
+                                    }
+                                    let paybills = [];
+                                    try { paybills = JSON.parse(localStorage.getItem('depositPaybills') || '[]'); } catch {}
+                                    if (paybills.some(p => p.paybillNum === paybillData.number)) {
+                                        alert('This paybill number already exists.');
+                                        return;
+                                    }
+                                    paybills.push({
+                                        paybillNum: paybillData.number,
+                                        accNum: paybillData.account_number,
+                                        accName: paybillData.account_name
+                                    });
+                                    localStorage.setItem('depositPaybills', JSON.stringify(paybills));
+                                    document.getElementById('addPaybillForm').style.display = 'none';
+                                    afterAccountAdded();
+                                    const notificationList = document.getElementById('adminNotificationList');
+                                    const notification = document.createElement('li');
+                                    notification.textContent = 'Paybill Account added successfully.';
+                                    notificationList.appendChild(notification);
+                                    setTimeout(() => notification.remove(), 4000);
+                                });
+                                                // Save selected channel and mode to localStorage for user pages
+                                                function saveChannelAndModeToLocalStorage() {
+                                                    const channelSelect = document.getElementById('depositChannel');
+                                                    const modeSelect = document.getElementById('depositMode');
+                                                    const selectedChannel = channelSelect.options[channelSelect.selectedIndex];
+                                                    localStorage.setItem('manualDepositChannel', selectedChannel ? selectedChannel.textContent : '');
+                                                    localStorage.setItem('manualDepositMode', modeSelect.value);
+                                                }
+                                                document.getElementById('switchDepositBtn').addEventListener('click', saveChannelAndModeToLocalStorage);
+                                                document.getElementById('depositMode').addEventListener('change', saveChannelAndModeToLocalStorage);
+                        </script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AfricaBased Admin Deposit</title>
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://unpkg.com https://yoqtahdctzponqkmgkzn.supabase.co; script-src 'self' https://unpkg.com 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://yoqtahdctzponqkmgkzn.supabase.co wss://yoqtahdctzponqkmgkzn.supabase.co https://unpkg.com;">
+    
+    <!-- Load Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
+    <!-- Load application logic -->
+    <script type="module" src="js/admin-deposit.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/admin-deposit.css">
+    <style>
+    .deposit-action-btn { 
+        background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+        color: #fff; 
+        border: none; 
+        padding: 14px 32px; 
+        border-radius: 8px; 
+        font-size: 1.05rem; 
+        font-weight: 600; 
+        cursor: pointer; 
+        box-shadow: 0 4px 12px rgba(33,150,243,0.2);
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .deposit-action-btn:hover { 
+        background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+        color: #ffd54f; 
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(33,150,243,0.3);
+    }
+
+    /* Table Styles */
+    .deposit-table-scroll { 
+        max-height: 420px; 
+        overflow-y: auto; 
+        margin-bottom: 24px; 
+        border-radius: 12px; 
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        background: rgba(35,37,38,0.8);
+        border: 1px solid rgba(255,213,79,0.1);
+    }
+
+    .deposit-table-scroll table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: transparent;
+    }
+
+    .deposit-table-scroll th {
+        background: rgba(255,213,79,0.1);
+        color: #ffd54f;
+        padding: 16px;
+        font-weight: 600;
+        text-align: left;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .deposit-table-scroll td {
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .deposit-table-scroll tbody tr:hover {
+        background: rgba(255,213,79,0.05);
+    }
+
+    /* Account List Styles */
+    .account-list { 
+        margin-bottom: 20px;
+        display: grid;
+        gap: 12px;
+    }
+
+    .account-list div { 
+        background: rgba(35,39,47,0.9);
+        color: #ffd54f;
+        padding: 16px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,213,79,0.1);
+        transition: all 0.3s ease;
+    }
+
+    .account-list div:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        background: rgba(35,39,47,0.95);
+    }
+
+    /* Form Styles */
+    input, select { 
+        background: rgba(35,37,38,0.8);
+        border: 1px solid rgba(255,213,79,0.2);
+        color: #ffd54f;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-bottom: 16px;
+    }
+
+    input:focus, select:focus {
+        outline: none;
+        border-color: #ffd54f;
+        box-shadow: 0 0 0 2px rgba(255,213,79,0.1);
+    }
+
+    /* Modal Styles */
+    .admin-modal { 
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.85);
+        backdrop-filter: blur(8px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .admin-modal-content { 
+        background: linear-gradient(145deg, #232526 0%, #1c1e1f 100%);
+        padding: 40px;
+        border-radius: 16px;
+        min-width: 420px;
+        color: #ffd54f;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+        border: 1px solid rgba(255,213,79,0.1);
+        transform: translateY(0);
+        animation: modalSlide 0.3s ease;
+    }
+
+    /* System Button Styles */
+    .system-btn { 
+        background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+        color: #fff;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .system-btn:hover { 
+        background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+        transform: translateY(-2px);
+    }
+
+    /* Progress Bar Styles */
+    .sync-status { 
+        display: none;
+        background: linear-gradient(145deg, #232526 0%, #1c1e1f 100%);
+        padding: 24px;
+        border-radius: 12px;
+        margin: 24px auto;
+        max-width: 600px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        border: 1px solid rgba(255,213,79,0.1);
+    }
+
+    .sync-progress { 
+        height: 6px;
+        background: rgba(49,52,59,0.5);
+        border-radius: 3px;
+        margin: 16px 0;
+        overflow: hidden;
+    }
+
+    .progress-bar { 
+        height: 100%;
+        width: 0;
+        background: linear-gradient(90deg, #2196f3 0%, #1976d2 100%);
+        border-radius: 3px;
+        transition: width 0.4s ease;
+    }
+
+    /* Typography */
+    h2, h3, label { 
+        color: #ffd54f;
+        margin-bottom: 16px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    h2 { 
+        font-size: 1.75rem;
+        text-transform: uppercase;
+        background: linear-gradient(90deg, #ffd54f 0%, #ffb300 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 32px;
+    }
+
+    /* Animations */
+    @keyframes modalSlide {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Scrollbar Styles */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: rgba(35,37,38,0.8);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #2196f3;
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #1976d2;
+    }
+    /* Header and Notification Styles */
+    .admin-header {
+        margin: 24px 0 0 24px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: linear-gradient(90deg, #232526 60%, #ffd54f 100%);
+        border-radius: 10px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+        padding: 18px 24px;
+    }
+    .back-btn {
+        background: #ffd54f;
+        color: #232526;
+        padding: 8px 18px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+        transition: background 0.2s, color 0.2s;
+    }
+    .back-btn:hover {
+        background: #fff176;
+        color: #181c24;
+    }
+    .notification-bar {
+        background: linear-gradient(90deg, #232526 60%, #ffd54f 100%);
+        padding: 18px 22px;
+        border-radius: 10px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(255,213,79,0.08);
+        color: #232526;
+    }
+    .notification-bar h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        color: #ffd54f;
+    }
+    .notification-bar ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .notification-bar li {
+        margin-bottom: 8px;
+        color: #232526;
+        font-weight: 500;
+        background: #ffd54f22;
+        border-radius: 6px;
+        padding: 8px 12px;
+    }
+    .modern-panel {
+        background: linear-gradient(135deg, #232526 80%, #ffd54f 100%);
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+        padding: 40px;
+    }
+    .deposit-btns {
+        display: flex;
+        gap: 24px;
+        justify-content: center;
+        margin-bottom: 32px;
+    }
+    .deposit-info {
+        margin-bottom: 32px;
+        color: #ffd54f;
+        text-align: center;
+        font-size: 1.15rem;
+        font-weight: 500;
+    }
+    </style>
+</head>
+<body>
+    <!-- Reset/Sync Buttons and Modal -->
+    <div class="admin-header">
+        <a href="Admin-panel.html" class="back-btn">&larr; Back to Admin Panel</a>
+        <button class="system-btn btn-reset" id="resetBtn">Reset</button>
+        <button class="system-btn btn-sync" id="syncBtn">Sync Changes</button>
+    </div>
+
+    <!-- Reset Confirmation Modal -->
+    <div id="resetConfirmModal" class="admin-modal" style="display:none;">
+        <div class="admin-modal-content">
+            <h2>Confirm System Reset</h2>
+            <p>This will reset the page and clear all local changes. Enter security key to confirm:</p>
+            <input type="password" id="resetSecurityKey" placeholder="Security Key">
+            <div style="margin-top:18px;display:flex;gap:12px;justify-content:flex-end;">
+                <button id="confirmResetBtn" class="system-btn btn-reset">Confirm Reset</button>
+                <button id="cancelResetBtn" class="system-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sync Status -->
+    <div class="sync-status" id="syncStatus" style="display:none;background:#232526;padding:16px;border-radius:8px;margin:16px auto;max-width:600px;">
+        <div class="sync-progress" style="height:4px;background:#333;border-radius:2px;margin:8px 0;">
+            <div class="progress-bar" id="syncProgress" style="height:100%;width:0;background:#2196f3;border-radius:2px;transition:width 0.3s;"></div>
+        </div>
+        <p id="syncMessage"></p>
+    </div>
+
+    <!-- Global Admin Notification Bar -->
+    <div id="adminNotificationBar" class="notification-bar">
+        <h3>Notifications</h3>
+        <ul id="adminNotificationList"></ul>
+    </div>
+    <div class="deposit-panel modern-panel">
+        <h2 class="page-title">AfricaBased Admin Deposit Channels</h2>
+        <div class="deposit-channel-control">
+                <label for="depositChannel">Deposit Channel:</label>
+                <select id="depositChannel"></select>
+                <button id="addDepositChannelBtn" class="deposit-action-btn" style="margin-left:12px;">Add Channel</button>
+                <label for="depositMode" style="margin-left:24px;">Mode:</label>
+                <select id="depositMode">
+                    <option value="manual">Manual Deposit</option>
+                    <option value="auto">Auto Deposit (API)</option>
+                </select>
+                <button id="switchDepositBtn" class="deposit-action-btn">Switch Channel/Mode</button>
+                <!-- Add Channel Modal -->
+                <div id="addChannelModal" class="admin-modal" style="display:none;">
+                    <div class="admin-modal-content">
+                        <h2>Add Deposit Channel</h2>
+                        <label>Channel Name:</label>
+                        <input id="channelNameInput" placeholder="e.g. Mpesa, Bank, Paybill" />
+                        <label>Channel Type:</label>
+                        <select id="channelTypeInput">
+                            <option value="mpesa">Mpesa</option>
+                            <option value="bank">Bank</option>
+                            <option value="paybill">Paybill</option>
+                        </select>
+                        <div style="margin-top:18px;display:flex;gap:12px;justify-content:flex-end;">
+                            <button id="saveChannelBtn" class="system-btn">Save</button>
+                            <button id="cancelChannelBtn" class="system-btn">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+                                        <script type="module">
+                                                // Hide add forms by default
+                                                document.addEventListener('DOMContentLoaded', function() {
+                                                    document.getElementById('addTillForm').style.display = 'none';
+                                                    document.getElementById('addBankForm').style.display = 'none';
+                                                    document.getElementById('addPaybillForm').style.display = 'none';
+                                                });
+                                                // Helper to update deposit table visibility
+                                                function updateDepositTableVisibility(mode) {
+                                                    document.getElementById('autoDepositTableWrap').style.display = (mode === 'auto') ? 'block' : 'none';
+                                                    document.getElementById('depositTableWrap').style.display = (mode === 'manual') ? 'block' : 'none';
+                                                }
+
+                                                // On page load, set mode from localStorage and update table visibility
+                                                document.addEventListener('DOMContentLoaded', function() {
+                                                    const savedMode = localStorage.getItem('activeDepositMode') || 'manual';
+                                                    document.getElementById('depositMode').value = savedMode;
+                                                    updateDepositTableVisibility(savedMode);
+                                                });
+
+                                                // Respond to mode switch
+                                                document.getElementById('switchDepositBtn').addEventListener('click', function() {
+                                                    const mode = document.getElementById('depositMode').value;
+                                                    localStorage.setItem('activeDepositMode', mode);
+                                                    // Show notification
+                                                    const notificationList = document.getElementById('adminNotificationList');
+                                                    const notification = document.createElement('li');
+                                                    notification.textContent = `Successfully switched to ${mode} mode.`;
+                                                    notificationList.appendChild(notification);
+                                                    setTimeout(() => notification.remove(), 4000);
+                                                    updateDepositTableVisibility(mode);
+                                                });
+                                                // Also respond to dropdown change for instant feedback
+                                                document.getElementById('depositMode').addEventListener('change', function() {
+                                                    const mode = this.value;
+                                                    localStorage.setItem('activeDepositMode', mode);
+                                                    updateDepositTableVisibility(mode);
+                                                });
+
+                                                // Add Deposit Channel Modal logic
+                                                const addDepositChannelBtn = document.getElementById('addDepositChannelBtn');
+                                                const addChannelModal = document.getElementById('addChannelModal');
+                                                const saveChannelBtn = document.getElementById('saveChannelBtn');
+                                                const cancelChannelBtn = document.getElementById('cancelChannelBtn');
+                                                const channelNameInput = document.getElementById('channelNameInput');
+                                                const channelTypeInput = document.getElementById('channelTypeInput');
+                                                const depositChannelSelect = document.getElementById('depositChannel');
+
+                                                // Show modal
+                                                addDepositChannelBtn.addEventListener('click', () => {
+                                                    addChannelModal.style.display = 'flex';
+                                                    channelNameInput.value = '';
+                                                    channelTypeInput.value = 'mpesa';
+                                                });
+                                                // Hide modal
+                                                cancelChannelBtn.addEventListener('click', () => {
+                                                    addChannelModal.style.display = 'none';
+                                                });
+                                                // Save channel
+                                                saveChannelBtn.addEventListener('click', async () => {
+                                                    const name = channelNameInput.value.trim();
+                                                    const type = channelTypeInput.value;
+                                                    if (!name) {
+                                                        alert('Channel name is required');
+                                                        return;
+                                                    }
+                                                    // Save to Supabase
+                                                    try {
+                                                        // Use window.supabase from loaded script
+                                                        const supabase = window.supabase || window.createSupabaseClient && window.createSupabaseClient();
+                                                        if (!supabase) {
+                                                            alert('Supabase client not found.');
+                                                            return;
+                                                        }
+                                                        const { data, error } = await supabase.from('deposit_channels').insert([{ name, type }]);
+                                                        if (error) throw error;
+                                                        // Add to dropdown
+                                                        const option = document.createElement('option');
+                                                        option.value = data[0].id;
+                                                        option.textContent = data[0].name;
+                                                        depositChannelSelect.appendChild(option);
+                                                        depositChannelSelect.value = data[0].id;
+                                                        // Show notification
+                                                        const notificationList = document.getElementById('adminNotificationList');
+                                                        const notification = document.createElement('li');
+                                                        notification.textContent = `Channel '${name}' added successfully.`;
+                                                        notificationList.appendChild(notification);
+                                                        setTimeout(() => notification.remove(), 4000);
+                                                        addChannelModal.style.display = 'none';
+                                                    } catch (err) {
+                                                        alert('Error adding channel: ' + err.message);
+                                                    }
+                                                });
+                                        </script>
+        </div>
+        <div class="deposit-accounts-control">
+            <div>
+                <h3 class="section-title mpesa">Mpesa Tills</h3>
+                                <div id="tillList" class="account-list"></div>
+                                <script>
+                                // Render till list with delete buttons
+                                function renderTillList() {
+                                    let tills = [];
+                                    try { tills = JSON.parse(localStorage.getItem('depositTills') || '[]'); } catch {}
+                                    const tillList = document.getElementById('tillList');
+                                    tillList.innerHTML = '';
+                                    tills.forEach((till, idx) => {
+                                        const div = document.createElement('div');
+                                        div.innerHTML = `Till Number: ${till.till}<br>Business: ${till.businessName || ''} <button style='float:right;background:#ff6b6b;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;' onclick='deleteTill(${idx})'>Delete</button>`;
+                                        tillList.appendChild(div);
+                                    });
+                                }
+                                function deleteTill(idx) {
+                                    let tills = [];
+                                    try { tills = JSON.parse(localStorage.getItem('depositTills') || '[]'); } catch {}
+                                    tills.splice(idx, 1);
+                                    localStorage.setItem('depositTills', JSON.stringify(tills));
+                                    renderTillList();
+                                    if (typeof updateDepositChannelDropdown === 'function') updateDepositChannelDropdown();
+                                }
+                                renderTillList();
+                                window.deleteTill = deleteTill;
+                                </script>
+                <button id="addTillBtn" class="deposit-action-btn">Add Mpesa Till</button>
+                <div id="addTillForm" class="add-form">
+                    <label>Till Number:</label><input id="tillNum" style="width:100%; margin-bottom:8px;" />
+                    <label>Business Name:</label><input id="tillBusinessName" style="width:100%; margin-bottom:8px;" />
+                    <label>Shortcode:</label><input id="tillShortcode" style="width:100%; margin-bottom:8px;" />
+                    <label>API Key/Token:</label><input id="tillApiKey" style="width:100%; margin-bottom:8px;" />
+                    <label>Client ID:</label><input id="tillClientId" style="width:100%; margin-bottom:8px;" />
+                    <label>Client Secret:</label><input id="tillClientSecret" style="width:100%; margin-bottom:8px;" />
+                    <label>Callback URL:</label><input id="tillCallback" style="width:100%; margin-bottom:8px;" />
+                    <button id="saveTillBtn" class="system-btn" style="margin-right:8px;">Save</button>
+                    <button id="cancelTillBtn" class="system-btn">Cancel</button>
+                </div>
+            </div>
+            <div>
+                <h3 class="section-title bank">Bank Accounts</h3>
+                                <div id="bankList" class="account-list"></div>
+                                <script>
+                                // Render bank list with delete buttons
+                                function renderBankList() {
+                                    let banks = [];
+                                    try { banks = JSON.parse(localStorage.getItem('depositBanks') || '[]'); } catch {}
+                                    const bankList = document.getElementById('bankList');
+                                    bankList.innerHTML = '';
+                                    banks.forEach((bank, idx) => {
+                                        const div = document.createElement('div');
+                                        div.innerHTML = `Bank: ${bank.bankName}<br>Account: ${bank.accountNumber} <button style='float:right;background:#ff6b6b;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;' onclick='deleteBank(${idx})'>Delete</button>`;
+                                        bankList.appendChild(div);
+                                    });
+                                }
+                                function deleteBank(idx) {
+                                    let banks = [];
+                                    try { banks = JSON.parse(localStorage.getItem('depositBanks') || '[]'); } catch {}
+                                    banks.splice(idx, 1);
+                                    localStorage.setItem('depositBanks', JSON.stringify(banks));
+                                    renderBankList();
+                                    if (typeof updateDepositChannelDropdown === 'function') updateDepositChannelDropdown();
+                                }
+                                renderBankList();
+                                window.deleteBank = deleteBank;
+                                </script>
+                <button id="addBankBtn" class="deposit-action-btn">Add Bank Account</button>
+                <div id="addBankForm" class="add-form">
+                    <label>Bank Name:</label><input id="bankName" style="width:100%; margin-bottom:8px;" />
+                    <label>Account Number:</label><input id="bankAcc" style="width:100%; margin-bottom:8px;" />
+                    <label>Account Name:</label><input id="bankAccName" style="width:100%; margin-bottom:8px;" />
+                    <label>API Key/Token:</label><input id="bankApiKey" style="width:100%; margin-bottom:8px;" />
+                    <label>Client ID:</label><input id="bankClientId" style="width:100%; margin-bottom:8px;" />
+                    <label>Client Secret:</label><input id="bankClientSecret" style="width:100%; margin-bottom:8px;" />
+                    <label>Callback URL:</label><input id="bankCallback" style="width:100%; margin-bottom:8px;" />
+                    <button id="saveBankBtn" class="system-btn" style="margin-right:8px;">Save</button>
+                    <button id="cancelBankBtn" class="system-btn">Cancel</button>
+                </div>
+            </div>
+            <div>
+                <h3 class="section-title paybill">Paybill Accounts</h3>
+                                <div id="paybillList" class="account-list"></div>
+                                <script>
+                                // Render paybill list with delete buttons
+                                function renderPaybillList() {
+                                    let paybills = [];
+                                    try { paybills = JSON.parse(localStorage.getItem('depositPaybills') || '[]'); } catch {}
+                                    const paybillList = document.getElementById('paybillList');
+                                    paybillList.innerHTML = '';
+                                    paybills.forEach((paybill, idx) => {
+                                        const div = document.createElement('div');
+                                        div.innerHTML = `Paybill: ${paybill.paybillNum}<br>Account: ${paybill.accNum} <button style='float:right;background:#ff6b6b;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;' onclick='deletePaybill(${idx})'>Delete</button>`;
+                                        paybillList.appendChild(div);
+                                    });
+                                }
+                                function deletePaybill(idx) {
+                                    let paybills = [];
+                                    try { paybills = JSON.parse(localStorage.getItem('depositPaybills') || '[]'); } catch {}
+                                    paybills.splice(idx, 1);
+                                    localStorage.setItem('depositPaybills', JSON.stringify(paybills));
+                                    renderPaybillList();
+                                    if (typeof updateDepositChannelDropdown === 'function') updateDepositChannelDropdown();
+                                }
+                                renderPaybillList();
+                                window.deletePaybill = deletePaybill;
+                                </script>
+                <button id="addPaybillBtn" class="deposit-action-btn">Add Paybill</button>
+                <div id="addPaybillForm" class="add-form">
+                    <label>Paybill Number:</label><input id="paybillNum" style="width:100%; margin-bottom:8px;" />
+                    <label>Account Number:</label><input id="paybillAccNum" style="width:100%; margin-bottom:8px;" />
+                    <label>Account Name:</label><input id="paybillAccName" style="width:100%; margin-bottom:8px;" />
+                    <label>API Key/Token:</label><input id="paybillApiKey" style="width:100%; margin-bottom:8px;" />
+                    <label>Client ID:</label><input id="paybillClientId" style="width:100%; margin-bottom:8px;" />
+                    <label>Client Secret:</label><input id="paybillClientSecret" style="width:100%; margin-bottom:8px;" />
+                    <label>Callback URL:</label><input id="paybillCallback" style="width:100%; margin-bottom:8px;" />
+                    <button id="savePaybillBtn" class="system-btn" style="margin-right:8px;">Save</button>
+                    <button id="cancelPaybillBtn" class="system-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+        <div class="deposit-btns">
+            <button id="showDepositRequestBtn" class="deposit-action-btn">Show Deposit Requests</button>
+            <button id="showDepositHistoryBtn" class="deposit-action-btn">Show Deposit History</button>
+        </div>
+        <div id="depositInfo" class="deposit-info"></div>
+        <div class="wallet-balance">
+            <strong>Wallet Balance: Ksh <span id="walletBalance">0.00</span></strong>
+        </div>
+        <div id="depositTableWrap" class="table-section">
+            <h2>Manual Deposit Requests</h2>
+            <div class="deposit-table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Request ID</th><th>User ID</th><th>Name</th><th>Amount</th><th>Method</th><th>Date</th><th>Transaction ID</th><th>Status</th><th>Mpesa/Bank</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="depositTableBody"></tbody>
+                </table>
+            </div>
+            <script>
+            // Render deposit requests from localStorage
+            function renderDepositRequests() {
+                let requests = [];
+                try { requests = JSON.parse(localStorage.getItem('depositRequests') || '[]'); } catch {}
+                const tbody = document.getElementById('depositTableBody');
+                tbody.innerHTML = '';
+                requests.forEach((req, idx) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${req.requestId||'-'}</td>
+                        <td>${req.userId||'-'}</td>
+                        <td>${req.name||'-'}</td>
+                        <td>${req.amount||'-'}</td>
+                        <td>${req.method||'-'}</td>
+                        <td>${req.date||'-'}</td>
+                        <td>${req.transactionId||'-'}</td>
+                        <td style="color:${req.status==='Approved'?'#4ecdc4':(req.status==='Rejected'?'#ff6b6b':'#fff')}">${req.status||'-'}</td>
+                        <td>${req.mpesaNumber||req.bankAccount||'-'}</td>
+                        <td>
+                            <button onclick="approveDepositRequest(${idx})" style="background:#4ecdc4;color:#111;padding:4px 10px;border:none;border-radius:6px;cursor:pointer;margin-right:4px;">Approve</button>
+                            <button onclick="rejectDepositRequest(${idx})" style="background:#ff6b6b;color:#fff;padding:4px 10px;border:none;border-radius:6px;cursor:pointer;">Reject</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            function approveDepositRequest(idx) {
+                let requests = [];
+                try { requests = JSON.parse(localStorage.getItem('depositRequests') || '[]'); } catch {}
+                if (requests[idx]) {
+                    requests[idx].status = 'Approved';
+                    // Add amount to user's wallet
+                    const userId = requests[idx].userId || 'user';
+                    const amount = parseFloat(requests[idx].amount) || 0;
+                    // Wallets are stored as { userId: balance }
+                    let wallets = {};
+                    try { wallets = JSON.parse(localStorage.getItem('wallets') || '{}'); } catch {}
+                    if (!wallets[userId]) wallets[userId] = 0;
+                    wallets[userId] = parseFloat(wallets[userId]) + amount;
+                    localStorage.setItem('wallets', JSON.stringify(wallets));
+                    localStorage.setItem('depositRequests', JSON.stringify(requests));
+                    renderDepositRequests();
+                }
+            }
+            function rejectDepositRequest(idx) {
+                let requests = [];
+                try { requests = JSON.parse(localStorage.getItem('depositRequests') || '[]'); } catch {}
+                if (requests[idx]) {
+                    requests[idx].status = 'Rejected';
+                    localStorage.setItem('depositRequests', JSON.stringify(requests));
+                    renderDepositRequests();
+                }
+            }
+            // Initial render
+            renderDepositRequests();
+            // Expose to window for inline onclick
+            window.approveDepositRequest = approveDepositRequest;
+            window.rejectDepositRequest = rejectDepositRequest;
+            // Listen for storage changes (in case another tab adds a deposit)
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'depositRequests') renderDepositRequests();
+            });
+            </script>
+        </div>
+        <div id="autoDepositTableWrap" style="display:none; margin-top:32px;">
+            <h2>Automatic Deposit Requests</h2>
+            <div class="deposit-table-scroll" style="max-height:320px; overflow-y:auto; margin-bottom:18px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.10); background:#232526;">
+                <table style="width:100%; border-collapse:collapse; background:#232526;">
+                    <thead>
+                        <tr><th>Request ID</th><th>User ID</th><th>Name</th><th>Amount</th><th>Method</th><th>Date</th><th>Transaction ID</th><th>Status</th><th>Mpesa/Bank</th></tr>
+                    </thead>
+                    <tbody id="autoDepositTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div id="depositHistoryWrap" style="margin-top:32px;">
+            <h2>Deposit History</h2>
+            <div class="deposit-table-scroll" style="max-height:320px; overflow-y:auto; margin-bottom:18px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.10); background:#232526;">
+                <table style="width:100%; border-collapse:collapse; background:#232526;">
+                    <thead>
+                        <tr><th>Request ID</th><th>User ID</th><th>Name</th><th>Amount</th><th>Method</th><th>Date</th><th>Transaction ID</th><th>Status</th><th>Mpesa/Bank</th></tr>
+                    </thead>
+                    <tbody id="depositHistoryBody"></tbody>
+                </table>
+            </div>
+            <div style="margin-top:12px; text-align:right;">
+                <button id="exportCsvBtn" class="deposit-action-btn">Download CSV</button>
+                <button id="exportExcelBtn" class="deposit-action-btn">Download Excel</button>
+                <button id="exportPdfBtn" class="deposit-action-btn">Download PDF</button>
+            </div>
+        </div>
+        <div style="margin-bottom:32px; text-align:center;">
+            <label for="darajaEnv" class="env-label">Daraja Environment:</label>
+            <select id="darajaEnv" class="env-select">
+                <option value="sandbox">Sandbox (Test)</option>
+                <option value="production">Production (Live)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- All JavaScript is now loaded via js/admin-deposit.js as a module -->
+
+<script>
+(function() {
+  if (localStorage.getItem('ab_sub_admin')) {
+    document.querySelectorAll('a[href="Admin-panel.html"]').forEach(function(a) {
+      a.href = 'sub-admin-panel.html';
+      var t = a.textContent.trim();
+      if (t.includes('Admin Panel') || t === 'Back') a.textContent = '← Back to Dashboard';
+    });
+  }
+})();
+</script>
+<script src="/js/admin-pin.js"></script>
+</body>
+</html>

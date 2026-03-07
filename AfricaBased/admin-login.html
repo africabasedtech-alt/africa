@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+        <script>
+            // Removed hardcoded Supabase URL/anon key initialization.
+            if (!window.supabase && window.supabaseClient) window.supabase = window.supabaseClient;
+            if (!window.supabase) {
+                window.supabase = null;
+                console.warn('Supabase client not initialized. Call initSupabaseClient(url, anonKey) from a secure runtime.');
+            }
+        </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AfricaBased - Super Admin Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="robots" content="noindex, nofollow"> <!-- Prevent search engine indexing -->
+    <style>
+        :root {
+            --primary-color: #1a2238;
+            --secondary-color: #4ecdc4;
+            --accent-color: #ff6b6b;
+            --bg-color: #0f172a;
+            --text-color: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            --gradient: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: var(--primary-color);
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: var(--shadow);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--secondary-color);
+        }
+
+        .login-header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            background: var(--card-bg);
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.1);
+        }
+
+        .security-code {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-family: monospace;
+            font-size: 1.2rem;
+            letter-spacing: 3px;
+            color: var(--secondary-color);
+            border: 1px solid rgba(78, 205, 196, 0.2);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--gradient);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 2.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .error-message {
+            color: var(--accent-color);
+            background: rgba(255, 107, 107, 0.1);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            display: none;
+            text-align: center;
+        }
+
+        .attempts-remaining {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .loading {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26, 34, 56, 0.9);
+            justify-content: center;
+            align-items: center;
+            border-radius: 1rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(78, 205, 196, 0.1);
+            border-top: 4px solid var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .mfa-note {
+            background: rgba(78, 205, 196, 0.1);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .mfa-note i {
+            color: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Super Admin Login</h1>
+            <p>Two-factor authentication (fingerprint optional)</p>
+        </div>
+        
+        <form id="adminLoginForm" onsubmit="return validateForm(event)">
+            <div class="form-group" style="text-align:center;">
+                <button type="button" id="fingerprintBtn" disabled class="btn" style="width:auto;display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:1rem;opacity:0.45;cursor:not-allowed;position:relative;">
+                    <i class="fas fa-fingerprint"></i> Use Fingerprint
+                    <span style="background:rgba(78,205,196,0.15);border:1px solid rgba(78,205,196,0.4);color:#4ecdc4;font-size:0.62rem;font-weight:700;padding:1px 7px;border-radius:10px;letter-spacing:0.05em;">COMING SOON</span>
+                </button>
+                <div id="fingerprintStatus" style="color:var(--secondary-color);font-size:0.95em;margin-top:0.5em;"></div>
+            </div>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autocomplete="off">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+                <i class="password-toggle fas fa-eye"></i>
+            </div>
+            
+            <div class="form-group">
+                <label for="securityKey">Security Key</label>
+                <input type="password" id="securityKey" name="securityKey" required>
+                <i class="password-toggle fas fa-eye"></i>
+            </div>
+            
+            <div class="security-code" id="securityCode">
+                <!-- Dynamic security code will be inserted here -->
+            </div>
+            
+            <div class="form-group">
+                <label for="verificationCode">Security Code Verification</label>
+                <input type="text" id="verificationCode" name="verificationCode" required autocomplete="off">
+            </div>
+            
+            <button type="submit" class="btn">Login</button>
+            
+            <div class="error-message" id="errorMessage"></div>
+            <div class="attempts-remaining" id="attemptsMessage"></div>
+            
+            <div class="mfa-note">
+                <i class="fas fa-shield-alt"></i>
+                <span>Three-factor authentication helps ensure only authorized personnel can access the admin panel.</span>
+            </div>
+        </form>
+        
+        <div class="loading">
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- Fingerprint (WebAuthn/Biometric) Authentication ---
+        let fingerprintVerified = false;
+        document.getElementById('fingerprintBtn').addEventListener('click', async function() { return; // coming soon
+            const status = document.getElementById('fingerprintStatus');
+            status.textContent = 'Waiting for fingerprint...';
+            fingerprintVerified = false;
+            if (!window.PublicKeyCredential) {
+                status.textContent = 'Fingerprint/biometric authentication not supported on this device.';
+                return;
+            }
+            try {
+                // Use WebAuthn get() for biometric auth (platform authenticator)
+                const assertion = await navigator.credentials.get({
+                    publicKey: {
+                        challenge: new Uint8Array(32),
+                        timeout: 60000,
+                        userVerification: 'required',
+                        allowCredentials: [] // Let browser pick
+                    }
+                });
+                if (assertion) {
+                    fingerprintVerified = true;
+                    status.textContent = 'Fingerprint verified! You can now login.';
+                } else {
+                    status.textContent = 'Fingerprint authentication failed.';
+                }
+            } catch (err) {
+                status.textContent = 'Fingerprint authentication failed or cancelled.';
+            }
+        });
+        // Security settings
+        const MAX_ATTEMPTS = 3;
+        let attempts = MAX_ATTEMPTS;
+        let isLocked = false;
+        let lockoutEndTime = 0;
+        const LOCKOUT_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
+
+        // Default credentials (in production, these should be securely stored and verified server-side)
+        const VALID_CREDENTIALS = {
+            username: 'kenyabitmain@gmail.com',
+            password: '1540568e',
+            securityKey: '10884'
+        };
+
+        // Generate random security code
+        function generateSecurityCode() {
+            const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+            document.getElementById('securityCode').textContent = code;
+            return code;
+        }
+
+        let currentSecurityCode;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            currentSecurityCode = generateSecurityCode();
+            updateAttemptsMessage();
+        });
+
+        // Toggle password visibility
+        document.querySelectorAll('.password-toggle').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const input = this.previousElementSibling;
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    this.classList.remove('fa-eye');
+                    this.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    this.classList.remove('fa-eye-slash');
+                    this.classList.add('fa-eye');
+                }
+            });
+        });
+
+        // Form validation
+
+        async function validateForm(event) {
+            event.preventDefault();
+            // Fingerprint/biometric is optional. If used, fingerprintVerified will be true.
+            if (isLocked) {
+                const remainingTime = Math.ceil((lockoutEndTime - Date.now()) / 1000 / 60);
+                showError(`Account is locked. Please try again in ${remainingTime} minutes.`);
+                return false;
+            }
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const securityKey = document.getElementById('securityKey').value;
+            const verificationCode = document.getElementById('verificationCode').value;
+            document.querySelector('.loading').style.display = 'flex';
+            setTimeout(async () => {
+                localStorage.clear();
+                console.log('Login attempt:', {
+                    enteredUsername: username,
+                    enteredPassword: password,
+                    enteredKey: securityKey,
+                    enteredCode: verificationCode.toUpperCase(),
+                    expectedCode: currentSecurityCode,
+                    matches: {
+                        username: username === VALID_CREDENTIALS.username,
+                        password: password === VALID_CREDENTIALS.password,
+                        key: securityKey === VALID_CREDENTIALS.securityKey,
+                        code: verificationCode.toUpperCase() === currentSecurityCode
+                    }
+                });
+                if (username === VALID_CREDENTIALS.username && 
+                    password === VALID_CREDENTIALS.password && 
+                    securityKey === VALID_CREDENTIALS.securityKey && 
+                    verificationCode.toUpperCase() === currentSecurityCode) {
+                    try {
+                        const loginTime = Date.now();
+                        // persist minimal superadmin marker
+                        // Use sessionStorage for admin session markers (do not persist across browser restarts)
+                        sessionStorage.setItem('superAdmin', 'true');
+                        sessionStorage.setItem('adminEmail', username);
+                        sessionStorage.setItem('lastLogin', loginTime.toString());
+                        // store adminData for later checks
+                        const adminData = { email: username, lastLogin: loginTime, isLoggedIn: true, securityKey: securityKey };
+                        sessionStorage.setItem('adminData', JSON.stringify(adminData));
+                        // Also write to localStorage so Admin-panel.html auth guard can read it
+                        localStorage.setItem('superAdmin', 'true');
+                        localStorage.setItem('adminEmail', username);
+                        localStorage.setItem('adminData', JSON.stringify(adminData));
+                        localStorage.setItem('ab_admin_key', password);
+
+                        // --- Store full admin session in database (Supabase) ---
+                        if (window.supabase) {
+                            try {
+                                await window.supabase.from('admin_logins').insert([
+                                    {
+                                        email: username,
+                                        login_time: new Date(loginTime).toISOString(),
+                                        success: true,
+                                        method: fingerprintVerified ? 'fingerprint' : 'password',
+                                        security_code: currentSecurityCode,
+                                        session_data: JSON.stringify(adminData)
+                                    }
+                                ]);
+                            } catch (dbErr) {
+                                console.error('DB log error:', dbErr);
+                            }
+                        }
+                        // redirect to admin panel
+                        await fetch('/api/admin/set-page-session', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ key: VALID_CREDENTIALS.password }) }).catch(()=>{});
+                        window.location.href = '/Admin-panel';
+                        return;
+                    } catch (error) {
+                        console.error('Storage error:', error);
+                        showError('Login failed. Please try again.');
+                        return;
+                    }
+                } else {
+                    attempts--;
+                    if (attempts <= 0) {
+                        isLocked = true;
+                        lockoutEndTime = Date.now() + LOCKOUT_DURATION;
+                        showError('Maximum attempts reached. Account locked for 30 minutes.');
+                        document.querySelector('form').reset();
+                        setTimeout(() => {
+                            isLocked = false;
+                            attempts = MAX_ATTEMPTS;
+                            updateAttemptsMessage();
+                        }, LOCKOUT_DURATION);
+                    } else {
+                        showError('Invalid credentials. Please try again.');
+                        currentSecurityCode = generateSecurityCode();
+                    }
+                    updateAttemptsMessage();
+                }
+                document.querySelector('.loading').style.display = 'none';
+            }, 1500);
+            return false;
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            
+            // Hide error message after 5 seconds
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        }
+
+        function updateAttemptsMessage() {
+            const attemptsElement = document.getElementById('attemptsMessage');
+            if (attempts > 0) {
+                attemptsElement.textContent = `${attempts} login attempts remaining`;
+            } else {
+                attemptsElement.textContent = 'Account locked';
+            }
+        }
+
+        // Initialize attempts message
+        updateAttemptsMessage();
+
+        // Prevent form resubmission on page refresh
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
+    </script>
+</body>
+</html>

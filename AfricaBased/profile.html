@@ -1,0 +1,2084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="module" src="supabaseClient.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/profile.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AfricaBased - Profile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+    /* Custom modal for M-Pesa confirmation */
+    .custom-modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.7);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .custom-modal-content {
+        background: var(--main-bg, #101c1c);
+        color: var(--main-text, #fff);
+        border-radius: 16px;
+        box-shadow: 0 4px 32px 0 rgba(0,0,0,0.25);
+        padding: 2em 2.5em 1.5em 2.5em;
+        min-width: 320px;
+        max-width: 90vw;
+        text-align: center;
+    }
+    .custom-modal-content h3 {
+        margin-top: 0;
+        color: var(--accent, #00e6d0);
+    }
+    .modal-btns-row {
+        display: flex;
+        gap: 1em;
+        justify-content: center;
+    }
+    .custom-modal-content .modal-btn.confirm-btn {
+        background: var(--button-gradient, linear-gradient(90deg, #00e6d0 0%, #00b3a4 100%));
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.7em 1.5em;
+        font-weight: 600;
+        font-size: 1em;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .custom-modal-content .modal-btn.confirm-btn:hover {
+        background: var(--accent, #00e6d0);
+    }
+    .custom-modal-content .modal-btn.cancel-btn {
+        background: #222c2c;
+        color: #fff;
+        border: 1px solid var(--accent, #00e6d0);
+        border-radius: 8px;
+        padding: 0.7em 1.5em;
+        font-weight: 600;
+        font-size: 1em;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .custom-modal-content .modal-btn.cancel-btn:hover {
+        background: #182222;
+    }
+        :root {
+            --primary: #0f172a;
+            --accent: #4ecdc4;
+            --text: #fff;
+            --text-light: #bfc9d1;
+            --background: #0f172a;
+            --white: #1a2238;
+            --error: #ff6b6b;
+            --success: #2ecc71;
+            --border: #232c43;
+            --shadow: 0 2px 12px rgba(0,0,0,0.18);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.5;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            position: relative;
+        }
+
+        .back-btn-container {
+            margin-bottom: 2rem;
+        }
+
+        .back-btn {
+            background: linear-gradient(90deg, #232c43, #4ecdc4);
+            color: #fff;
+            border: 1px solid #4ecdc4;
+            border-radius: 10px;
+            padding: 0.5rem 1.2rem;
+            cursor: pointer;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(78,205,196,0.10);
+        }
+
+        .back-btn:hover {
+            background: linear-gradient(90deg, #4ecdc4, #232c43);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(78,205,196,0.18);
+        }
+
+        .back-btn i {
+            font-size: 1rem;
+        }
+
+        .profile-container {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 0;
+            margin: 0 auto;
+            max-width: 800px;
+            overflow: hidden;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            padding: 3rem 2rem;
+            color: var(--white);
+            text-align: center;
+            position: relative;
+        }
+
+        .profile-photo-container {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 1.5rem;
+            position: relative;
+        }
+
+        .profile-photo {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid var(--white);
+            box-shadow: var(--shadow);
+            object-fit: cover;
+            background-color: var(--background);
+            transition: all 0.3s ease;
+        }
+
+        .photo-upload-label {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid var(--white);
+            box-shadow: var(--shadow);
+        }
+
+        .photo-upload-label:hover {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .photo-upload-input {
+            display: none;
+        }
+
+        .profile-header h1 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .profile-header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .profile-content {
+            padding: 2rem;
+        }
+
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .info-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .info-group label {
+            color: var(--text-light);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .info-value {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.125rem;
+            color: var(--text);
+        }
+
+        .static-value {
+            color: var(--text-light);
+        }
+
+        .edit-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .edit-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .edit-btn:hover {
+            background: var(--accent);
+            color: var(--white);
+        }
+
+        .update-btn {
+            background: linear-gradient(90deg, #232c43, #4ecdc4);
+            color: #fff;
+            border: 1px solid #4ecdc4;
+            padding: 0.5rem 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            align-self: flex-start;
+            box-shadow: 0 2px 8px rgba(78,205,196,0.10);
+        }
+
+        .update-btn:hover {
+            background: linear-gradient(90deg, #4ecdc4, #232c43);
+        }
+
+        .edit-input {
+            font: inherit;
+            color: inherit;
+            background: var(--white);
+            border: 1px solid var(--border);
+            padding: 0.5rem;
+            border-radius: 4px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .edit-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .save-cancel-btns {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: 0.5rem;
+        }
+
+        /* Bank Selection Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            animation: fadeIn 0.3s;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            position: relative;
+            background-color: var(--white);
+            margin: 10% auto;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            animation: slideIn 0.3s;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: var(--text);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .bank-search {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .bank-search i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        .bank-search input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .bank-search input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .bank-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin: -0.5rem;
+            padding: 0.5rem;
+            max-height: 400px;
+        }
+
+        .bank-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .bank-item:hover {
+            border-color: var(--accent);
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        .bank-item.selected {
+            border-color: var(--accent);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        .bank-item i {
+            color: var(--accent);
+            font-size: 1.25rem;
+        }
+
+        .bank-info {
+            flex-grow: 1;
+        }
+
+        .bank-name {
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+
+        .bank-code {
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        .payment-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .payment-method-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .payment-method-item:hover {
+            border-color: var(--accent);
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        .payment-method-item i {
+            font-size: 1.5rem;
+            color: var(--accent);
+        }
+
+        .payment-method-info {
+            flex-grow: 1;
+        }
+
+        .payment-method-name {
+            font-weight: 500;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .payment-method-detail {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            margin-bottom: 0.25rem;
+        }
+
+        .payment-method-hint {
+            font-size: 0.813rem;
+            color: var(--text-light);
+            opacity: 0.8;
+        }
+
+        .payment-method-arrow {
+            color: var(--text-light);
+            opacity: 0.5;
+            transition: all 0.2s;
+        }
+
+        .payment-method-item:hover .payment-method-arrow {
+            opacity: 1;
+            transform: translateX(4px);
+        }
+
+        .modal-subtitle {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+            font-size: 0.938rem;
+        }
+
+        .modal-actions {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        .modal-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .save-btn, .cancel-btn {
+            background: linear-gradient(90deg, #232c43, #4ecdc4);
+            color: #fff;
+            border: 1px solid #4ecdc4;
+            padding: 0.5rem 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(78,205,196,0.10);
+        }
+
+        .save-btn {
+            background: linear-gradient(90deg, #232c43, #4ecdc4);
+            color: #fff;
+            border-color: #4ecdc4;
+        }
+
+        .save-btn:hover {
+            background: linear-gradient(90deg, #4ecdc4, #232c43);
+        }
+
+        .cancel-btn:hover {
+            background: #ff6b6b;
+            color: #fff;
+            border-color: #ff6b6b;
+        }
+
+        /* Email Change Modal Styles */
+        #emailChangeModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            animation: fadeIn 0.3s;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #emailChangeModal .modal-content {
+            position: relative;
+            background-color: var(--white);
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            animation: slideIn 0.3s;
+            margin: 0;
+        }
+
+        #emailChangeModal .edit-input {
+            background: var(--background);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        #emailChangeModal .edit-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.2);
+        }
+
+        /* Impersonation banner styles */
+        .impersonation-banner {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: #ffd54f;
+            color: #232526;
+            padding: 16px 32px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            z-index: 99999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+        .impersonation-banner button {
+            margin-left: 24px;
+            background: #232526;
+            color: #ffd54f;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 18px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .impersonation-banner button:hover {
+            background: #ffd54f;
+            color: #232526;
+            border: 1px solid #232526;
+        }
+
+        /* Profile action buttons styling */
+        #saveProfileBtn {
+            transition: all 0.3s ease;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        #saveProfileBtn:hover {
+            background: linear-gradient(90deg, #00b3a4 0%, #00e6d0 100%) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 230, 208, 0.2);
+        }
+
+        #logoutBtn {
+            transition: all 0.3s ease;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        #logoutBtn:hover {
+            background: #ff6b6b !important;
+            color: #fff;
+            border-color: #ff6b6b !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.2);
+        }
+    
+        .pf-lock-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: rgba(255,107,107,0.10); color: rgba(255,150,150,0.85);
+            border: 1px solid rgba(255,107,107,0.2); border-radius: 20px;
+            font-size: 0.68rem; font-weight: 600; padding: 2px 8px;
+            margin-left: 8px; white-space: nowrap; vertical-align: middle;
+            user-select: none; cursor: default;
+        }
+</style>
+<script src="/js/token.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="back-btn-container">
+            <button class="back-btn" onclick="window.history.back()">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
+        </div>
+        <div class="profile-container">
+            <div class="profile-header">
+                <div class="profile-photo-container">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%237f8c8d'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" 
+                         alt="Profile Photo" 
+                         id="profilePhoto"
+                         class="profile-photo">
+                    <label for="photoUpload" class="photo-upload-label">
+                        <i class="fas fa-camera"></i>
+                    </label>
+                    <input type="file" 
+                           id="photoUpload" 
+                           class="photo-upload-input" 
+                           accept="image/*">
+                </div>
+                <h1 id="headerName">John Doe</h1>
+                <p id="headerEmail">john.doe@example.com</p>
+            </div>
+            <div class="profile-content">
+                <div class="profile-info">
+                <div class="info-group">
+                    <label>Full Name</label>
+                    <div class="edit-group">
+                        <div class="info-value">
+                            <span id="userName">John Doe</span>
+                            <button class="edit-btn" onclick="startEditing('userName')">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-group">
+                    <label>Email</label>
+                    <div class="edit-group">
+                        <div class="info-value">
+                            <span id="userEmail">john.doe@example.com</span>
+                            <button class="update-btn" onclick="openEmailChangeModal()">
+                                <i class="fas fa-envelope"></i> Change Email
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-group">
+                    <label>M-Pesa Number</label>
+                    <div class="edit-group">
+                        <div class="info-value">
+                            <span id="mpesaNumber">254712345678</span>
+                            <button class="edit-btn" onclick="startEditing('mpesaNumber')">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-group">
+                    <label>Bank Name</label>
+                    <div class="edit-group">
+                        <div class="info-value">
+                            <span id="bankType">Not Set</span>
+                            <button class="edit-btn" title="Select bank" onclick="startBankSelection()">
+                                <i class="fas fa-building-columns"></i>
+                            </button>
+                        </div>
+                        <button class="update-btn" onclick="startBankSelection()">
+                            Select Bank
+                        </button>
+                    </div>
+                </div>
+
+                <div class="info-group">
+                    <label>Bank Account Number</label>
+                    <div class="edit-group">
+                        <div class="info-value">
+                            <span id="accountNumber">Not Set</span>
+                            <button class="edit-btn" onclick="startEditing('accountNumber')">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-group" style="display:none;">
+                    <label>Paybill Number</label>
+                    <div class="edit-group">
+                        <div class="info-value">
+                            <span id="bankPaybill" style="color:rgba(255,255,255,0.5);font-style:italic;">Auto-set by bank selection</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-group">
+                    <label>Account Holder Name</label>
+                    <div class="edit-group">
+                        <div class="info-value">
+                            <span id="bankAccHolderName">Not Set</span>
+                            <button class="edit-btn" onclick="startEditing('bankAccHolderName')">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+            <!-- Biometric Management -->
+            <div class="info-group" id="biometricSection" style="display:none;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                    <label style="display:flex;align-items:center;gap:8px;font-size:0.95rem;">
+                        <i class="fas fa-fingerprint" style="color:#4ecdc4;font-size:1.1rem;"></i>
+                        Biometric Login
+                    </label>
+                    <div id="biometricToggle" style="position:relative;width:48px;height:26px;cursor:pointer;" onclick="toggleBiometric()">
+                        <div id="biometricTrack" style="position:absolute;inset:0;border-radius:13px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.1);transition:background 0.25s,border-color 0.25s;"></div>
+                        <div id="biometricThumb" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.25s,background 0.25s;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>
+                    </div>
+                </div>
+                <p id="biometricDesc" style="font-size:0.82rem;color:rgba(255,255,255,0.4);margin-bottom:12px;line-height:1.5;">Sign in faster using your device's fingerprint, Face ID, or screen lock.</p>
+                <div id="biometricCredsList" style="display:none;margin-bottom:10px;"></div>
+                <div id="biometricMsg" style="font-size:0.82rem;margin-top:8px;display:none;"></div>
+                <p id="biometricUnsupported" style="display:none;font-size:0.82rem;color:rgba(255,107,107,0.8);margin-top:4px;">Biometrics are not available on this device or browser.</p>
+            </div>
+
+<div class="profile-actions" style="display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border);">
+                <button id="saveProfileBtn" class="modal-btn save-btn" style="min-width: 150px; background: linear-gradient(90deg, #00e6d0 0%, #00b3a4 100%);">
+                    <i class="fas fa-save"></i> Update Profile
+                </button>
+                <button id="logoutBtn" class="modal-btn cancel-btn" style="background: #222c2c; border: 1px solid var(--accent, #00e6d0);">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Bank Selection Modal -->
+        <div class="custom-modal-overlay" id="bankModal" style="display: none;">
+            <div class="custom-modal-content">
+                <h2 class="modal-title">Select Your Bank</h2>
+                <div class="bank-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="bankSearch" placeholder="Search banks...">
+                </div>
+                <div class="bank-list" id="bankList">
+                    <!-- Banks will be populated by JavaScript -->
+                </div>
+                <div class="modal-actions">
+                    <button class="modal-btn cancel-btn" onclick="closeBankModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Method Selection Modal -->
+        <div class="custom-modal-overlay" id="paymentMethodModal" style="display: none;">
+            <div class="custom-modal-content">
+                <h2 class="modal-title">Select Payment Method</h2>
+                <p class="modal-subtitle">Choose how you would like to receive your funds:</p>
+                <div class="payment-methods">
+                    <div class="payment-method-item" onclick="selectPaymentMethod('mpesa')">
+                        <i class="fas fa-mobile-alt"></i>
+                        <div class="payment-method-info">
+                            <div class="payment-method-name">M-Pesa Transfer</div>
+                            <div class="payment-method-detail" id="mpesaDetail"></div>
+                            <div class="payment-method-hint">Instant transfer to your M-Pesa account</div>
+                        </div>
+                        <i class="fas fa-chevron-right payment-method-arrow"></i>
+                    </div>
+                    <div class="payment-method-item" onclick="selectPaymentMethod('bank')">
+                        <i class="fas fa-building-columns"></i>
+                        <div class="payment-method-info">
+                            <div class="payment-method-name">Bank Transfer</div>
+                            <div class="payment-method-detail" id="bankDetail"></div>
+                            <div class="payment-method-hint">Direct transfer to your bank account</div>
+                        </div>
+                        <i class="fas fa-chevron-right payment-method-arrow"></i>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="modal-btn cancel-btn" onclick="closePaymentMethodModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Changes Modal -->
+        <div class="custom-modal-overlay" id="saveChangesModal" style="display: none;">
+            <div class="custom-modal-content">
+                <h2 class="modal-title">Save Changes?</h2>
+                <p class="modal-subtitle">Are you sure you want to save all changes to your profile?</p>
+                <div class="modal-actions">
+                    <button class="modal-btn save-btn" onclick="saveProfileChanges()">
+                        <i class="fas fa-check"></i> Save Changes
+                    </button>
+                    <button class="modal-btn cancel-btn" onclick="closeSaveChangesModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Change Modal -->
+        <div class="custom-modal-overlay" id="emailChangeModal" style="display: none;">
+            <div class="custom-modal-content">
+                <h2 class="modal-title">Change Email Address</h2>
+                <p class="modal-subtitle">Please enter your current password and new email address:</p>
+                <div style="margin: 1.5rem 0; display: flex; flex-direction: column; gap: 1rem;">
+                    <div>
+                        <label for="currentPassword" style="display: block; margin-bottom: 0.5rem; color: var(--text-light); font-size: 0.875rem;">Current Password</label>
+                        <input type="password" 
+                               id="currentPassword" 
+                               class="edit-input" 
+                               style="width: 100%; max-width: none; background: var(--background); color: var(--text);" 
+                               placeholder="Enter your current password">
+                    </div>
+                    <div>
+                        <label for="newEmailInput" style="display: block; margin-bottom: 0.5rem; color: var(--text-light); font-size: 0.875rem;">New Email Address</label>
+                        <input type="email" 
+                               id="newEmailInput" 
+                               class="edit-input" 
+                               style="width: 100%; max-width: none; background: var(--background); color: var(--text);" 
+                               placeholder="Enter new email address">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="modal-btn save-btn" onclick="submitEmailChange()">
+                        <i class="fas fa-check"></i> Change Email
+                    </button>
+                    <button class="modal-btn cancel-btn" onclick="closeEmailChangeModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/profile.js"></script>
+
+    <script>
+        // Email change modal functions
+        function openEmailChangeModal() {
+            const modal = document.getElementById('emailChangeModal');
+            modal.style.display = 'flex';
+            const input = document.getElementById('newEmailInput');
+            input.value = ''; // Clear any previous value
+            input.focus();
+        }
+
+        function closeEmailChangeModal() {
+            const modal = document.getElementById('emailChangeModal');
+            modal.style.display = 'none';
+        }
+
+        function retryEmailChange() {
+            // Remove the error modal
+            document.querySelector('.custom-modal-overlay').remove();
+            
+            // Re-focus on the password field
+            const passwordField = document.getElementById('currentPassword');
+            passwordField.focus();
+        }
+
+        async function submitEmailChange() {
+            const newEmail = document.getElementById('newEmailInput').value.trim();
+            const currentPassword = document.getElementById('currentPassword').value;
+
+            // Validate inputs
+            if (!isValidEmail(newEmail)) {
+                showToast('Please enter a valid email address', 'error');
+                return;
+            }
+
+            if (!currentPassword) {
+                showToast('Please enter your current password', 'error');
+                return;
+            }
+
+            try {
+                // First verify the current password with Supabase
+                const { user, error: authError } = await supabase.auth.signInWithPassword({
+                    email: document.getElementById('userEmail').textContent,
+                    password: currentPassword
+                });
+
+                if (authError) {
+                    showToast('Incorrect password. Please try again.', 'error');
+                    return;
+                }
+
+                // If password is correct, initiate email change
+                const { data, error: updateError } = await supabase
+                    .from('email_change_requests')
+                    .insert([
+                        { 
+                            user_id: user.id,
+                            current_email: user.email,
+                            new_email: newEmail,
+                            status: 'pending',
+                            created_at: new Date().toISOString()
+                        }
+                    ]);
+
+                if (updateError) {
+                    showToast('Failed to initiate email change. Please try again.', 'error');
+                    return;
+                }
+
+                // Close the modal and show success message
+                closeEmailChangeModal();
+                showToast('A verification link has been sent to your new email address. Please check your inbox and click the link to complete the email change process.', 'success');
+                
+                // Show a more detailed message in a custom modal
+                const modal = document.createElement('div');
+                modal.className = 'custom-modal-overlay';
+                modal.innerHTML = `
+                    <div class="custom-modal-content">
+                        <h3 style="color: var(--accent, #00e6d0);">Email Change Initiated</h3>
+                        <p style="margin: 1.5em 0; color: var(--main-text, #fff); line-height: 1.5;">
+                            We've sent a verification link to <strong>${newEmail}</strong>.<br><br>
+                            To complete your email change:
+                            <br>1. Check your email inbox
+                            <br>2. Open the verification email
+                            <br>3. Click the confirmation link
+                            <br><br>
+                            Your email will remain unchanged until you verify the new address.
+                        </p>
+                        <div class="modal-btns-row">
+                            <button class="modal-btn confirm-btn" onclick="this.closest('.custom-modal-overlay').remove()">OK, I'll Check My Email</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+            } catch (error) {
+                console.error('Email change error:', error);
+                
+                // Show a detailed error modal
+                const modal = document.createElement('div');
+                modal.className = 'custom-modal-overlay';
+                modal.innerHTML = `
+                    <div class="custom-modal-content">
+                        <h3 style="color: #ff6b6b;">Unable to Change Email</h3>
+                        <p style="margin: 1.5em 0; color: var(--main-text, #fff); line-height: 1.5;">
+                            We encountered an issue while trying to change your email address.
+                            <br><br>
+                            This could be due to:
+                            <br>• Network connectivity issues
+                            <br>• Server temporary unavailability
+                            <br>• Database connection problems
+                            <br><br>
+                            Please try again in a few moments. If the problem persists, contact our support team.
+                        </p>
+                        <div class="modal-btns-row">
+                            <button class="modal-btn cancel-btn" onclick="this.closest('.custom-modal-overlay').remove()">Close</button>
+                            <button class="modal-btn confirm-btn" onclick="retryEmailChange()">Try Again</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                // Clear the password field but keep the email
+                document.getElementById('currentPassword').value = '';
+            }
+        }
+
+        // Initialize userData in localStorage if not exists
+        if (!localStorage.getItem('userData')) {
+            const initialData = {
+                name: 'Not Set',
+                email: 'Not Set',
+                mpesa: 'Not Set',
+                bankType: 'Not Set',
+                accountNumber: 'Not Set',
+                photoUrl: null,
+                bankDetailsVerified: false
+            };
+            sessionStorage.setItem('userData', JSON.stringify(initialData));
+        }
+
+        // Bank list data
+        const banks = [
+            { name: 'Equity Bank', paybill: '247247', code: 'EQT' },
+            { name: 'KCB Bank', paybill: '522522', code: 'KCB' },
+            { name: 'Standard Chartered', paybill: '329329', code: 'SCB' },
+            { name: 'ABSA Bank', code: 'ABSA' },
+            { name: 'Cooperative Bank', code: 'COOP' },
+            { name: 'Family Bank', paybill: '222111', code: 'FMB' },
+            { name: 'National Bank', paybill: '625625', code: 'NBK' },
+            { name: 'DTB Bank', paybill: '516600', code: 'DTB' },
+            { name: 'I&M Bank', paybill: '542542', code: 'IMB' },
+            { name: 'Stanbic Bank', paybill: '600100', code: 'STB' },
+            { name: 'NCBA Bank', paybill: '880100', code: 'NCBA' },
+            { name: 'HF Group', code: 'HF' },
+            { name: 'Ecobank', code: 'ECO' },
+            { name: 'Bank of Africa', code: 'BOA' },
+            { name: 'Guaranty Trust Bank', code: 'GTB' },
+            { name: 'SBM Bank', code: 'SBM' },
+            { name: 'Credit Bank', paybill: '570570', code: 'CRB' },
+            { name: 'Victoria Commercial Bank', code: 'VCB' },
+            { name: 'Citibank', code: 'CITI' },
+            { name: 'UBA Bank', code: 'UBA' },
+            { name: 'Access Bank', code: 'ACCESS' },
+            { name: 'Kingdom Bank', paybill: '101010', code: 'KNGD' },
+            { name: 'ABC Bank', paybill: '335577', code: 'ABC' },
+            { name: 'Prime Bank', paybill: '530300', code: 'PRIME' },
+            { name: 'Postbank', code: 'POST' },
+            { name: 'Jamii Bora Bank', code: 'JBB' },
+            { name: 'Consolidated Bank', paybill: '530300', code: 'CON' },
+            { name: 'Gulf African Bank', paybill: '985050', code: 'GAB' },
+            { name: 'First Community Bank', code: 'FCB' },
+            { name: 'Spire Bank', code: 'SPIRE' },
+            { name: 'Habib Bank AG Zurich', code: 'HBZ' },
+            { name: 'Middle East Bank', code: 'MEB' },
+            { name: 'Paramount Bank', code: 'PARA' },
+            { name: 'Transnational Bank', code: 'TNB' },
+            { name: 'Guardian Bank', code: 'GUARD' },
+            { name: 'Development Bank of Kenya', code: 'DBK' },
+            { name: 'Chase Bank', code: 'CHASE' },
+            { name: 'Imperial Bank', code: 'IMPERIAL' },
+            { name: 'Fidelity Commercial Bank', code: 'FIDELITY' },
+            { name: 'Oriental Commercial Bank', code: 'ORIENT' },
+            { name: 'Equatorial Commercial Bank', code: 'ECB' },
+            { name: 'K-Rep Bank', code: 'KREP' },
+            { name: 'Commercial Bank of Africa', code: 'CBA' },
+            { name: 'Housing Finance Bank', code: 'HFB' },
+            { name: 'Microfinance Bank', code: 'MFB' },
+            { name: 'Faulu Microfinance Bank', code: 'FAULU' },
+            { name: 'SMEP Microfinance Bank', code: 'SMEP' },
+            { name: 'Rafiki Microfinance Bank', code: 'RAFIKI' },
+            { name: 'Musoni Microfinance', code: 'MUSONI' },
+            { name: 'Kenya Women Microfinance Bank', code: 'KWFT' },
+            { name: 'Caritas Microfinance Bank', code: 'CARITAS' },
+            { name: 'Uwezo Microfinance Bank', code: 'UWEZO' },
+            { name: 'Sumac Microfinance Bank', code: 'SUMAC' },
+            { name: 'Century Microfinance Bank', code: 'CENTURY' },
+            { name: 'Daraja Microfinance Bank', code: 'DARAJA' },
+            { name: 'Remu Microfinance Bank', code: 'REMU' },
+            { name: 'Choice Microfinance Bank', code: 'CHOICE' },
+            { name: 'Key Microfinance Bank', code: 'KEY' },
+            { name: 'Vision Fund Kenya', code: 'VISION' },
+            { name: 'Suntra Investment Bank', code: 'SUNTRA' },
+            { name: 'NIC Bank', code: 'NIC' },
+            { name: 'Barclays Bank', code: 'BBK' },
+            { name: 'Standard Bank', code: 'STDB' },
+            { name: 'Bank of Baroda', code: 'BARODA' },
+            { name: 'Bank of India', code: 'BOI' },
+            { name: 'State Bank of India', code: 'SBI' },
+            { name: 'Habib Bank', code: 'HBL' },
+            { name: 'United Bank for Africa', code: 'UBA2' },
+            { name: 'First Bank of Nigeria', code: 'FBN' },
+            { name: 'EcoBank Nigeria', code: 'ECO2' },
+            { name: 'Access Bank Nigeria', code: 'ACCESS2' },
+            { name: 'Zenith Bank', code: 'ZENITH' },
+            { name: 'Fina Bank', code: 'FINA' },
+            { name: 'Transnational Bank', code: 'TNB2' }
+        ];
+
+        const initialData = {
+            name: 'John Doe',
+            email: '',  // Will be populated from registration data
+            mpesa: '+254 712 345 678',
+            bankType: 'Not Set',
+            accountNumber: 'Not Set',
+            photoUrl: null,
+            bankDetailsVerified: false  // New flag to track if bank details are properly set
+        };
+
+        // Get email from registration data
+        const getRegisteredEmail = () => {
+            const registrationData = JSON.parse(localStorage.getItem('registrationData')) || {};
+            return registrationData.email || '';
+        };
+
+        // Load user profile from API
+        const loadUserProfile = async () => {
+            const token = getABToken();
+            try {
+                if (token) {
+                    const res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
+                    if (res.ok) {
+                        const d = await res.json();
+                        const u = d.user || {};
+                        const p = d.profile || {};
+                        const name = u.username || p.username || '';
+                        const email = u.email || p.email || '';
+                        document.getElementById('userName').textContent = name || 'Not Set';
+                        document.getElementById('userEmail').textContent = email || 'Not Set';
+                        document.getElementById('mpesaNumber').textContent = p.mpesa_phone || 'Not Set';
+                        document.getElementById('bankType').textContent = p.bank_name || 'Not Set';
+                        document.getElementById('bankPaybill').textContent = p.bank_paybill || 'Not Set';
+                        document.getElementById('accountNumber').textContent = p.bank_account_number || 'Not Set';
+                        document.getElementById('bankAccHolderName').textContent = p.bank_account_name || 'Not Set';
+                        document.getElementById('headerName').textContent = name || '';
+                        document.getElementById('headerEmail').textContent = email || '';
+                        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+                        if (userData.photoUrl) document.getElementById('profilePhoto').src = userData.photoUrl;
+                        if (d.locked) applyLockState(d.locked);
+                        return;
+                    }
+                }
+            } catch(e) { console.warn('loadUserProfile API error', e); }
+            // Fallback to localStorage
+            let userData = JSON.parse(localStorage.getItem('userData')) || initialData;
+            document.getElementById('userName').textContent = userData.name || 'Not Set';
+            document.getElementById('userEmail').textContent = userData.email || 'Not Set';
+            document.getElementById('mpesaNumber').textContent = userData.mpesa || 'Not Set';
+            document.getElementById('bankType').textContent = userData.bankType || 'Not Set';
+            document.getElementById('accountNumber').textContent = userData.accountNumber || 'Not Set';
+            document.getElementById('headerName').textContent = userData.name || '';
+            document.getElementById('headerEmail').textContent = userData.email || '';
+            if (userData.photoUrl) document.getElementById('profilePhoto').src = userData.photoUrl;
+        };
+
+        const startEditing = (elementId) => {
+            // Lock M-Pesa number after 2 days unless in admin impersonation mode
+            const _locked = window._profileLocked || {};
+            const _lockedField = { userName: _locked.username, mpesaNumber: _locked.mpesa_phone, accountNumber: _locked.bank, bankAccHolderName: _locked.bank };
+            if (_lockedField[elementId]) {
+                showToast('This field is locked. Please contact the admin to make changes.', 'error');
+                return;
+            }
+            const element = document.getElementById(elementId);
+            const container = element.parentElement;
+            const currentValue = element.textContent;
+
+            // Create input
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentValue === 'Not Set' ? '' : currentValue;
+            input.className = 'edit-input';
+            input.placeholder = `Enter your ${elementId.replace(/([A-Z])/g, ' $1').toLowerCase()}`;
+
+            // Create buttons container
+            const buttonsDiv = document.createElement('div');
+            buttonsDiv.className = 'save-cancel-btns';
+
+            // Create save button
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'save-btn';
+            saveBtn.innerHTML = '<i class="fas fa-check"></i>';
+            saveBtn.onclick = () => saveEdit(elementId, input.value);
+
+            // Create cancel button
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'cancel-btn';
+            cancelBtn.innerHTML = '<i class="fas fa-times"></i>';
+            cancelBtn.onclick = () => cancelEdit(elementId);
+
+            // Add buttons to container
+            buttonsDiv.appendChild(saveBtn);
+            buttonsDiv.appendChild(cancelBtn);
+
+            // Hide original elements
+            element.style.display = 'none';
+            element.nextElementSibling.style.display = 'none';
+
+            // Add new elements
+            container.insertBefore(input, element);
+            container.insertBefore(buttonsDiv, input.nextSibling);
+
+            input.focus();
+        };
+
+        const saveEdit = (elementId, newValue) => {
+            if (!newValue.trim()) return cancelEdit(elementId);
+
+            const element = document.getElementById(elementId);
+            const userData = JSON.parse(localStorage.getItem('userData')) || initialData;
+
+            // Update value based on field
+            switch(elementId) {
+                case 'userEmail':
+                    if (!isValidEmail(newValue)) {
+                        showToast('Please enter a valid email address', 'error');
+                        return;
+                    }
+                    // Call the changeEmail function from profile.js
+                    changeEmail(newValue).then(success => {
+                        if (success) {
+                            element.textContent = newValue;
+                            cleanupEditUI(elementId);
+                        }
+                    });
+                    return;  // Early return since changeEmail handles the update
+                case 'userName':
+                    userData.name = newValue;
+                    break;
+                case 'userEmail':
+                    if (!isValidEmail(newValue)) {
+                        alert('Please enter a valid email address');
+                        return;
+                    }
+                    userData.email = newValue;
+                    break;
+                case 'mpesaNumber': {
+                    // Format the number: remove non-digits and check if it's valid
+                    const cleaned = newValue.replace(/[^0-9]/g, '');
+                    if (!isValidMPesa(cleaned)) {
+                        showMpesaErrorModal('Please enter a valid M-Pesa number starting with 254 followed by 9 digits');
+                        return;
+                    }
+        // Custom error modal for invalid M-Pesa number
+        function showMpesaErrorModal(message) {
+            // Remove any existing modal
+            const oldModal = document.getElementById('mpesa-error-modal');
+            if (oldModal) oldModal.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'mpesa-error-modal';
+            modal.className = 'custom-modal-overlay';
+            modal.innerHTML = `
+                <div class="custom-modal-content">
+                    <h3 style="color: var(--accent, #00e6d0);">Invalid M-Pesa Number</h3>
+                    <p style="margin-bottom: 1.5em; color: var(--main-text, #fff);">${message}</p>
+                    <div class="modal-btns-row">
+                        <button class="modal-btn confirm-btn" id="mpesa-error-ok">OK</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            document.getElementById('mpesa-error-ok').onclick = () => {
+                modal.remove();
+            };
+        }
+                    // Set or update the mpesaSetAt timestamp if not impersonating
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const isImpersonating = urlParams.get('impersonate') === '1' && urlParams.get('user');
+                    showMpesaConfirmModal(() => {
+                        userData.mpesa = cleaned;
+                        localStorage.setItem('userData', JSON.stringify(userData));
+                        element.textContent = newValue;
+                        cleanupEditUI(elementId);
+                        showToast('M-Pesa number saved successfully', 'success');
+                    });
+                    return;
+                    // Format the number for display (254XXXXXXXXX)
+                    userData.mpesa = cleaned;
+                    // Show success message
+                    showToast('M-Pesa number saved successfully', 'success');
+                    break;
+        // Custom confirmation modal for M-Pesa number lock warning
+        function showMpesaConfirmModal(onConfirm) {
+            // Remove any existing modal
+            const oldModal = document.getElementById('mpesa-confirm-modal');
+            if (oldModal) oldModal.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'mpesa-confirm-modal';
+            modal.className = 'custom-modal-overlay';
+            modal.innerHTML = `
+                <div class="custom-modal-content">
+                    <h3>Warning</h3>
+                    <p style="margin-bottom: 1.5em;">Once saved, your M-Pesa number can only be changed by the admin. Are you sure you want to save this number?</p>
+                    <div class="modal-btns-row">
+                        <button class="modal-btn confirm-btn" id="mpesa-confirm-yes">Yes, Save</button>
+                        <button class="modal-btn cancel-btn" id="mpesa-confirm-no">Cancel</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            document.getElementById('mpesa-confirm-yes').onclick = () => {
+                modal.remove();
+                onConfirm();
+            };
+            document.getElementById('mpesa-confirm-no').onclick = () => {
+                modal.remove();
+            };
+        }
+    /* Custom modal for M-Pesa confirmation: see <style> in <head> */
+<!-- Custom modal styles for M-Pesa confirmation -->
+                }
+                case 'accountNumber':
+                    if (!isValidAccountNumber(newValue)) {
+                        alert('Please enter a valid account number (8-12 digits)');
+                        return;
+                    }
+                    break;
+                case 'bankAccHolderName':
+                    if (newValue.trim().length < 2) { alert('Please enter the account holder name'); return; }
+                    break;
+            }
+
+            // Values saved to DB on profile save button
+
+            // Update display
+            element.textContent = newValue;
+            cleanupEditUI(elementId);
+        };
+
+        const cancelEdit = (elementId) => {
+            cleanupEditUI(elementId);
+        };
+
+        const cleanupEditUI = (elementId) => {
+            const element = document.getElementById(elementId);
+            const container = element.parentElement;
+            const input = container.querySelector('.edit-input');
+            const buttons = container.querySelector('.save-cancel-btns');
+
+            // Remove input and buttons
+            if (input) input.remove();
+            if (buttons) buttons.remove();
+
+            // Show original elements
+            element.style.display = '';
+            element.nextElementSibling.style.display = '';
+        };
+
+        const isValidEmail = (email) => {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        };
+
+        const isValidMPesa = (number) => {
+            // Remove any spaces, +, or other characters and check if it starts with 254
+            const cleaned = number.replace(/[^0-9]/g, '');
+            return cleaned.length === 12 && cleaned.startsWith('254');
+        };
+
+        const isValidAccountNumber = (number) => {
+            return /^\d{8,12}$/.test(number.replace(/\s/g, ''));
+        };
+
+        // Bank selection functionality
+        const startBankSelection = () => {
+            if (window._profileLocked && window._profileLocked.bank) {
+                showToast('Bank details are locked. Please contact the admin to make changes.', 'error');
+                return;
+            }
+            document.getElementById('bankModal').style.display = 'block';
+            document.getElementById('bankSearch').focus();
+            populateBankList();
+        };
+
+        const closeBankModal = () => {
+            document.getElementById('bankModal').style.display = 'none';
+            document.getElementById('bankSearch').value = '';
+        };
+
+        const populateBankList = (searchTerm = '') => {
+            const bankList = document.getElementById('bankList');
+            bankList.innerHTML = '';
+            
+            const filteredBanks = banks.filter(bank => 
+                bank.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                bank.code.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            
+            filteredBanks.forEach(bank => {
+                const div = document.createElement('div');
+                div.className = 'bank-item';
+                div.innerHTML = `
+                    <i class="fas fa-building-columns"></i>
+                    <div class="bank-info">
+                        <div class="bank-name">${bank.name}</div>
+                        <div class="bank-code">${bank.code}</div>
+                    </div>
+                `;
+                
+                div.onclick = () => selectBank(bank);
+                bankList.appendChild(div);
+            });
+        };
+
+        const selectBank = (bank) => {
+            document.getElementById('bankType').textContent = bank.name;
+            if (bank.paybill) document.getElementById('bankPaybill').textContent = bank.paybill;
+            closeBankModal();
+        };
+
+        // Profile photo handling
+        const handlePhotoUpload = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file');
+                return;
+            }
+
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Image size should be less than 5MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const userData = JSON.parse(localStorage.getItem('userData')) || initialData;
+                
+                // Compress image if needed
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const maxSize = 800; // Max width or height
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // Calculate new dimensions while maintaining aspect ratio
+                    if (width > height) {
+                        if (width > maxSize) {
+                            height *= maxSize / width;
+                            width = maxSize;
+                        }
+                    } else {
+                        if (height > maxSize) {
+                            width *= maxSize / height;
+                            height = maxSize;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Convert to base64 with reduced quality
+                    const compressedImageData = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    // Save compressed image
+                    userData.photoUrl = compressedImageData;
+                    localStorage.setItem('userData', JSON.stringify(userData));
+                    
+                    // Update all profile images on the page
+                    const profileImages = document.querySelectorAll('.profile-image, #profilePhoto');
+                    profileImages.forEach(img => {
+                        img.src = compressedImageData;
+                    });
+
+                    // Notify user
+                    showToast('Profile photo updated successfully', 'success');
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        // Set up event listeners
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease forwards';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // Function to save all profile changes
+        async function saveAllProfileChanges() {
+            const mpesa = document.getElementById('mpesaNumber').textContent.trim();
+            const bankName = document.getElementById('bankType').textContent.trim();
+            const bankPaybill = document.getElementById('bankPaybill').textContent.trim();
+            const accountNumber = document.getElementById('accountNumber').textContent.trim();
+            const bankAccHolderName = document.getElementById('bankAccHolderName').textContent.trim();
+            const username = document.getElementById('userName').textContent.trim();
+
+            // Validate M-Pesa number
+            if (mpesa && mpesa !== 'Not Set' && !isValidMPesa(mpesa)) {
+                showToast('Invalid M-Pesa number format', 'error');
+                return false;
+            }
+
+            const token = getABToken();
+            if (!token) { showToast('Not logged in', 'error'); return false; }
+
+            try {
+                const body = { username };
+                if (mpesa && mpesa !== 'Not Set') body.mpesa_phone = mpesa.replace(/[^0-9]/g, '');
+                if (bankName && bankName !== 'Not Set') body.bank_name = bankName;
+                if (bankPaybill && bankPaybill !== 'Not Set') body.bank_paybill = bankPaybill;
+                if (accountNumber && accountNumber !== 'Not Set') body.bank_account_number = accountNumber;
+                if (bankAccHolderName && bankAccHolderName !== 'Not Set') body.bank_account_name = bankAccHolderName;
+
+                const res = await fetch('/api/profile', {
+                    method: 'PUT',
+                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (!res.ok) { showToast('Failed to save profile', 'error'); return false; }
+                document.getElementById('headerName').textContent = username;
+                showToast('Profile updated successfully', 'success');
+                return true;
+            } catch(e) {
+                showToast('Network error saving profile', 'error');
+                return false;
+            }
+        }
+
+        window._profileLocked = {};
+        function applyLockState(locked) {
+            window._profileLocked = locked || {};
+            function lockField(spanId, btnSel, extraBtnSel) {
+                [btnSel, extraBtnSel].forEach(function(sel) {
+                    if (!sel) return;
+                    var btn = document.querySelector(sel);
+                    if (btn) btn.style.display = 'none';
+                });
+                var span = document.getElementById(spanId);
+                if (span && !document.querySelector('.pf-lock-badge[data-for="'+spanId+'"]')) {
+                    var badge = document.createElement('span');
+                    badge.className = 'pf-lock-badge';
+                    badge.setAttribute('data-for', spanId);
+                    badge.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Admin only';
+                    span.insertAdjacentElement('afterend', badge);
+                }
+            }
+            if (locked.username) lockField('userName', 'button[onclick*="userName"]');
+            if (locked.mpesa_phone) lockField('mpesaNumber', 'button[onclick*="mpesaNumber"]');
+            if (locked.bank) {
+                lockField('bankType', 'button[onclick*="startBankSelection"]', '.update-btn[onclick*="startBankSelection"]');
+                lockField('accountNumber', 'button[onclick*="accountNumber"]');
+                lockField('bankAccHolderName', 'button[onclick*="bankAccHolderName"]');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadUserProfile();
+
+            // Email change functions
+            window.showEmailChangeConfirmation = () => {
+                const modal = document.createElement('div');
+                modal.id = 'emailChangeModal';
+                modal.className = 'modal';
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <h3>Change Email Address</h3>
+                        <p class="modal-subtitle">Enter your new email address below. You will need to verify the new email address before the change takes effect.</p>
+                        <div style="margin: 20px 0;">
+                            <input type="email" id="newEmailInput" class="edit-input" placeholder="Enter new email address" style="width: 100%;">
+                        </div>
+                        <div class="modal-actions">
+                            <button onclick="confirmEmailChange()" class="modal-btn confirm-btn">
+                                <i class="fas fa-check"></i> Confirm
+                            </button>
+                            <button onclick="closeEmailChangeModal()" class="modal-btn cancel-btn">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                const input = document.getElementById('newEmailInput');
+                input.focus();
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        confirmEmailChange();
+                    }
+                });
+            };
+
+            window.closeEmailChangeModal = () => {
+                const modal = document.getElementById('emailChangeModal');
+                if (modal) {
+                    modal.remove();
+                }
+            };
+
+            window.confirmEmailChange = async () => {
+                const newEmail = document.getElementById('newEmailInput').value.trim();
+                if (!newEmail) {
+                    showToast('Please enter a new email address', 'error');
+                    return;
+                }
+
+                const success = await changeEmail(newEmail);
+                if (success) {
+                    closeEmailChangeModal();
+                    document.getElementById('userEmail').textContent = newEmail;
+                    document.getElementById('headerEmail').textContent = newEmail;
+                }
+            };
+
+            // Load profile photo
+            const userData = JSON.parse(localStorage.getItem('userData')) || initialData;
+            if (userData.photoUrl) {
+                document.getElementById('profilePhoto').src = userData.photoUrl;
+            }
+
+            // Add click event listener for save profile button
+            document.getElementById('saveProfileBtn').addEventListener('click', async (e) => {
+                const button = e.target.closest('button');
+                const originalContent = button.innerHTML;
+                
+                // Show loading state
+                button.classList.add('loading');
+                button.innerHTML = '<i class="fas fa-spinner"></i> Saving...';
+
+                try {
+                    // Add a small delay to show the loading state (remove in production)
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                    
+                    if (await saveAllProfileChanges()) {
+                        button.innerHTML = '<i class="fas fa-check"></i> Saved!';
+                        setTimeout(() => {
+                            button.classList.remove('loading');
+                            button.innerHTML = originalContent;
+                        }, 2000);
+                    } else {
+                        button.classList.remove('loading');
+                        button.innerHTML = originalContent;
+                    }
+                } catch (error) {
+                    showToast('Error saving profile', 'error');
+                    button.classList.remove('loading');
+                    button.innerHTML = originalContent;
+                }
+            });
+            
+            // Photo upload functionality
+            document.getElementById('photoUpload').addEventListener('change', handlePhotoUpload);
+            
+            // Bank search functionality
+            document.getElementById('bankSearch').addEventListener('input', (e) => {
+                populateBankList(e.target.value);
+            });
+
+            // Handle logout
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                // Show custom logout modal
+                const modal = document.createElement('div');
+                modal.className = 'custom-modal-overlay';
+                modal.style.display = 'flex';
+                modal.innerHTML = `
+                    <div class="custom-modal-content">
+                        <h2 class="modal-title">Confirm Logout</h2>
+                        <p class="modal-subtitle">Are you sure you want to sign out of your account?</p>
+                        <div class="modal-actions">
+                            <button class="modal-btn save-btn" onclick="handleLogout()" style="background: #ff6b6b; border-color: #ff6b6b;">
+                                <i class="fas fa-sign-out-alt"></i> Yes, Logout
+                            </button>
+                            <button class="modal-btn cancel-btn" onclick="closeLogoutModal()">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            });
+
+            // Logout handling functions
+            window.handleLogout = async () => {
+                try {
+                    await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + getABToken() }
+                    });
+                } catch(e) {}
+                localStorage.removeItem('ab_token');
+                localStorage.removeItem('ab_user');
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('myProducts');
+                window.location.href = '/login';
+            };
+
+            window.closeLogoutModal = () => {
+                const modal = document.querySelector('.custom-modal-overlay');
+                if (modal) modal.remove();
+            };
+
+            // Function to check if bank details are properly set up
+            window.isBankDetailsVerified = () => {
+                const userData = JSON.parse(localStorage.getItem('userData')) || initialData;
+                return userData.bankDetailsVerified && 
+                       userData.bankType !== 'Not Set' && 
+                       userData.accountNumber !== 'Not Set';
+            };
+
+            // Add window function for withdraw button
+            window.handleWithdraw = (amount) => {
+                const userData = JSON.parse(localStorage.getItem('userData')) || initialData;
+                const hasMpesa = userData.mpesa && userData.mpesa !== 'Not Set';
+                const hasBank = isBankDetailsVerified();
+
+                if (!hasMpesa && !hasBank) {
+                    alert('Please set up either M-Pesa or Bank details in your profile before withdrawing.');
+                    window.location.href = '/profile'; // Redirect to profile page to set up payment details
+                    return;
+                }
+
+                // Update payment details in the modal
+                if (hasMpesa) {
+                    document.getElementById('mpesaDetail').textContent = `Send to: ${userData.mpesa}`;
+                }
+
+                if (hasBank) {
+                    document.getElementById('bankDetail').textContent = `${userData.bankType}\nAccount: ${userData.accountNumber}`;
+                }
+
+                // Show/hide payment methods based on availability
+                const mpesaOption = document.querySelector('[onclick="selectPaymentMethod(\'mpesa\')"]');
+                const bankOption = document.querySelector('[onclick="selectPaymentMethod(\'bank\')"]');
+                
+                mpesaOption.style.display = hasMpesa ? 'flex' : 'none';
+                bankOption.style.display = hasBank ? 'flex' : 'none';
+
+                // Store withdrawal amount for confirmation
+                window.withdrawalAmount = amount;
+
+                // Show the payment method modal
+                document.getElementById('paymentMethodModal').style.display = 'block';
+            };
+        });
+
+        // Payment method modal functions
+        const closePaymentMethodModal = () => {
+            document.getElementById('paymentMethodModal').style.display = 'none';
+        };
+
+        const selectPaymentMethod = (method) => {
+            const userData = JSON.parse(localStorage.getItem('userData')) || initialData;
+            const amount = window.withdrawalAmount || 0;
+            let confirmMessage = '';
+            
+            if (method === 'mpesa') {
+                confirmMessage = `Confirm withdrawal of KES ${amount} to:\nM-Pesa number: ${userData.mpesa}`;
+            } else {
+                confirmMessage = `Confirm withdrawal of KES ${amount} to:\nBank: ${userData.bankType}\nAccount: ${userData.accountNumber}`;
+            }
+
+            if (confirm(confirmMessage)) {
+                // Store the selected payment method
+                localStorage.setItem('lastUsedPaymentMethod', method);
+                alert(`Withdrawal of KES ${amount} initiated. Processing your request...`);
+                closePaymentMethodModal();
+                
+                // You can add additional logic here to handle the actual withdrawal process
+            }
+        };
+        // Toast notification function
+        function showToast(message, type = 'success') {
+            // Create toast container if it doesn't exist
+            let container = document.getElementById('toastContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toastContainer';
+                document.body.appendChild(container);
+            }
+
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                ${message}
+            `;
+
+            // Add to container
+            container.appendChild(toast);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease-out forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+
+            // Click to dismiss
+            toast.onclick = () => toast.remove();
+        }
+
+        // Impersonation banner for profile page
+        function showImpersonationBannerProfile(user) {
+          let banner = document.getElementById('impersonationBanner');
+          if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'impersonationBanner';
+            banner.className = 'impersonation-banner';
+            document.body.prepend(banner);
+          }
+          // Calculate time taken
+          const urlParams = new URLSearchParams(window.location.search);
+          const start = parseInt(urlParams.get('start'), 10);
+          let timerInterval;
+          function updateTimer() {
+            if (!start) return;
+            const now = Date.now();
+            const seconds = Math.floor((now - start) / 1000);
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            document.getElementById('impersonationTime').textContent = `${mins}m ${secs}s`;
+          }
+          banner.innerHTML = `<strong>Impersonating:</strong> ${user.name || user.username} (${user.id}) <span style='margin-left:18px;'>Time: <span id='impersonationTime'>0m 0s</span></span> <button onclick='stopImpersonationProfile()'>Stop Impersonating</button>`;
+          banner.style.display = 'block';
+          banner.style.position = 'fixed';
+          banner.style.top = '0';
+          banner.style.left = '0';
+          banner.style.right = '0';
+          banner.style.zIndex = '99999';
+          if (start) {
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+            banner.dataset.timerInterval = timerInterval;
+          }
+        }
+
+        function stopImpersonationProfile() {
+          let banner = document.getElementById('impersonationBanner');
+          if (banner && banner.dataset.timerInterval) {
+            clearInterval(banner.dataset.timerInterval);
+          }
+          if (banner) banner.style.display = 'none';
+          window.location.href = '/admin-user';
+        }
+
+        // Add impersonation banner styles
+        const impStyle = document.createElement('style');
+        impStyle.textContent = `
+        .impersonation-banner {
+          position: fixed;
+          top: 0; left: 0; right: 0;
+          background: #ffd54f;
+          color: #232526;
+          padding: 16px 32px;
+          font-size: 1.15rem;
+          font-weight: 600;
+          z-index: 99999;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+        .impersonation-banner button {
+          margin-left: 24px;
+          background: #232526;
+          color: #ffd54f;
+          border: none;
+          border-radius: 6px;
+          padding: 8px 18px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+        .impersonation-banner button:hover {
+          background: #ffd54f;
+          color: #232526;
+          border: 1px solid #232526;
+        }
+        `;
+        document.head.appendChild(impStyle);
+
+        // Ensure banner persists on navigation
+        function checkImpersonationModeProfile() {
+          const urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.get('impersonate') === '1' && urlParams.get('user')) {
+            let userData = JSON.parse(localStorage.getItem('userData')) || {};
+            userData.id = urlParams.get('user');
+            showImpersonationBannerProfile(userData);
+            window.addEventListener('popstate', () => showImpersonationBannerProfile(userData));
+            window.addEventListener('hashchange', () => showImpersonationBannerProfile(userData));
+          }
+        }
+        document.addEventListener('DOMContentLoaded', checkImpersonationModeProfile);
+    
+        // ── Biometric Management ──────────────────────────────────────────────────
+        let _bioEnabled = false;
+        let _bioAvailable = false;
+
+        function setBiometricToggleState(on) {
+            _bioEnabled = on;
+            const track = document.getElementById('biometricTrack');
+            const thumb = document.getElementById('biometricThumb');
+            const credsList = document.getElementById('biometricCredsList');
+            if (on) {
+                track.style.background = '#4ecdc4';
+                track.style.borderColor = '#4ecdc4';
+                thumb.style.transform = 'translateX(22px)';
+                if (credsList) credsList.style.display = 'block';
+            } else {
+                track.style.background = 'rgba(255,255,255,0.12)';
+                track.style.borderColor = 'rgba(255,255,255,0.1)';
+                thumb.style.transform = 'translateX(0)';
+                if (credsList) credsList.style.display = 'none';
+            }
+        }
+
+        (async function initBiometric() {
+            const token = getABToken();
+            if (!token) return;
+
+            const supported = !!(window.PublicKeyCredential &&
+                typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function');
+
+            const section = document.getElementById('biometricSection');
+            if (!section) return;
+            section.style.display = '';
+
+            if (!supported) {
+                document.getElementById('biometricUnsupported').style.display = 'block';
+                document.getElementById('biometricToggle').style.opacity = '0.4';
+                document.getElementById('biometricToggle').style.pointerEvents = 'none';
+                return;
+            }
+
+            _bioAvailable = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false);
+            if (!_bioAvailable) {
+                document.getElementById('biometricUnsupported').style.display = 'block';
+                document.getElementById('biometricToggle').style.opacity = '0.4';
+                document.getElementById('biometricToggle').style.pointerEvents = 'none';
+                return;
+            }
+
+            await loadBiometricCreds(token);
+        })();
+
+        async function loadBiometricCreds(token) {
+            const listEl = document.getElementById('biometricCredsList');
+            if (!listEl) return;
+            if (!token) token = getABToken();
+            try {
+                const res = await fetch('/api/auth/webauthn/credentials', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await res.json();
+                const creds = data.credentials || [];
+                if (creds.length > 0) {
+                    setBiometricToggleState(true);
+                    listEl.innerHTML = creds.map(cr => {
+                        const date = new Date(cr.created_at).toLocaleDateString();
+                        const icon = cr.device_type === 'multiDevice' ? 'fa-mobile-alt' : 'fa-fingerprint';
+                        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(78,205,196,0.06);border:1px solid rgba(78,205,196,0.2);border-radius:10px;margin-bottom:8px;">
+                            <i class="fas ${icon}" style="color:#4ecdc4;font-size:1.1rem;flex-shrink:0;"></i>
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-weight:600;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${cr.name}</div>
+                                <div style="font-size:0.75rem;color:rgba(255,255,255,0.45);">Added ${date}</div>
+                            </div>
+                        </div>`;
+                    }).join('');
+                } else {
+                    setBiometricToggleState(false);
+                    listEl.innerHTML = '';
+                }
+            } catch(e) {
+                listEl.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">Could not load biometric devices.</div>';
+                listEl.style.display = 'block';
+            }
+        }
+
+        window.toggleBiometric = async function() {
+            if (!_bioAvailable) return;
+            const token = getABToken();
+            const msgEl = document.getElementById('biometricMsg');
+            if (!token) return;
+            if (msgEl) { msgEl.style.display = 'none'; }
+
+            if (_bioEnabled) {
+                if (!confirm('Disable biometric login? Your saved passkeys for this app will be removed.')) return;
+                try {
+                    const res = await fetch('/api/auth/webauthn/credentials', {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                    const data = await res.json();
+                    const creds = data.credentials || [];
+                    for (const cr of creds) {
+                        await fetch(`/api/auth/webauthn/credentials/${cr.id}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': 'Bearer ' + token },
+                        });
+                    }
+                    setBiometricToggleState(false);
+                    document.getElementById('biometricCredsList').innerHTML = '';
+                    if (msgEl) { msgEl.style.color = 'rgba(255,255,255,0.5)'; msgEl.textContent = 'Biometric login disabled.'; msgEl.style.display = 'block'; }
+                } catch(e) {
+                    if (msgEl) { msgEl.style.color = '#ff6b6b'; msgEl.textContent = 'Failed to disable. Please try again.'; msgEl.style.display = 'block'; }
+                }
+            } else {
+                const toggle = document.getElementById('biometricToggle');
+                toggle.style.pointerEvents = 'none';
+                toggle.style.opacity = '0.6';
+                if (msgEl) { msgEl.style.color = 'rgba(255,255,255,0.5)'; msgEl.textContent = 'Verify your identity...'; msgEl.style.display = 'block'; }
+                try {
+                    const SIMPLEWEBAUTHN_CDN = 'https://unpkg.com/@simplewebauthn/browser@13/dist/bundle/index.es5.umd.min.js';
+                    if (!window.SimpleWebAuthnBrowser) {
+                        await new Promise((resolve, reject) => {
+                            const s = document.createElement('script');
+                            s.src = SIMPLEWEBAUTHN_CDN;
+                            s.onload = resolve; s.onerror = reject;
+                            document.head.appendChild(s);
+                        });
+                    }
+                    const lib = window.SimpleWebAuthnBrowser;
+                    const beginRes = await fetch('/api/auth/webauthn/register/begin', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    });
+                    const options = await beginRes.json();
+                    if (!beginRes.ok) throw new Error(options.error || 'Failed to start setup');
+                    const attResp = await lib.startRegistration({ optionsJSON: options });
+                    const deviceName = navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad') ? 'iPhone/iPad' :
+                        navigator.userAgent.includes('Android') ? 'Android Device' :
+                        navigator.userAgent.includes('Mac') ? 'Mac' :
+                        navigator.userAgent.includes('Win') ? 'Windows PC' : 'My Device';
+                    const completeRes = await fetch('/api/auth/webauthn/register/complete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                        body: JSON.stringify({ response: attResp, deviceName }),
+                    });
+                    const result = await completeRes.json();
+                    if (!completeRes.ok) throw new Error(result.error || 'Failed to save');
+                    if (msgEl) { msgEl.style.color = '#4ecdc4'; msgEl.textContent = 'Biometric login enabled!'; msgEl.style.display = 'block'; }
+                    await loadBiometricCreds(token);
+                } catch(e) {
+                    if (msgEl) { msgEl.style.color = '#ff6b6b'; msgEl.textContent = e.message || 'Setup failed. Please try again.'; msgEl.style.display = 'block'; }
+                } finally {
+                    toggle.style.pointerEvents = '';
+                    toggle.style.opacity = '';
+                }
+            }
+        };
+</script>
+</div>
+</body>
+</html>

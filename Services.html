@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Services - AfricaBased</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            background: #f0f2f5;
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: #25D366;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(37,211,102,0.3);
+            transition: all 0.2s;
+            z-index: 100;
+            text-decoration: none;
+        }
+        .back-button:hover { background: #128C7E; transform: translateY(-1px); }
+
+        .services-container {
+            max-width: 600px;
+            margin: 70px auto 0;
+        }
+
+        .whatsapp-card {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(37,211,102,0.10);
+            padding: 32px 24px;
+            position: relative;
+            border: 1px solid #e0e0e0;
+        }
+
+        .whatsapp-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 20px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+        .whatsapp-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #128C7E;
+            margin: 0;
+        }
+        .wa-icon-circle {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: #25D366;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.7rem;
+            box-shadow: 0 2px 8px rgba(37,211,102,0.25);
+            flex-shrink: 0;
+        }
+
+        .tier-status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f7fdf9;
+            border: 1px solid #c8f0da;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .tier-status-label {
+            font-size: 0.82rem;
+            color: #666;
+            font-weight: 500;
+        }
+        .tier-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .tier-inactive  { background: #e0e0e0; color: #555; }
+        .tier-active    { background: #6ec6ff; color: #0a3d62; }
+        .tier-basic     { background: #a78bfa; color: #2e1065; }
+        .tier-premium   { background: #f59e0b; color: #451a03; }
+        .tier-gold      { background: linear-gradient(90deg, #f7c948, #ffd700); color: #451a03; }
+        .tier-refs-note { font-size: 0.78rem; color: #888; }
+
+        .whatsapp-section {
+            background: #f7fdf9;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #128C7E;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-divider {
+            background: #e0e0e0;
+            height: 1px;
+            margin: 20px 0;
+        }
+
+        .whatsapp-btn {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 13px 18px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            text-decoration: none;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .whatsapp-btn.unlocked {
+            background: #25D366;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(37,211,102,0.15);
+        }
+        .whatsapp-btn.unlocked:hover {
+            background: #128C7E;
+            box-shadow: 0 4px 14px rgba(18,140,126,0.2);
+            transform: translateY(-1px);
+        }
+        .whatsapp-btn.locked {
+            background: #f5f5f5;
+            color: #aaa;
+            border: 1.5px dashed #ccc;
+            cursor: not-allowed;
+        }
+        .btn-icon-wrap {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .unlocked .btn-icon-wrap { background: #128C7E; color: #fff; }
+        .locked .btn-icon-wrap   { background: #e0e0e0; color: #aaa; }
+
+        .btn-text { display: flex; flex-direction: column; align-items: flex-start; flex: 1; }
+        .btn-title    { font-size: 1rem; font-weight: 600; line-height: 1.3; }
+        .btn-subtitle { font-size: 0.82rem; opacity: 0.8; line-height: 1.3; }
+        .btn-lock-badge {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .empty-msg { color: #aaa; font-size: 0.9rem; text-align: center; padding: 18px; }
+
+        /* Verification / Locked Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: #fff;
+            border-radius: 18px;
+            padding: 30px 26px;
+            max-width: 380px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.18);
+        }
+        .modal-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: #fff3f3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: #e53935;
+            margin: 0 auto 16px;
+        }
+        .modal-title { font-size: 1.2rem; font-weight: 700; color: #222; margin-bottom: 10px; }
+        .modal-body  { font-size: 0.92rem; color: #555; line-height: 1.6; margin-bottom: 20px; }
+        .modal-body strong { color: #128C7E; }
+        .modal-tier-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 14px 0;
+            font-size: 0.88rem;
+            color: #666;
+        }
+        .modal-close-btn {
+            background: #128C7E;
+            color: #fff;
+            border: none;
+            padding: 11px 30px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .modal-close-btn:hover { background: #0a6b61; }
+        .modal-referral-link {
+            display: inline-block;
+            margin-top: 12px;
+            font-size: 0.85rem;
+            color: #25D366;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        @media (max-width: 480px) {
+            .whatsapp-card { padding: 20px 14px; }
+            .whatsapp-header h2 { font-size: 1.25rem; }
+        }
+    </style>
+<script src="/js/token.js"></script>
+</head>
+<body>
+    <a href="/home" class="back-button"><i class="fas fa-arrow-left"></i> Back to Home</a>
+
+    <div class="services-container">
+        <div class="whatsapp-card">
+            <div class="whatsapp-header">
+                <div class="wa-icon-circle"><i class="fab fa-whatsapp"></i></div>
+                <h2>Our WhatsApp Services</h2>
+            </div>
+
+            <div class="tier-status-bar" id="tierStatusBar" style="display:none;">
+                <div>
+                    <div class="tier-status-label">Your membership level</div>
+                    <div class="tier-refs-note" id="tierRefsNote"></div>
+                </div>
+                <span class="tier-badge" id="tierBadge"></span>
+            </div>
+
+            <div class="whatsapp-section">
+                <h3 class="section-title"><i class="fas fa-users"></i> WhatsApp Groups</h3>
+                <div id="groupsContainer">
+                    <div class="empty-msg">Loading...</div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <div class="whatsapp-section">
+                <h3 class="section-title"><i class="fas fa-headset"></i> Chat with Managers</h3>
+                <div id="managersContainer">
+                    <div class="empty-msg">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Locked / Verification Modal -->
+    <div class="modal-overlay" id="lockedModal">
+        <div class="modal-box">
+            <div class="modal-icon"><i class="fas fa-lock"></i></div>
+            <div class="modal-title" id="modalTitle">Access Restricted</div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-tier-row">
+                <span>Your tier:</span>
+                <span class="tier-badge" id="modalUserTier"></span>
+                <span>Required:</span>
+                <span class="tier-badge" id="modalRequiredTier"></span>
+            </div>
+            <button class="modal-close-btn" onclick="closeLockedModal()">Got it</button>
+            <div class="modal-referral-link" onclick="window.location.href='/referrals'">
+                <i class="fas fa-users"></i> Grow your referrals to unlock
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TIER_ORDER  = ['inactive', 'active', 'basic', 'premium', 'gold'];
+        const TIER_LABELS = { inactive: 'Inactive', active: 'Active', basic: 'Basic', premium: 'Premium', gold: 'Gold', all: 'All Members' };
+        const TIER_CLASS  = { inactive: 'tier-inactive', active: 'tier-active', basic: 'tier-basic', premium: 'tier-premium', gold: 'tier-gold', all: 'tier-active' };
+
+        function tierRank(t) {
+            if (!t || t === 'all') return -1;
+            return TIER_ORDER.indexOf(t.toLowerCase());
+        }
+
+        function canAccess(userTier, minTier) {
+            if (!minTier || minTier === 'all') return true;
+            return tierRank(userTier) >= tierRank(minTier);
+        }
+
+        function escHtml(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function normPhone(p) {
+            p = String(p).replace(/\s+/g,'').replace(/^\+/,'');
+            if (p.startsWith('07') || p.startsWith('01')) p = '254' + p.slice(1);
+            if (!p.startsWith('254')) p = '254' + p;
+            return p;
+        }
+
+        function tierBadgeHtml(tier) {
+            const t = (tier || 'all').toLowerCase();
+            const cls = TIER_CLASS[t] || 'tier-active';
+            return `<span class="tier-badge ${cls}">${TIER_LABELS[t] || tier}</span>`;
+        }
+
+        function lockBadgeHtml(minTier) {
+            const t = (minTier || 'all').toLowerCase();
+            const cls = TIER_CLASS[t] || 'tier-active';
+            const label = TIER_LABELS[t] || minTier;
+            return `<span class="btn-lock-badge ${cls}" style="background:inherit;border:1.5px solid #ccc;color:#888;"><i class="fas fa-lock" style="font-size:0.7rem;"></i> ${label}+</span>`;
+        }
+
+        function showTierStatus(membershipLevel, activeRefs) {
+            const bar = document.getElementById('tierStatusBar');
+            const badge = document.getElementById('tierBadge');
+            const note = document.getElementById('tierRefsNote');
+            const t = (membershipLevel || 'Inactive').toLowerCase();
+            badge.className = 'tier-badge ' + (TIER_CLASS[t] || 'tier-inactive');
+            badge.textContent = TIER_LABELS[t] || membershipLevel;
+            note.textContent = activeRefs + ' active referral' + (activeRefs === 1 ? '' : 's');
+            bar.style.display = 'flex';
+        }
+
+        let currentUserTier = 'inactive';
+
+        function renderServices(services, membershipLevel, activeRefs) {
+            currentUserTier = (membershipLevel || 'Inactive').toLowerCase();
+            showTierStatus(membershipLevel, activeRefs);
+
+            const groups   = services.filter(s => s.type === 'group');
+            const managers = services.filter(s => s.type === 'manager');
+
+            const gEl = document.getElementById('groupsContainer');
+            if (!groups.length) {
+                gEl.innerHTML = '<div class="empty-msg">No groups available yet.</div>';
+            } else {
+                gEl.innerHTML = groups.map(g => buildBtn(g, 'group')).join('');
+            }
+
+            const mEl = document.getElementById('managersContainer');
+            if (!managers.length) {
+                mEl.innerHTML = '<div class="empty-msg">No managers available yet.</div>';
+            } else {
+                mEl.innerHTML = managers.map(m => buildBtn(m, 'manager')).join('');
+            }
+        }
+
+        function buildBtn(svc, type) {
+            const accessible = canAccess(currentUserTier, svc.min_tier);
+            const icon = type === 'group' ? 'fa-users' : 'fa-comment-dots';
+            const link = type === 'group' ? escHtml(svc.phone_or_link) : 'https://wa.me/' + normPhone(svc.phone_or_link);
+            const minT = (svc.min_tier || 'all').toLowerCase();
+
+            if (accessible) {
+                return `<a href="${link}" target="_blank" class="whatsapp-btn unlocked">
+                    <div class="btn-icon-wrap"><i class="fas ${icon}"></i></div>
+                    <div class="btn-text">
+                        <span class="btn-title">${escHtml(svc.name)}</span>
+                        <span class="btn-subtitle">${escHtml(svc.category)}</span>
+                    </div>
+                    <i class="fas fa-arrow-right" style="margin-left:auto;font-size:0.9rem;opacity:0.7;"></i>
+                </a>`;
+            } else {
+                return `<button class="whatsapp-btn locked" onclick="showLockedModal('${escHtml(svc.name)}','${minT}')">
+                    <div class="btn-icon-wrap"><i class="fas fa-lock"></i></div>
+                    <div class="btn-text">
+                        <span class="btn-title">${escHtml(svc.name)}</span>
+                        <span class="btn-subtitle">${escHtml(svc.category)}</span>
+                    </div>
+                    ${lockBadgeHtml(svc.min_tier)}
+                </button>`;
+            }
+        }
+
+        const TIER_REQS = {
+            active:  '1+ active direct referral',
+            basic:   '5+ active direct referrals',
+            premium: '60+ active direct referrals',
+            gold:    '300+ active direct referrals'
+        };
+
+        function showLockedModal(name, minTier) {
+            const req = TIER_REQS[minTier] || '';
+            document.getElementById('modalTitle').textContent = 'Access Restricted';
+            document.getElementById('modalBody').innerHTML =
+                `<strong>${name}</strong> is only available to <strong>${TIER_LABELS[minTier] || minTier}</strong> members and above.<br><br>` +
+                (req ? `You need <strong>${req}</strong> to unlock this service.` : '');
+            const uBadge = document.getElementById('modalUserTier');
+            uBadge.className = 'tier-badge ' + (TIER_CLASS[currentUserTier] || 'tier-inactive');
+            uBadge.textContent = TIER_LABELS[currentUserTier] || currentUserTier;
+            const rBadge = document.getElementById('modalRequiredTier');
+            rBadge.className = 'tier-badge ' + (TIER_CLASS[minTier] || 'tier-active');
+            rBadge.textContent = TIER_LABELS[minTier] || minTier;
+            document.getElementById('lockedModal').classList.add('active');
+        }
+
+        function closeLockedModal() {
+            document.getElementById('lockedModal').classList.remove('active');
+        }
+
+        document.getElementById('lockedModal').addEventListener('click', function(e) {
+            if (e.target === this) closeLockedModal();
+        });
+
+        async function loadServices() {
+            const token = getABToken();
+            if (!token) { window.location.href = '/login'; return; }
+
+            try {
+                const res = await fetch('/api/services/whatsapp', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (res.status === 401) { window.location.href = '/login'; return; }
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                renderServices(data.services || [], data.membership_level || 'Inactive', data.active_referrals || 0);
+            } catch(e) {
+                document.getElementById('groupsContainer').innerHTML = '<div class="empty-msg">Failed to load services. Please try again.</div>';
+                document.getElementById('managersContainer').innerHTML = '';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadServices);
+    </script>
+</body>
+</html>

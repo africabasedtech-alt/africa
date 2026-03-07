@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+        <script>
+            // Only declare a safe placeholder for the Supabase client (do NOT embed URL/anon key here)
+            if (typeof window.supabaseClient === 'undefined') {
+                window.supabaseClient = null;
+                /**
+                 * Initialize the Supabase client securely at runtime.
+                 * DO NOT pass credentials in static HTML. Call this from a secure runtime
+                 * (server-injected config, environment variables, or a protected admin endpoint).
+                 *
+                 * Example (secure source):
+                 *   window.initSupabaseClient(SAFE_URL, SAFE_ANON_KEY);
+                 */
+                window.initSupabaseClient = function(url, anonKey) {
+                    if (!url || !anonKey) {
+                        console.warn('Supabase URL or anon key not provided. Call initSupabaseClient(url, anonKey) with secure credentials.');
+                        return;
+                    }
+                    if (window.supabaseClient) return;
+                    if (typeof window.supabase !== 'undefined' && typeof window.supabase.createClient === 'function') {
+                        window.supabaseClient = window.supabase.createClient(url, anonKey);
+                    } else {
+                        console.warn('Supabase library not available.');
+                    }
+                };
+            }
+        </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Management - AfricaBased</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Supabase client already initialized above -->
+    <style>
+        :root {
+            --primary-bg: #2c3e50;
+            --secondary-bg: #34495e;
+            --accent-color: #3498db;
+            --accent-hover: #2980b9;
+            --text-primary: #ecf0f1;
+            --text-secondary: #bdc3c7;
+            --success-color: #2ecc71;
+            --warning-color: #f1c40f;
+            --error-color: #e74c3c;
+            --card-bg: #34495e;
+            --border-color: #3498db;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--primary-bg);
+            margin: 0;
+            padding: 0;
+            color: var(--text-primary);
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            background: var(--secondary-bg);
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border: 1px solid var(--border-color);
+        }
+        
+        h1 {
+            color: var(--accent-color);
+            margin-bottom: 24px;
+            text-align: center;
+            font-size: 2.2rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .admin-table-panel {
+            margin: 24px auto;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(52, 152, 219, 0.1);
+            padding: 24px;
+            max-height: 420px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+        
+        .admin-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: var(--card-bg);
+        }
+        
+        .admin-table th, .admin-table td {
+            border: 1px solid var(--border-color);
+            padding: 12px 16px;
+            color: var(--text-primary);
+            text-align: center;
+        }
+        
+        .admin-table th {
+            background: var(--accent-color);
+            font-weight: 600;
+            font-size: 1.05rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .admin-table td button {
+            background: var(--accent-color);
+            color: var(--text-primary);
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            margin: 0 4px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+        }
+        
+        .admin-table td button:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+        .add-admin-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+            width: 100%;
+            margin-top: 32px;
+        }
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+        
+        .form-row label {
+            color: var(--accent-color);
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1.05rem;
+        }
+        
+        .form-row input[type="text"],
+        .form-row input[type="password"],
+        .form-row input[type="email"],
+        .form-row input[type="tel"],
+        .form-row input[type="datetime-local"],
+        .form-row select {
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 1rem;
+            width: 280px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.1);
+        }
+        
+        .form-row input:focus,
+        .form-row select:focus {
+            border-color: var(--accent-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .privileges-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            padding: 16px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .privileges-list label {
+            color: var(--text-primary);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .privileges-list label:hover {
+            background: rgba(52, 152, 219, 0.1);
+        }
+        
+        .privileges-list input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-color);
+        }
+        .admin-link-result {
+            margin-top: 18px;
+            color: #ffd54f;
+            font-size: 1.05rem;
+            word-break: break-all;
+            text-align: center;
+        }
+        .system-btn {
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            border: none;
+        }
+        .btn-reset {
+            background: #ff9800;
+            color: #000;
+        }
+        .btn-sync {
+            background: #2196f3;
+            color: #fff;
+        }
+        .admin-modal {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .admin-modal-content {
+            background: var(--secondary-bg);
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(52, 152, 219, 0.2);
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            animation: modalFadeIn 0.3s ease;
+        }
+        
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .admin-modal-content h2 {
+            margin-bottom: 20px;
+            color: var(--accent-color);
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        
+        .admin-modal-content p {
+            margin-bottom: 24px;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+        
+        .admin-modal-content input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+        .sync-status {
+            display: none;
+            background: #232526;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px auto;
+            max-width: 600px;
+        }
+        .sync-progress {
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            margin: 8px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background: #2196f3;
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div style="margin: 24px 0 0 24px; display: flex; align-items: center; gap: 16px;">
+        <a href="Admin-panel.html" class="back-btn" style="background:#ffd54f;color:#232526;padding:8px 18px;border-radius:6px;text-decoration:none;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.10);transition:background 0.2s, color 0.2s;">&larr; Back to Admin Panel</a>
+        <button class="system-btn btn-reset" onclick="confirmSystemReset()" style="background:#ff9800;color:#000;padding:8px 18px;border-radius:6px;font-weight:600;">Reset</button>
+        <button class="system-btn btn-sync" onclick="syncChanges()" style="background:#2196f3;color:#fff;padding:8px 18px;border-radius:6px;font-weight:600;">Sync Changes</button>
+    </div>
+    <div class="container">
+        <h1>Admin Management</h1>
+        <!-- Deposit Trial Notifications Panel -->
+        <div id="depositNotificationsPanel" style="background:#232526;padding:18px 22px;border-radius:10px;margin-bottom:24px;box-shadow:0 2px 8px rgba(255,213,79,0.08);color:#ffd54f;">
+            <h3 style="margin-top:0;margin-bottom:10px;color:#ffd54f;">Deposit Trial Notifications</h3>
+            <ul id="depositNotificationsList" style="list-style:none;padding:0;margin:0;"></ul>
+        </div>
+        <div class="admin-table-panel">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Admin Name</th>
+                        <th>Admin ID</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Privileges</th>
+                        <th>Status</th>
+                        <th>Last Login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="adminTableBody">
+                    <!-- Admins will be loaded here dynamically -->
+                </tbody>
+            </table>
+        </div>
+        <form id="addAdminForm" class="add-admin-form">
+            <h3>Add New Admin</h3>
+            <div class="form-row">
+                <label>Name:</label>
+                <input type="text" id="adminName" required>
+            </div>
+            <div class="form-row">
+                <label>Email:</label>
+                <input type="email" id="adminEmail" required>
+            </div>
+            <div class="form-row">
+                <label>Phone:</label>
+                <input type="tel" id="adminPhone" required>
+            </div>
+            <div class="form-row">
+                <label>Password:</label>
+                <input type="password" id="adminPassword" required>
+            </div>
+            <div class="form-row">
+                <label>API Key:</label>
+                <input type="text" id="adminApiKey" required>
+            </div>
+            <div class="form-row">
+                <label>Privileges:</label>
+                <div class="privileges-list">
+                    <label><input type="checkbox" value="exchange" id="exchangePrivCheckbox"> Exchange</label>
+                    <div id="exchangeLimitRow" style="display:none;margin-top:8px;margin-left:20px;background:rgba(78,205,196,0.07);border:1px solid rgba(78,205,196,0.25);border-radius:8px;padding:10px 14px;">
+                        <label style="color:#4ecdc4;font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;"><i class="fas fa-coins"></i> Exchange Generation Limit (KES)</label>
+                        <input type="number" id="adminExchangeLimit" min="0" step="1" placeholder="e.g. 50000 (0 = unlimited)" style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(78,205,196,0.3);border-radius:6px;padding:8px 10px;color:#fff;font-size:0.9rem;outline:none;">
+                        <p style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin:5px 0 0;">Maximum total KES this admin can generate from Exchange. Set 0 for no limit.</p>
+                    </div>
+                    <label><input type="checkbox" value="withdraw" id="withdrawPrivCheckbox"> Withdraw</label>
+                    <div id="withdrawLimitRow" style="display:none;margin-top:8px;margin-left:20px;background:rgba(255,107,107,0.07);border:1px solid rgba(255,107,107,0.25);border-radius:8px;padding:10px 14px;">
+                        <label style="color:#ff6b6b;font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;"><i class="fas fa-money-bill-transfer"></i> Max Withdrawal Amount Per Transaction (KES)</label>
+                        <input type="number" id="withdrawLimitInput" min="0" step="1" placeholder="e.g. 50000 (0 = unlimited)" style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,107,107,0.3);border-radius:6px;padding:8px 10px;color:#fff;font-size:0.9rem;outline:none;">
+                        <p style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin:5px 0 0;">This admin can only approve withdrawals below this amount. Set 0 for no limit.</p>
+                    </div>
+                    <label><input type="checkbox" value="deposit" id="depositPrivCheckbox"> Deposit</label>
+                    <div id="depositLimitRow" style="display:none;margin-top:8px;margin-left:20px;background:rgba(40,167,69,0.07);border:1px solid rgba(40,167,69,0.25);border-radius:8px;padding:10px 14px;">
+                        <label style="color:#28a745;font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;"><i class="fas fa-money-bill-wave"></i> Max Deposit Amount Per Transaction (KES)</label>
+                        <input type="number" id="depositLimitInput" min="0" step="1" placeholder="e.g. 50000 (0 = unlimited)" style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(40,167,69,0.3);border-radius:6px;padding:8px 10px;color:#fff;font-size:0.9rem;outline:none;">
+                        <p style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin:5px 0 0;">This admin can only approve deposits below this amount. Set 0 for no limit.</p>
+                    </div>
+                    <label><input type="checkbox" value="manual_deposit" id="manualDepositPrivCheckbox"> Manual Deposit Approval</label>
+                    <div id="manualDepositLimitRow" style="display:none;margin-top:8px;margin-left:20px;background:rgba(40,167,69,0.07);border:1px solid rgba(40,167,69,0.25);border-radius:8px;padding:10px 14px;">
+                        <label style="color:#28a745;font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;"><i class="fas fa-hand-holding-usd"></i> Max Manual Deposit Amount Per Transaction (KES)</label>
+                        <input type="number" id="manualDepositLimitInput" min="0" step="1" placeholder="e.g. 50000 (0 = unlimited)" style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(40,167,69,0.3);border-radius:6px;padding:8px 10px;color:#fff;font-size:0.9rem;outline:none;">
+                        <p style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin:5px 0 0;">Max deposit amount they can approve manually. Set 0 for no limit.</p>
+                    </div>
+                    <label><input type="checkbox" value="user" id="userPrivCheckbox"> User Management</label>
+                    <div id="userLimitRow" style="display:none;margin-top:8px;margin-left:20px;background:rgba(108,99,255,0.07);border:1px solid rgba(108,99,255,0.25);border-radius:8px;padding:10px 14px;">
+                        <label style="color:rgba(255,255,255,0.8);font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;"><i class="fas fa-users"></i> User Management Access Level</label>
+                        <label style="display:inline-flex;align-items:center;gap:8px;color:rgba(255,255,255,0.7);font-size:0.85rem;">
+                            <input type="checkbox" id="userViewOnlyInput" style="width:auto;margin:0;">
+                            View Only (cannot block, delete, or edit users)
+                        </label>
+                    </div>
+                    <label><input type="checkbox" value="impersonate"> Impersonate User</label>
+                    <label><input type="checkbox" value="service"> Service Management</label>
+                    <label><input type="checkbox" value="product" id="productPrivCheckbox"> Product Management</label>
+                    <div id="productPrivRow" style="display:none;margin-top:8px;margin-left:20px;background:rgba(78,205,196,0.07);border:1px solid rgba(78,205,196,0.25);border-radius:8px;padding:10px 14px;">
+                        <label style="color:#4ecdc4;font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;"><i class="fas fa-boxes-stacked"></i> Product Permissions</label>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;">
+                            <label style="display:flex;align-items:center;gap:6px;color:rgba(255,255,255,0.7);font-size:0.85rem;cursor:pointer;">
+                                <input type="checkbox" id="productAllInput" style="width:auto;margin:0;accent-color:#4ecdc4;"> <strong>All Permissions</strong>
+                            </label>
+                            <div></div>
+                            <label style="display:flex;align-items:center;gap:6px;color:rgba(255,255,255,0.7);font-size:0.85rem;cursor:pointer;">
+                                <input type="checkbox" class="product-sub-priv" value="product_view" style="width:auto;margin:0;accent-color:#4ecdc4;"> View Products
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;color:rgba(255,255,255,0.7);font-size:0.85rem;cursor:pointer;">
+                                <input type="checkbox" class="product-sub-priv" value="product_add" style="width:auto;margin:0;accent-color:#4ecdc4;"> Add Products
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;color:rgba(255,255,255,0.7);font-size:0.85rem;cursor:pointer;">
+                                <input type="checkbox" class="product-sub-priv" value="product_edit" style="width:auto;margin:0;accent-color:#4ecdc4;"> Edit Products
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;color:rgba(255,255,255,0.7);font-size:0.85rem;cursor:pointer;">
+                                <input type="checkbox" class="product-sub-priv" value="product_delete" style="width:auto;margin:0;accent-color:#4ecdc4;"> Delete Products
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;color:rgba(255,255,255,0.7);font-size:0.85rem;cursor:pointer;">
+                                <input type="checkbox" class="product-sub-priv" value="product_enable" style="width:auto;margin:0;accent-color:#4ecdc4;"> Enable Products
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;color:rgba(255,255,255,0.7);font-size:0.85rem;cursor:pointer;">
+                                <input type="checkbox" class="product-sub-priv" value="product_disable" style="width:auto;margin:0;accent-color:#4ecdc4;"> Disable Products
+                            </label>
+                        </div>
+                    </div>
+                    <label><input type="checkbox" value="settings"> Settings</label>
+                    <label><input type="checkbox" value="admin"> Admin Management</label>
+                    <label><input type="checkbox" value="audit"> Audit Logs</label>
+                    <label><input type="checkbox" value="kyc"> KYC Review</label>
+                    <label><input type="checkbox" value="support"> Support Tickets</label>
+                    <label><input type="checkbox" value="notifications"> Notifications</label>
+                    <label><input type="checkbox" value="finance"> Finance/Accounting</label>
+                    <label><input type="checkbox" value="referral"> Referral/Commission</label>
+                    <label><input type="checkbox" value="investments"> Investment Management</label>
+                    <label><input type="checkbox" value="wallet"> Wallet Management</label>
+                    <label><input type="checkbox" value="auto_deposit"> Auto Deposit System</label>
+                    <label><input type="checkbox" value="transactions"> Transaction History</label>
+                    <label><input type="checkbox" value="reports"> Reports & Analytics</label>
+                    <label><input type="checkbox" value="security"> Security Settings</label>
+                    <label><input type="checkbox" value="system"> System Configuration</label>
+                </div>
+            </div>
+            <div class="form-row">
+                <label>Status:</label>
+                <select id="adminStatus" required>
+                    <option value="active">Active</option>
+                    <option value="suspended">Suspended</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label>Link Expiry Time:</label>
+                <input type="datetime-local" id="adminLinkExpiry" required>
+            </div>
+            <button type="button" id="generateAdminLink" class="exchange-btn">Generate Admin Link</button>
+        </form>
+        <div id="adminLinkResult" class="admin-link-result"></div>
+
+    <!-- Existing Admins List -->
+    <div style="max-width:700px;margin:30px auto 0;background:#1a2238;border-radius:12px;padding:24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <h3 style="color:#4ecdc4;margin:0;"><i class="fas fa-users-cog"></i> Created Admins</h3>
+            <button onclick="loadAdmins()" style="background:rgba(78,205,196,0.15);border:1px solid #4ecdc4;color:#4ecdc4;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:0.9rem;"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+        <div id="adminsList" style="color:rgba(255,255,255,0.6);font-size:0.95rem;">Loading...</div>
+    </div>
+    </div>
+
+    <!-- Reset Confirmation Modal -->
+    <div id="resetConfirmModal" class="admin-modal" style="display:none;">
+        <div class="admin-modal-content">
+            <h2>Confirm System Reset</h2>
+            <p>This will reset the page and clear all local changes. Enter security key to confirm:</p>
+            <input type="password" id="resetSecurityKey" placeholder="Security Key">
+            <div style="margin-top:18px;display:flex;gap:12px;justify-content:flex-end;">
+                <button class="system-btn btn-reset" onclick="executeSystemReset()">Confirm Reset</button>
+                <button class="system-btn" onclick="closeAdminModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charge Sub-Admin Modal -->
+    <div id="chargeModal" class="admin-modal" style="display:none;">
+        <div class="admin-modal-content" style="max-width:460px;">
+            <h2 style="margin-bottom:6px;"><i class="fas fa-coins" style="color:#4ecdc4;"></i> Charge Sub-Admin</h2>
+            <p id="chargeModalSubtitle" style="color:rgba(255,255,255,0.5);font-size:0.9rem;margin-bottom:18px;"></p>
+            <div style="display:flex;gap:10px;margin-bottom:14px;">
+                <button id="chargeTypeCreditBtn" onclick="setChargeType('credit')" style="flex:1;padding:10px;border-radius:8px;border:2px solid #4ecdc4;background:rgba(78,205,196,0.15);color:#4ecdc4;font-weight:600;cursor:pointer;transition:all 0.2s;">
+                    <i class="fas fa-plus-circle"></i> Credit (Add Limit)
+                </button>
+                <button id="chargeTypeDebitBtn" onclick="setChargeType('debit')" style="flex:1;padding:10px;border-radius:8px;border:2px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.5);font-weight:600;cursor:pointer;transition:all 0.2s;">
+                    <i class="fas fa-minus-circle"></i> Debit (Deduct Limit)
+                </button>
+            </div>
+            <div id="chargeTypeDesc" style="font-size:0.8rem;color:rgba(255,255,255,0.4);margin-bottom:14px;padding:8px 12px;background:rgba(78,205,196,0.06);border-radius:6px;">
+                <i class="fas fa-info-circle" style="color:#4ecdc4;"></i> <b>Credit</b> adds to the admin's exchange generation limit (they can generate more codes).
+            </div>
+            <label style="display:block;font-size:0.85rem;color:rgba(255,255,255,0.6);margin-bottom:6px;">Amount (KES)</label>
+            <input type="number" id="chargeAmount" min="1" step="1" placeholder="e.g. 10000" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:10px 12px;color:#fff;font-size:1rem;margin-bottom:14px;outline:none;font-family:inherit;">
+            <label style="display:block;font-size:0.85rem;color:rgba(255,255,255,0.6);margin-bottom:6px;">Reason / Note <span style="color:rgba(255,255,255,0.3);font-size:0.78rem;">(optional)</span></label>
+            <input type="text" id="chargeReason" placeholder="e.g. Monthly top-up, Service fee..." style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:10px 12px;color:#fff;font-size:0.95rem;margin-bottom:20px;outline:none;font-family:inherit;">
+            <div style="display:flex;gap:10px;">
+                <button onclick="submitCharge()" style="flex:1;padding:12px;border-radius:8px;border:none;background:linear-gradient(45deg,#4ecdc4,#ff6b6b);color:#fff;font-weight:700;font-size:1rem;cursor:pointer;">Apply Charge</button>
+                <button onclick="closeChargeModal()" style="flex:1;padding:12px;border-radius:8px;border:none;background:rgba(255,255,255,0.08);color:#fff;font-weight:600;cursor:pointer;">Cancel</button>
+            </div>
+            <div style="margin-top:16px;">
+                <button onclick="viewChargeHistory()" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:rgba(255,255,255,0.5);font-size:0.85rem;cursor:pointer;"><i class="fas fa-history"></i> View Charge History</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charge History Modal -->
+    <div id="chargeHistoryModal" class="admin-modal" style="display:none;">
+        <div class="admin-modal-content" style="max-width:520px;max-height:80vh;overflow-y:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+                <h2 style="margin:0;"><i class="fas fa-history" style="color:#4ecdc4;"></i> Charge History</h2>
+                <button onclick="document.getElementById('chargeHistoryModal').style.display='none';document.getElementById('chargeModal').style.display='flex';" style="background:rgba(255,255,255,0.08);border:none;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;">Back</button>
+            </div>
+            <div id="chargeHistoryContent" style="color:rgba(255,255,255,0.7);font-size:0.9rem;">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Sync Status -->
+    <div class="sync-status" id="syncStatus" style="display:none;background:#232526;padding:16px;border-radius:8px;margin:16px auto;max-width:600px;">
+        <div class="sync-progress" style="height:4px;background:#333;border-radius:2px;margin:8px 0;">
+            <div class="progress-bar" id="syncProgress" style="height:100%;width:0;background:#2196f3;border-radius:2px;transition:width 0.3s;"></div>
+        </div>
+        <p id="syncMessage"></p>
+    </div>
+
+    <script>
+        const SUPER_ADMIN_KEY = '1540568e';
+
+        // ── Generate admin invite link ────────────────────────────────────────
+        // Show/hide privilege limit inputs based on checkboxes
+        document.getElementById('exchangePrivCheckbox').addEventListener('change', function() {
+            document.getElementById('exchangeLimitRow').style.display = this.checked ? 'block' : 'none';
+            if (!this.checked) document.getElementById('adminExchangeLimit').value = '';
+        });
+        document.getElementById('withdrawPrivCheckbox').addEventListener('change', function() {
+            document.getElementById('withdrawLimitRow').style.display = this.checked ? 'block' : 'none';
+            if (!this.checked) document.getElementById('withdrawLimitInput').value = '';
+        });
+        document.getElementById('depositPrivCheckbox').addEventListener('change', function() {
+            document.getElementById('depositLimitRow').style.display = this.checked ? 'block' : 'none';
+            if (!this.checked) document.getElementById('depositLimitInput').value = '';
+        });
+        document.getElementById('manualDepositPrivCheckbox').addEventListener('change', function() {
+            document.getElementById('manualDepositLimitRow').style.display = this.checked ? 'block' : 'none';
+            if (!this.checked) document.getElementById('manualDepositLimitInput').value = '';
+        });
+        document.getElementById('userPrivCheckbox').addEventListener('change', function() {
+            document.getElementById('userLimitRow').style.display = this.checked ? 'block' : 'none';
+            if (!this.checked) document.getElementById('userViewOnlyInput').checked = false;
+        });
+        document.getElementById('productPrivCheckbox').addEventListener('change', function() {
+            document.getElementById('productPrivRow').style.display = this.checked ? 'block' : 'none';
+            if (this.checked) {
+                document.querySelector('.product-sub-priv[value="product_view"]').checked = true;
+            } else {
+                document.getElementById('productAllInput').checked = false;
+                document.querySelectorAll('.product-sub-priv').forEach(c => c.checked = false);
+            }
+        });
+        document.getElementById('productAllInput').addEventListener('change', function() {
+            document.querySelectorAll('.product-sub-priv').forEach(c => c.checked = this.checked);
+        });
+        document.querySelectorAll('.product-sub-priv').forEach(function(cb) {
+            cb.addEventListener('change', function() {
+                var all = document.querySelectorAll('.product-sub-priv');
+                var allChecked = Array.from(all).every(c => c.checked);
+                document.getElementById('productAllInput').checked = allChecked;
+            });
+        });
+
+        function collectPrivilegeLimits() {
+            const limits = {};
+            const ex = parseFloat(document.getElementById('adminExchangeLimit').value) || 0;
+            if (document.getElementById('exchangePrivCheckbox').checked && ex > 0) limits.exchange = ex;
+            const wd = parseFloat(document.getElementById('withdrawLimitInput').value) || 0;
+            if (document.getElementById('withdrawPrivCheckbox').checked && wd > 0) limits.withdraw = wd;
+            const dep = parseFloat(document.getElementById('depositLimitInput').value) || 0;
+            if (document.getElementById('depositPrivCheckbox').checked && dep > 0) limits.deposit = dep;
+            const md = parseFloat(document.getElementById('manualDepositLimitInput').value) || 0;
+            if (document.getElementById('manualDepositPrivCheckbox').checked && md > 0) limits.manual_deposit = md;
+            if (document.getElementById('userPrivCheckbox').checked && document.getElementById('userViewOnlyInput').checked) limits.user_view_only = true;
+            if (document.getElementById('productPrivCheckbox').checked) {
+                var productPerms = [];
+                if (document.getElementById('productAllInput').checked) {
+                    productPerms = ['product_view','product_add','product_edit','product_delete','product_enable','product_disable'];
+                } else {
+                    document.querySelectorAll('.product-sub-priv:checked').forEach(c => productPerms.push(c.value));
+                }
+                if (productPerms.length > 0) limits.product_permissions = productPerms;
+            }
+            return limits;
+        }
+
+        document.getElementById('generateAdminLink').onclick = async function() {
+            const name       = document.getElementById('adminName').value.trim();
+            const email      = document.getElementById('adminEmail').value.trim();
+            const phone      = document.getElementById('adminPhone').value.trim();
+            const password   = document.getElementById('adminPassword').value;
+            const api_key    = document.getElementById('adminApiKey').value.trim();
+            const privileges = Array.from(document.querySelectorAll('.privileges-list input[type="checkbox"]:checked')).map(cb => cb.value);
+            const status     = document.getElementById('adminStatus').value;
+            const expiry     = document.getElementById('adminLinkExpiry').value;
+
+            if (!name || !email || !phone || !password || !api_key || privileges.length === 0 || !status || !expiry) {
+                alert('Please fill all fields and select at least one privilege.');
+                return;
+            }
+
+            const btn = document.getElementById('generateAdminLink');
+            btn.disabled = true; btn.textContent = 'Creating...';
+
+            const privilege_limits = collectPrivilegeLimits();
+
+            try {
+                const res = await fetch('/api/admin/invite', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-admin-key': SUPER_ADMIN_KEY },
+                    body: JSON.stringify({ name, email, phone, password, api_key, privileges, status, expires_at: new Date(expiry).toISOString(), exchange_limit: parseFloat(document.getElementById('adminExchangeLimit').value) || 0, privilege_limits })
+                });
+                const data = await res.json();
+                if (!res.ok) { alert('Error: ' + (data.error || 'Failed')); return; }
+
+                const invite = data.invite;
+                const link = `${window.location.origin}/admin-login-admin.html?token=${invite.token}`;
+                document.getElementById('adminLinkResult').innerHTML =
+                    `<div style="background:rgba(78,205,196,0.1);border:1px solid #4ecdc4;border-radius:8px;padding:16px;">
+                        <p style="margin:0 0 8px;color:#4ecdc4;font-weight:600;"><i class="fas fa-check-circle"></i> Admin invite created!</p>
+                        <p style="margin:0 0 4px;color:#fff;">Link (share this with the admin):</p>
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                            <input type="text" value="${link}" readonly style="flex:1;min-width:200px;background:#0f172a;border:1px solid #4ecdc4;color:#4ecdc4;padding:8px;border-radius:6px;font-family:monospace;font-size:0.85rem;">
+                            <button onclick="navigator.clipboard.writeText(this.previousElementSibling.value).then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)})" style="background:#4ecdc4;color:#0f172a;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600;">Copy</button>
+                        </div>
+                        <p style="margin:8px 0 0;color:rgba(255,255,255,0.5);font-size:0.85rem;">Expires: ${new Date(invite.expires_at).toLocaleString()} &nbsp;|&nbsp; Privileges: ${(invite.privileges||[]).join(', ')}</p>
+                    </div>`;
+                loadAdmins();
+                document.getElementById('adminName').value = '';
+                document.getElementById('adminEmail').value = '';
+                document.getElementById('adminPhone').value = '';
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('adminApiKey').value = '';
+                document.querySelectorAll('.privileges-list input').forEach(c => c.checked = false);
+            } catch (e) {
+                alert('Request failed: ' + e.message);
+            } finally {
+                btn.disabled = false; btn.textContent = 'Generate Admin Link';
+            }
+        };
+
+        // ── Load and display existing admins ──────────────────────────────────
+        async function loadAdmins() {
+            const el = document.getElementById('adminsList');
+            el.innerHTML = '<span style="color:rgba(255,255,255,0.4);">Loading...</span>';
+            try {
+                const res = await fetch('/api/admin/invites', { headers: { 'x-admin-key': SUPER_ADMIN_KEY } });
+                const data = await res.json();
+                if (!res.ok || !data.admins) { el.innerHTML = '<span style="color:#ff6b6b;">Failed to load admins.</span>'; return; }
+                if (!data.admins.length) { el.innerHTML = '<span style="color:rgba(255,255,255,0.4);">No admins created yet.</span>'; return; }
+                el.innerHTML = data.admins.map(a => {
+                    const expired = new Date(a.expires_at) < new Date();
+                    const statusColor = a.status === 'active' && !expired ? '#4ecdc4' : '#ff6b6b';
+                    const privs = (a.privileges || []).join(', ') || 'none';
+                    const link = `${window.location.origin}/admin-login-admin.html?token=${a.token}`;
+                    const hasExchange = (a.privileges || []).includes('exchange');
+                    const exLimit = parseFloat(a.exchange_limit || 0);
+                    const exUsed = parseFloat(a.exchange_generated || 0);
+                    const exRemaining = Math.max(0, exLimit - exUsed);
+                    const exPct = exLimit > 0 ? Math.min(100, (exUsed / exLimit) * 100) : 0;
+                    const exBarColor = exPct >= 90 ? '#ff6b6b' : exPct >= 70 ? '#ffc107' : '#4ecdc4';
+                    const exchangeBlock = hasExchange ? `
+                        <div style="margin-top:10px;background:rgba(78,205,196,0.06);border:1px solid rgba(78,205,196,0.18);border-radius:6px;padding:10px 12px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                                <span style="color:#4ecdc4;font-size:0.8rem;font-weight:600;"><i class="fas fa-coins"></i> Exchange Limit</span>
+                                <div style="display:flex;gap:6px;align-items:center;">
+                                    <span style="color:rgba(255,255,255,0.5);font-size:0.78rem;">KES ${exUsed.toLocaleString()} / ${exLimit > 0 ? 'KES ' + exLimit.toLocaleString() : 'Unlimited'}</span>
+                                    ${exLimit > 0 ? `<button onclick="resetExchangeUsage(${a.id})" style="background:rgba(255,193,7,0.15);border:1px solid #ffc107;color:#ffc107;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:0.72rem;" title="Reset usage to 0"><i class="fas fa-undo"></i> Reset</button>` : ''}
+                                    <button onclick="updateExchangeLimit(${a.id})" style="background:rgba(78,205,196,0.15);border:1px solid #4ecdc4;color:#4ecdc4;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:0.72rem;" title="Edit limit"><i class="fas fa-edit"></i> Edit</button>
+                                </div>
+                            </div>
+                            ${exLimit > 0 ? `
+                            <div style="height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;">
+                                <div style="height:100%;width:${exPct}%;background:${exBarColor};border-radius:3px;transition:width 0.3s;"></div>
+                            </div>
+                            <div style="margin-top:4px;font-size:0.75rem;color:rgba(255,255,255,0.4);">Remaining: KES ${exRemaining.toLocaleString()}</div>` : '<div style="font-size:0.75rem;color:rgba(255,255,255,0.4);">No limit set — generates unlimited amounts</div>'}
+                        </div>` : '';
+                    const pl = a.privilege_limits || {};
+                    const limitTags = [];
+                    if (pl.withdraw > 0) limitTags.push(`<span style="background:rgba(255,107,107,0.15);border:1px solid rgba(255,107,107,0.4);color:#ff6b6b;padding:2px 7px;border-radius:4px;font-size:0.73rem;"><i class="fas fa-money-bill-transfer"></i> Withdraw ≤ KES ${Number(pl.withdraw).toLocaleString()}</span>`);
+                    if (pl.deposit > 0) limitTags.push(`<span style="background:rgba(40,167,69,0.15);border:1px solid rgba(40,167,69,0.4);color:#28a745;padding:2px 7px;border-radius:4px;font-size:0.73rem;"><i class="fas fa-money-bill-wave"></i> Deposit ≤ KES ${Number(pl.deposit).toLocaleString()}</span>`);
+                    if (pl.manual_deposit > 0) limitTags.push(`<span style="background:rgba(40,167,69,0.12);border:1px solid rgba(40,167,69,0.35);color:#5cb85c;padding:2px 7px;border-radius:4px;font-size:0.73rem;"><i class="fas fa-hand-holding-usd"></i> Manual Dep ≤ KES ${Number(pl.manual_deposit).toLocaleString()}</span>`);
+                    if (pl.user_view_only) limitTags.push(`<span style="background:rgba(108,99,255,0.15);border:1px solid rgba(108,99,255,0.4);color:#a29bfe;padding:2px 7px;border-radius:4px;font-size:0.73rem;"><i class="fas fa-eye"></i> Users: View Only</span>`);
+                    if (pl.product_permissions && pl.product_permissions.length) {
+                        const ppLabels = {'product_view':'View','product_add':'Add','product_edit':'Edit','product_delete':'Delete','product_enable':'Enable','product_disable':'Disable'};
+                        const ppAll = pl.product_permissions.length >= 6;
+                        const ppText = ppAll ? 'All' : pl.product_permissions.map(p => ppLabels[p]||p).join(', ');
+                        limitTags.push(`<span style="background:rgba(78,205,196,0.15);border:1px solid rgba(78,205,196,0.4);color:#4ecdc4;padding:2px 7px;border-radius:4px;font-size:0.73rem;"><i class="fas fa-boxes-stacked"></i> Products: ${ppText}</span>`);
+                    }
+                    const limitBlock = limitTags.length ? `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">${limitTags.join('')}</div>` : '';
+                    return `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:14px;margin-bottom:10px;">
+                        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                            <div>
+                                <strong style="color:#fff;">${a.name}</strong>
+                                <span style="color:rgba(255,255,255,0.5);font-size:0.85rem;"> — ${a.email}</span>
+                                <span style="background:${statusColor};color:#0f172a;border-radius:4px;padding:2px 8px;font-size:0.75rem;font-weight:700;margin-left:8px;">${expired ? 'EXPIRED' : a.status.toUpperCase()}</span>
+                            </div>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                <button onclick="copyLink('${link}')" style="background:rgba(78,205,196,0.15);border:1px solid #4ecdc4;color:#4ecdc4;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:0.8rem;" title="Copy invite link"><i class="fas fa-link"></i></button>
+                                <button onclick="openChargeModal(${a.id}, '${a.name.replace(/'/g, "\\'")}')" style="background:rgba(78,205,196,0.15);border:1px solid #4ecdc4;color:#4ecdc4;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:0.8rem;" title="Charge / Top-up"><i class="fas fa-coins"></i> Charge</button>
+                                <button onclick="toggleAdminStatus(${a.id}, '${a.status}')" style="background:rgba(255,193,7,0.15);border:1px solid #ffc107;color:#ffc107;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:0.8rem;" title="${a.status === 'active' ? 'Suspend' : 'Activate'}"><i class="fas fa-${a.status === 'active' ? 'pause' : 'play'}"></i></button>
+                                <button onclick="deleteAdmin(${a.id})" style="background:rgba(255,107,107,0.15);border:1px solid #ff6b6b;color:#ff6b6b;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:0.8rem;" title="Delete"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <div style="margin-top:8px;font-size:0.82rem;color:rgba(255,255,255,0.45);">
+                            <i class="fas fa-shield-alt"></i> ${privs} &nbsp;|&nbsp;
+                            <i class="fas fa-clock"></i> Expires ${new Date(a.expires_at).toLocaleDateString()} &nbsp;|&nbsp;
+                            <i class="fas fa-sign-in-alt"></i> Last login: ${a.last_login ? new Date(a.last_login).toLocaleString() : 'Never'}
+                        </div>
+                        ${limitBlock}
+                        ${exchangeBlock}
+                    </div>`;
+                }).join('');
+            } catch (e) {
+                el.innerHTML = '<span style="color:#ff6b6b;">Error: ' + e.message + '</span>';
+            }
+        }
+
+        function copyLink(link) {
+            navigator.clipboard.writeText(link).then(() => alert('Link copied to clipboard!'));
+        }
+
+        async function toggleAdminStatus(id, currentStatus) {
+            const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
+            if (!confirm('Change status to ' + newStatus + '?')) return;
+            await fetch('/api/admin/invite/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'x-admin-key': SUPER_ADMIN_KEY },
+                body: JSON.stringify({ status: newStatus })
+            });
+            loadAdmins();
+        }
+
+        async function deleteAdmin(id) {
+            if (!confirm('Delete this admin? They will no longer be able to log in.')) return;
+            await fetch('/api/admin/invite/' + id, {
+                method: 'DELETE',
+                headers: { 'x-admin-key': SUPER_ADMIN_KEY }
+            });
+            loadAdmins();
+        }
+
+        async function resetExchangeUsage(id) {
+            if (!confirm('Reset this admin\'s exchange usage back to KES 0? This gives them their full limit again.')) return;
+            const res = await fetch('/api/admin/exchange-reset/' + id, {
+                method: 'POST',
+                headers: { 'x-admin-key': SUPER_ADMIN_KEY }
+            });
+            if (res.ok) { loadAdmins(); } else { alert('Failed to reset usage.'); }
+        }
+
+        async function updateExchangeLimit(id) {
+            const newLimit = prompt('Enter new Exchange Limit (KES). Enter 0 for unlimited:');
+            if (newLimit === null) return;
+            const parsed = parseFloat(newLimit);
+            if (isNaN(parsed) || parsed < 0) { alert('Invalid amount.'); return; }
+            const res = await fetch('/api/admin/invite/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'x-admin-key': SUPER_ADMIN_KEY },
+                body: JSON.stringify({ exchange_limit: parsed })
+            });
+            if (res.ok) { loadAdmins(); } else { alert('Failed to update limit.'); }
+        }
+
+        // ── Charge modal ──────────────────────────────────────────────────────
+        let chargeTargetId = null;
+        let chargeType = 'credit';
+
+        function openChargeModal(id, name) {
+            chargeTargetId = id;
+            chargeType = 'credit';
+            document.getElementById('chargeModalSubtitle').textContent = 'Admin: ' + name;
+            document.getElementById('chargeAmount').value = '';
+            document.getElementById('chargeReason').value = '';
+            setChargeType('credit');
+            document.getElementById('chargeModal').style.display = 'flex';
+        }
+
+        function closeChargeModal() {
+            document.getElementById('chargeModal').style.display = 'none';
+            chargeTargetId = null;
+        }
+
+        function setChargeType(type) {
+            chargeType = type;
+            const creditBtn = document.getElementById('chargeTypeCreditBtn');
+            const debitBtn  = document.getElementById('chargeTypeDebitBtn');
+            const desc      = document.getElementById('chargeTypeDesc');
+            if (type === 'credit') {
+                creditBtn.style.borderColor = '#4ecdc4';
+                creditBtn.style.background  = 'rgba(78,205,196,0.15)';
+                creditBtn.style.color       = '#4ecdc4';
+                debitBtn.style.borderColor  = 'rgba(255,255,255,0.15)';
+                debitBtn.style.background   = 'transparent';
+                debitBtn.style.color        = 'rgba(255,255,255,0.5)';
+                desc.innerHTML = '<i class="fas fa-info-circle" style="color:#4ecdc4;"></i> <b>Credit</b> adds to the admin\'s exchange generation limit (they can generate more codes).';
+                desc.style.background = 'rgba(78,205,196,0.06)';
+            } else {
+                debitBtn.style.borderColor  = '#ff6b6b';
+                debitBtn.style.background   = 'rgba(255,107,107,0.15)';
+                debitBtn.style.color        = '#ff6b6b';
+                creditBtn.style.borderColor = 'rgba(255,255,255,0.15)';
+                creditBtn.style.background  = 'transparent';
+                creditBtn.style.color       = 'rgba(255,255,255,0.5)';
+                desc.innerHTML = '<i class="fas fa-info-circle" style="color:#ff6b6b;"></i> <b>Debit</b> deducts from the admin\'s exchange generation limit (charge a fee or penalty).';
+                desc.style.background = 'rgba(255,107,107,0.06)';
+            }
+        }
+
+        async function submitCharge() {
+            const amt = parseFloat(document.getElementById('chargeAmount').value);
+            const reason = document.getElementById('chargeReason').value.trim();
+            if (!chargeTargetId) return;
+            if (isNaN(amt) || amt <= 0) { alert('Please enter a valid amount.'); return; }
+
+            const btn = document.querySelector('#chargeModal button[onclick="submitCharge()"]');
+            const origText = btn.textContent;
+            btn.disabled = true; btn.textContent = 'Applying...';
+
+            try {
+                const res = await fetch('/api/admin/charge-sub-admin/' + chargeTargetId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-admin-key': SUPER_ADMIN_KEY },
+                    body: JSON.stringify({ amount: amt, type: chargeType, reason })
+                });
+                const data = await res.json();
+                if (!res.ok) { alert('Error: ' + (data.error || 'Failed')); return; }
+
+                const action = chargeType === 'credit' ? 'credited' : 'debited';
+                alert('Successfully ' + action + ' KES ' + amt.toLocaleString() + ' to ' + data.name + '.\nNew exchange limit: KES ' + parseFloat(data.new_limit).toLocaleString());
+                closeChargeModal();
+                loadAdmins();
+            } catch (e) {
+                alert('Request failed: ' + e.message);
+            } finally {
+                btn.disabled = false; btn.textContent = origText;
+            }
+        }
+
+        async function viewChargeHistory() {
+            if (!chargeTargetId) return;
+            const histModal = document.getElementById('chargeHistoryModal');
+            const content   = document.getElementById('chargeHistoryContent');
+            content.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);">Loading...</div>';
+            document.getElementById('chargeModal').style.display = 'none';
+            histModal.style.display = 'flex';
+
+            try {
+                const res = await fetch('/api/admin/charge-history/' + chargeTargetId, {
+                    headers: { 'x-admin-key': SUPER_ADMIN_KEY }
+                });
+                const data = await res.json();
+                if (!res.ok) { content.innerHTML = '<p style="color:#ff6b6b;">Failed to load history.</p>'; return; }
+
+                if (!data.charges.length) {
+                    content.innerHTML = '<p style="text-align:center;color:rgba(255,255,255,0.3);padding:24px 0;">No charges recorded yet.</p>';
+                    return;
+                }
+
+                const summary = `
+                    <div style="display:flex;gap:12px;margin-bottom:16px;">
+                        <div style="flex:1;background:rgba(78,205,196,0.08);border:1px solid rgba(78,205,196,0.2);border-radius:8px;padding:12px;text-align:center;">
+                            <div style="color:#4ecdc4;font-weight:700;font-size:1.1rem;">KES ${parseFloat(data.total_credited).toLocaleString()}</div>
+                            <div style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin-top:2px;">Total Credited</div>
+                        </div>
+                        <div style="flex:1;background:rgba(255,107,107,0.08);border:1px solid rgba(255,107,107,0.2);border-radius:8px;padding:12px;text-align:center;">
+                            <div style="color:#ff6b6b;font-weight:700;font-size:1.1rem;">KES ${parseFloat(data.total_debited).toLocaleString()}</div>
+                            <div style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin-top:2px;">Total Debited</div>
+                        </div>
+                    </div>`;
+
+                const rows = data.charges.map(c => {
+                    const isCredit = c.type === 'credit';
+                    const color = isCredit ? '#4ecdc4' : '#ff6b6b';
+                    const icon  = isCredit ? 'fa-plus-circle' : 'fa-minus-circle';
+                    const date  = new Date(c.created_at).toLocaleString();
+                    return `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+                        <div>
+                            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+                                <i class="fas ${icon}" style="color:${color};font-size:0.85rem;"></i>
+                                <span style="color:#fff;font-weight:600;">${isCredit ? '+' : '-'}KES ${parseFloat(c.amount).toLocaleString()}</span>
+                                <span style="background:${isCredit ? 'rgba(78,205,196,0.15)' : 'rgba(255,107,107,0.15)'};color:${color};border-radius:4px;padding:1px 7px;font-size:0.72rem;font-weight:700;">${c.type.toUpperCase()}</span>
+                            </div>
+                            <div style="color:rgba(255,255,255,0.4);font-size:0.78rem;">${c.reason || '<em>No reason provided</em>'}</div>
+                        </div>
+                        <div style="color:rgba(255,255,255,0.35);font-size:0.75rem;text-align:right;white-space:nowrap;margin-left:10px;">${date}</div>
+                    </div>`;
+                }).join('');
+
+                content.innerHTML = summary + rows;
+            } catch (e) {
+                content.innerHTML = '<p style="color:#ff6b6b;">Error: ' + e.message + '</p>';
+            }
+        }
+
+        // ── Other existing functions ───────────────────────────────────────────
+        function confirmSystemReset() { document.getElementById('resetConfirmModal').style.display = 'flex'; }
+        function closeAdminModal() { document.getElementById('resetConfirmModal').style.display = 'none'; }
+        function executeSystemReset() {
+            const key = document.getElementById('resetSecurityKey').value;
+            if (key === '1540568e') { localStorage.clear(); sessionStorage.clear(); location.reload(); }
+            else alert('Incorrect security key.');
+        }
+
+        function renderDepositNotifications() {
+            let notifications = [];
+            try { notifications = JSON.parse(localStorage.getItem('adminDepositNotifications') || '[]'); } catch {}
+            const list = document.getElementById('depositNotificationsList');
+            if (!list) return;
+            list.innerHTML = !notifications.length
+                ? '<li style="color:#aaa;">No deposit trials yet.</li>'
+                : notifications.map(n => {
+                    let info = `<strong>${n.number||'N/A'}</strong> tried to deposit <strong>KES ${n.amount||'N/A'}</strong>`;
+                    if (n.txid) info += ` (TxID: <span style='color:#ffd54f;'>${n.txid}</span>)`;
+                    info += ` <span style='font-size:0.95em;color:#aaa;'>[${new Date(n.time).toLocaleString()}]</span>`;
+                    return `<li style='margin-bottom:8px;'>${info}</li>`;
+                }).join('');
+        }
+
+        // Init on load
+        loadAdmins();
+        renderDepositNotifications();
+        setInterval(renderDepositNotifications, 5000);
+    </script>
+
+<script>
+(function() {
+  if (localStorage.getItem('ab_sub_admin')) {
+    document.querySelectorAll('a[href="Admin-panel.html"]').forEach(function(a) {
+      a.href = 'sub-admin-panel.html';
+      var t = a.textContent.trim();
+      if (t.includes('Admin Panel') || t === 'Back') a.textContent = '← Back to Dashboard';
+    });
+  }
+})();
+</script>
+<script src="/js/admin-pin.js"></script>
+</body>
+</html>

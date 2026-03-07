@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="env.js"></script>
+    <script type="module" src="bootstrap.js"></script>
+    <title>AfricaBased - Africa's Investment Platform</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #050b15;
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes subtleFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* ── Welcome Screen (full page) ── */
+        .welcome-screen {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 40px 24px;
+            text-align: center;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .welcome-screen.hidden {
+            opacity: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
+            position: absolute;
+            inset: 0;
+        }
+
+        .welcome-screen::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(78,205,196,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(78,205,196,0.03) 1px, transparent 1px);
+            background-size: 56px 56px;
+            pointer-events: none;
+        }
+
+        .welcome-screen::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 240px;
+            background: linear-gradient(to top, #050b15, transparent);
+            pointer-events: none;
+        }
+
+        .welcome-glow {
+            position: absolute;
+            top: -150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(78,205,196,0.07) 0%, transparent 65%);
+            pointer-events: none;
+            z-index: 0;
+            animation: subtleFloat 8s ease-in-out infinite;
+        }
+
+        .welcome-glow-2 {
+            position: absolute;
+            bottom: -100px;
+            left: -150px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            animation: subtleFloat 10s ease-in-out infinite reverse;
+        }
+
+        .welcome-glow-3 {
+            position: absolute;
+            bottom: -80px;
+            right: -150px;
+            width: 380px;
+            height: 380px;
+            background: radial-gradient(circle, rgba(78,205,196,0.04) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            animation: subtleFloat 12s ease-in-out infinite;
+        }
+
+        .welcome-inner {
+            position: relative;
+            z-index: 1;
+            max-width: 680px;
+            animation: fadeInUp 0.7s ease-out;
+        }
+
+        .welcome-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 48px;
+        }
+
+        .welcome-logo-icon {
+            width: 64px; height: 64px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .welcome-logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 16px rgba(78,205,196,0.2));
+        }
+
+        .welcome-logo span {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.5px;
+        }
+
+        .welcome-eyebrow {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #4ecdc4;
+            margin-bottom: 20px;
+            opacity: 0.85;
+        }
+
+        .welcome-headline {
+            font-size: 3.2rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.12;
+            letter-spacing: -2px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 600px) {
+            .welcome-headline { font-size: 2.2rem; letter-spacing: -1px; }
+        }
+
+        .welcome-headline .accent {
+            background: linear-gradient(135deg, #4ecdc4, #2dd4bf, #4ecdc4);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 4s linear infinite;
+        }
+
+        .welcome-sub {
+            font-size: 1.05rem;
+            color: rgba(255,255,255,0.42);
+            line-height: 1.8;
+            margin-bottom: 48px;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+            font-weight: 400;
+        }
+
+        .welcome-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-bottom: 64px;
+            flex-wrap: wrap;
+        }
+
+        .btn-signup {
+            padding: 16px 40px;
+            background: linear-gradient(135deg, #4ecdc4 0%, #44b8b0 100%);
+            color: #050b15;
+            font-weight: 700;
+            font-size: 1rem;
+            font-family: inherit;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.2s, filter 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(78,205,196,0.25);
+            letter-spacing: 0.1px;
+        }
+
+        .btn-signup:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(78,205,196,0.35);
+            filter: brightness(1.05);
+        }
+
+        .btn-signup:active { transform: translateY(0); }
+
+        .btn-signin {
+            padding: 16px 40px;
+            background: rgba(255,255,255,0.04);
+            color: rgba(255,255,255,0.8);
+            font-weight: 600;
+            font-size: 1rem;
+            font-family: inherit;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.15s, border-color 0.2s, background 0.2s, color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 0.1px;
+        }
+
+        .btn-signin:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.07);
+            color: #fff;
+        }
+
+        .btn-signin:active { transform: translateY(0); }
+
+        .welcome-stats {
+            display: flex;
+            gap: 0;
+            justify-content: center;
+            margin-bottom: 56px;
+        }
+
+        @media (max-width: 500px) {
+            .welcome-stats { flex-direction: column; gap: 20px; }
+            .welcome-stat-item { border-right: none !important; padding: 0 !important; }
+        }
+
+        .welcome-stat-item {
+            flex: 0 1 auto;
+            padding: 0 36px;
+            border-right: 1px solid rgba(255,255,255,0.07);
+        }
+
+        .welcome-stat-item:last-child { border-right: none; }
+
+        .welcome-stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.5px;
+            line-height: 1;
+        }
+
+        .welcome-stat-label {
+            font-size: 0.74rem;
+            color: rgba(255,255,255,0.32);
+            margin-top: 6px;
+            letter-spacing: 0.3px;
+            font-weight: 500;
+        }
+
+        .welcome-steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            max-width: 700px;
+            margin: 0 auto 48px;
+        }
+
+        @media (max-width: 700px) {
+            .welcome-steps { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 400px) {
+            .welcome-steps { grid-template-columns: 1fr; }
+        }
+
+        .welcome-step {
+            text-align: center;
+            padding: 20px 12px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .welcome-step:hover {
+            border-color: rgba(78,205,196,0.15);
+            background: rgba(78,205,196,0.03);
+        }
+
+        .welcome-step-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            background: rgba(78,205,196,0.08);
+            border: 1px solid rgba(78,205,196,0.15);
+            display: inline-flex; align-items: center; justify-content: center;
+            color: #4ecdc4;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
+
+        .welcome-step strong {
+            display: block;
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.85);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .welcome-step span {
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.28);
+            line-height: 1.5;
+        }
+
+        .welcome-trust {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .welcome-trust-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.76rem;
+            color: rgba(255,255,255,0.35);
+            font-weight: 500;
+        }
+
+        .welcome-trust-item i { color: rgba(78,205,196,0.7); font-size: 0.72rem; }
+
+        /* ── Registration Screen ── */
+        .register-screen {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .register-screen.visible {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .signup-panel {
+            width: 100%;
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 40px 24px 48px;
+            position: relative;
+        }
+
+        @media (min-width: 600px) {
+            .signup-panel {
+                padding: 48px 48px 56px;
+            }
+        }
+
+        .signup-panel-inner {
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        .signup-brand {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .signup-brand-icon {
+            width: 72px; height: 72px;
+            display: inline-flex; align-items: center; justify-content: center;
+            margin-bottom: 14px;
+        }
+
+        .signup-brand-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 12px rgba(78,205,196,0.2));
+        }
+
+        .signup-brand h1 {
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.45);
+            font-size: 0.84rem;
+            font-family: inherit;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 8px 0;
+            margin-bottom: 20px;
+            transition: color 0.2s;
+        }
+
+        .back-btn:hover { color: #4ecdc4; }
+
+        .back-btn i { font-size: 0.75rem; }
+
+        .form-header { margin-bottom: 30px; }
+
+        .form-header h2 {
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        .form-header p {
+            font-size: 0.88rem;
+            color: rgba(255,255,255,0.38);
+            font-weight: 400;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 540px) { .form-row { grid-template-columns: 1fr; } }
+
+        .field { margin-bottom: 18px; }
+
+        .field label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .opt-badge {
+            font-size: 0.58rem;
+            background: rgba(78,205,196,0.1);
+            color: rgba(78,205,196,0.65);
+            padding: 2px 7px;
+            border-radius: 4px;
+            letter-spacing: 0.3px;
+            margin-left: 6px;
+            vertical-align: middle;
+            font-weight: 600;
+        }
+
+        .input-wrap { position: relative; }
+
+        .input-wrap .prefix-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.18);
+            font-size: 0.82rem;
+            pointer-events: none;
+            transition: color 0.2s;
+        }
+
+        .input-wrap input {
+            width: 100%;
+            padding: 12px 14px 12px 40px;
+            background: rgba(255,255,255,0.035);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .input-wrap input::placeholder { color: rgba(255,255,255,0.18); }
+
+        .input-wrap input:focus {
+            border-color: rgba(78,205,196,0.45);
+            background: rgba(78,205,196,0.035);
+            box-shadow: 0 0 0 3px rgba(78,205,196,0.07), 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .input-wrap:has(input:focus) .prefix-icon {
+            color: rgba(78,205,196,0.6);
+        }
+
+        .eye-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.2);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 0.82rem;
+            transition: color 0.2s;
+        }
+
+        .eye-btn:hover { color: rgba(255,255,255,0.5); }
+        .has-eye { padding-right: 40px !important; }
+
+        .field-err {
+            font-size: 0.74rem;
+            color: #f87171;
+            margin-top: 6px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .strength-bar {
+            height: 3px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .strength-bar span {
+            display: block;
+            height: 100%;
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.35s ease, background 0.35s ease;
+        }
+
+        .check-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 11px;
+            margin-bottom: 14px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .check-row:hover {
+            border-color: rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.03);
+        }
+
+        .check-row input {
+            accent-color: #4ecdc4;
+            width: 16px; height: 16px;
+            margin-top: 1px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .check-row label {
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.48);
+            line-height: 1.55;
+            cursor: pointer;
+        }
+
+        .check-row label a { color: #4ecdc4; text-decoration: none; font-weight: 500; }
+        .check-row label a:hover { text-decoration: underline; }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #4ecdc4 0%, #44b8b0 100%);
+            color: #050b15;
+            font-weight: 700;
+            font-size: 0.96rem;
+            font-family: inherit;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.2s, filter 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            letter-spacing: 0.1px;
+            margin-top: 6px;
+            margin-bottom: 4px;
+            box-shadow: 0 2px 12px rgba(78,205,196,0.2);
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(78,205,196,0.3);
+            filter: brightness(1.05);
+        }
+
+        .submit-btn:active:not(:disabled) { transform: translateY(0); box-shadow: 0 2px 8px rgba(78,205,196,0.2); }
+        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; filter: none; }
+
+        .spinner {
+            width: 16px; height: 16px;
+            border: 2px solid rgba(0,0,0,0.15);
+            border-top-color: #050b15;
+            border-radius: 50%;
+            animation: spin 0.65s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.84rem;
+            margin-top: 14px;
+            display: none;
+            line-height: 1.55;
+            font-weight: 500;
+        }
+
+        .alert-error {
+            background: rgba(248,113,113,0.07);
+            border: 1px solid rgba(248,113,113,0.18);
+            color: #fca5a5;
+        }
+
+        .alert-success {
+            background: rgba(52,211,153,0.07);
+            border: 1px solid rgba(52,211,153,0.18);
+            color: #6ee7b7;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 22px 0;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .divider span { font-size: 0.78rem; color: rgba(255,255,255,0.25); white-space: nowrap; font-weight: 400; }
+
+        .bottom-link {
+            text-align: center;
+            font-size: 0.88rem;
+            color: rgba(255,255,255,0.38);
+        }
+
+        .bottom-link a {
+            color: #4ecdc4;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+        .bottom-link a:hover { color: #5ee0d7; text-decoration: underline; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ════════ WELCOME SCREEN ════════ -->
+    <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-glow"></div>
+        <div class="welcome-glow-2"></div>
+        <div class="welcome-glow-3"></div>
+        <div class="welcome-inner">
+            <div class="welcome-logo">
+                <div class="welcome-logo-icon"><img src="/public/logo.png" alt="AfricaBased Logo"></div>
+                <span>AfricaBased</span>
+            </div>
+
+            <p class="welcome-eyebrow">Africa's Investment Platform</p>
+
+            <h1 class="welcome-headline">
+                Grow your wealth<br>
+                with <span class="accent">daily returns</span>
+            </h1>
+            <p class="welcome-sub">Join thousands of African investors earning consistent daily profits. Deposit via M-Pesa and start growing in minutes.</p>
+
+            <div class="welcome-buttons">
+                <button class="btn-signup" id="goToSignUp"><i class="fas fa-user-plus"></i> Sign Up</button>
+                <a href="/login" class="btn-signin"><i class="fas fa-sign-in-alt"></i> Sign In</a>
+            </div>
+
+            <div class="welcome-stats">
+                <div class="welcome-stat-item">
+                    <div class="welcome-stat-value">10K+</div>
+                    <div class="welcome-stat-label">Active investors</div>
+                </div>
+                <div class="welcome-stat-item">
+                    <div class="welcome-stat-value">M-Pesa</div>
+                    <div class="welcome-stat-label">Instant deposits</div>
+                </div>
+                <div class="welcome-stat-item">
+                    <div class="welcome-stat-value">Daily</div>
+                    <div class="welcome-stat-label">Profit payouts</div>
+                </div>
+            </div>
+
+            <div class="welcome-steps">
+                <div class="welcome-step">
+                    <div class="welcome-step-icon"><i class="fas fa-user-plus"></i></div>
+                    <strong>Create account</strong>
+                    <span>Register free in under 60 seconds</span>
+                </div>
+                <div class="welcome-step">
+                    <div class="welcome-step-icon"><i class="fas fa-mobile-alt"></i></div>
+                    <strong>Add M-Pesa</strong>
+                    <span>Link your payment details</span>
+                </div>
+                <div class="welcome-step">
+                    <div class="welcome-step-icon"><i class="fas fa-chart-line"></i></div>
+                    <strong>Invest</strong>
+                    <span>Pick a plan &amp; fund instantly</span>
+                </div>
+                <div class="welcome-step">
+                    <div class="welcome-step-icon"><i class="fas fa-wallet"></i></div>
+                    <strong>Earn daily</strong>
+                    <span>Withdraw anytime to M-Pesa</span>
+                </div>
+            </div>
+
+            <div class="welcome-trust">
+                <div class="welcome-trust-item"><i class="fas fa-shield-alt"></i> Secure &amp; encrypted</div>
+                <div class="welcome-trust-item"><i class="fas fa-lock"></i> KYC protected</div>
+                <div class="welcome-trust-item"><i class="fas fa-check-circle"></i> Free to join</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════ REGISTRATION SCREEN (hidden initially) ════════ -->
+    <div class="register-screen" id="registerScreen">
+
+        <!-- Sign up form panel (full width) -->
+        <div class="signup-panel">
+            <div class="signup-panel-inner">
+                <div class="signup-brand">
+                    <div class="signup-brand-icon"><img src="/public/logo.png" alt="AfricaBased Logo"></div>
+                    <h1>AfricaBased</h1>
+                </div>
+
+                <button class="back-btn" id="backToWelcome"><i class="fas fa-arrow-left"></i> Back</button>
+
+                <div class="form-header">
+                    <h2>Create your account</h2>
+                    <p>Join thousands of African investors — it's free</p>
+                </div>
+
+                <form id="registerForm" novalidate>
+                    <div class="form-row">
+                        <div class="field">
+                            <label for="username">Username</label>
+                            <div class="input-wrap">
+                                <i class="fas fa-user prefix-icon"></i>
+                                <input type="text" id="username" autocomplete="username" placeholder="your_username">
+                            </div>
+                            <div class="field-err" id="usernameErr"></div>
+                        </div>
+                        <div class="field">
+                            <label for="email">Email address</label>
+                            <div class="input-wrap">
+                                <i class="fas fa-envelope prefix-icon"></i>
+                                <input type="email" id="email" autocomplete="email" placeholder="name@example.com">
+                            </div>
+                            <div class="field-err" id="emailErr"></div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="password">Password</label>
+                        <div class="input-wrap">
+                            <i class="fas fa-lock prefix-icon"></i>
+                            <input type="password" id="password" class="has-eye" autocomplete="new-password" placeholder="Min. 8 characters">
+                            <button type="button" class="eye-btn" id="togglePwd"><i class="fas fa-eye-slash"></i></button>
+                        </div>
+                        <div class="strength-bar"><span id="strengthBar"></span></div>
+                        <div class="field-err" id="passwordErr"></div>
+                    </div>
+
+                    <div class="field">
+                        <label for="confirmPassword">Confirm password</label>
+                        <div class="input-wrap">
+                            <i class="fas fa-lock prefix-icon"></i>
+                            <input type="password" id="confirmPassword" class="has-eye" autocomplete="new-password" placeholder="Repeat your password">
+                            <button type="button" class="eye-btn" id="toggleConfirm"><i class="fas fa-eye-slash"></i></button>
+                        </div>
+                        <div class="field-err" id="confirmErr"></div>
+                    </div>
+
+                    <div class="field">
+                        <label for="referral">Referral code <span class="opt-badge">OPTIONAL</span></label>
+                        <div class="input-wrap">
+                            <i class="fas fa-ticket-alt prefix-icon"></i>
+                            <input type="text" id="referral" autocomplete="off" placeholder="e.g. AB12CD34" style="text-transform:uppercase;">
+                        </div>
+                    </div>
+
+                    <div class="check-row">
+                        <input type="checkbox" id="fingerprintOpt">
+                        <label for="fingerprintOpt">
+                            <i class="fas fa-fingerprint" style="color:#4ecdc4;margin-right:5px;"></i>
+                            Enable device fingerprinting for added security <span class="opt-badge">OPTIONAL</span>
+                        </label>
+                    </div>
+
+                    <div class="check-row">
+                        <input type="checkbox" id="terms">
+                        <label for="terms">I agree to the <a href="/terms" target="_blank">Terms &amp; Conditions</a> and <a href="/terms" target="_blank">Privacy Policy</a></label>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <span id="btnText">Create Account</span>
+                    </button>
+
+                    <div class="alert alert-error"   id="errorAlert"></div>
+                    <div class="alert alert-success" id="successAlert"></div>
+                </form>
+
+                <div class="divider"><span>Already have an account?</span></div>
+                <div class="bottom-link"><a href="/login">Sign in instead</a></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+    import { signUp, sendRegistrationOtp, getSession, getDeviceFingerprint } from './js/api-auth.js';
+
+    (async () => {
+        const { session } = await getSession();
+        if (session) window.location.href = '/home';
+    })();
+
+    const welcomeScreen = document.getElementById('welcomeScreen');
+    const registerScreen = document.getElementById('registerScreen');
+
+    document.getElementById('goToSignUp').addEventListener('click', () => {
+        welcomeScreen.classList.add('hidden');
+        setTimeout(() => {
+            registerScreen.classList.add('visible');
+        }, 300);
+    });
+
+    document.getElementById('backToWelcome').addEventListener('click', () => {
+        registerScreen.classList.remove('visible');
+        setTimeout(() => {
+            welcomeScreen.classList.remove('hidden');
+        }, 50);
+    });
+
+    const refParam = new URLSearchParams(location.search).get('ref') || '';
+    if (refParam) {
+        const el = document.getElementById('referral');
+        if (el) el.value = refParam.toUpperCase();
+        welcomeScreen.classList.add('hidden');
+        registerScreen.classList.add('visible');
+    }
+
+    const toggleBtn = (btnId, inputId) => {
+        document.getElementById(btnId).addEventListener('click', () => {
+            const inp  = document.getElementById(inputId);
+            const icon = document.querySelector('#' + btnId + ' i');
+            inp.type   = inp.type === 'password' ? 'text' : 'password';
+            icon.className = inp.type === 'password' ? 'fas fa-eye-slash' : 'fas fa-eye';
+        });
+    };
+    toggleBtn('togglePwd', 'password');
+    toggleBtn('toggleConfirm', 'confirmPassword');
+
+    document.getElementById('password').addEventListener('input', function() {
+        const v   = this.value;
+        const bar = document.getElementById('strengthBar');
+        let score = 0;
+        if (v.length >= 8)            score++;
+        if (/[A-Z]/.test(v))          score++;
+        if (/[0-9]/.test(v))          score++;
+        if (/[^A-Za-z0-9]/.test(v))   score++;
+        const w = ['0%','25%','50%','75%','100%'];
+        const c = ['transparent','#ef4444','#f59e0b','#3b82f6','#10b981'];
+        bar.style.width      = w[score];
+        bar.style.background = c[score];
+    });
+
+    function showErr(id, msg) {
+        const el = document.getElementById(id);
+        el.textContent  = msg;
+        el.style.display = msg ? 'block' : 'none';
+    }
+
+    let _pendingReg = null;
+    let _otpCountdown = null;
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        ['usernameErr','emailErr','passwordErr','confirmErr'].forEach(id => showErr(id, ''));
+        const errorAlert = document.getElementById('errorAlert');
+        errorAlert.style.display = 'none';
+
+        const username         = document.getElementById('username').value.trim();
+        const email            = document.getElementById('email').value.trim();
+        const password         = document.getElementById('password').value;
+        const confirm          = document.getElementById('confirmPassword').value;
+        const referral         = document.getElementById('referral').value.trim();
+        const terms            = document.getElementById('terms').checked;
+        const fingerprintOpted = document.getElementById('fingerprintOpt').checked;
+
+        let valid = true;
+        if (!username || username.length < 3)              { showErr('usernameErr', 'Username must be at least 3 characters'); valid = false; }
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('emailErr', 'Enter a valid email address'); valid = false; }
+        if (password.length < 8)                           { showErr('passwordErr', 'Password must be at least 8 characters'); valid = false; }
+        if (password !== confirm)                          { showErr('confirmErr', 'Passwords do not match'); valid = false; }
+        if (!terms) {
+            errorAlert.textContent  = 'Please accept the Terms & Conditions to continue.';
+            errorAlert.style.display = 'block';
+            valid = false;
+        }
+        if (!valid) return;
+
+        const btn     = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        btn.disabled  = true;
+        btnText.innerHTML = '<span class="spinner"></span> Sending code...';
+
+        try {
+            const fp = fingerprintOpted ? await getDeviceFingerprint() : null;
+            const { data, error } = await sendRegistrationOtp(username, email, password);
+            if (error) {
+                errorAlert.textContent  = error.message || 'Failed to send code. Please try again.';
+                errorAlert.style.display = 'block';
+                btn.disabled  = false;
+                btnText.textContent = 'Create Account';
+                return;
+            }
+            _pendingReg = { username, email, password, referral: referral || undefined, fp };
+            showOtpModal(email);
+            btn.disabled  = false;
+            btnText.textContent = 'Create Account';
+        } catch (err) {
+            errorAlert.textContent  = 'Something went wrong. Please try again.';
+            errorAlert.style.display = 'block';
+            btn.disabled  = false;
+            btnText.textContent = 'Create Account';
+        }
+    });
+
+    function showOtpModal(email) {
+        document.getElementById('otpEmailDisplay').textContent = email;
+        document.getElementById('otpModal').style.display = 'flex';
+        document.getElementById('otpErr').style.display = 'none';
+        document.getElementById('otpConfirmBtn').disabled = false;
+        document.getElementById('otpConfirmBtn').innerHTML = '<i class="fas fa-check"></i> Verify & Create Account';
+        document.querySelectorAll('.otp-digit').forEach(i => i.value = '');
+        document.querySelector('.otp-digit').focus();
+        startOtpCountdown();
+    }
+
+    function startOtpCountdown() {
+        clearInterval(_otpCountdown);
+        let secs = 300;
+        const tick = () => {
+            const m = String(Math.floor(secs / 60)).padStart(2,'0');
+            const s = String(secs % 60).padStart(2,'0');
+            document.getElementById('otpTimer').textContent = m + ':' + s;
+            if (secs <= 0) {
+                clearInterval(_otpCountdown);
+                document.getElementById('otpErr').textContent = 'Code expired. Please request a new one.';
+                document.getElementById('otpErr').style.display = 'block';
+                document.getElementById('otpConfirmBtn').disabled = true;
+            }
+            secs--;
+        };
+        tick();
+        _otpCountdown = setInterval(tick, 1000);
+    }
+
+    document.querySelectorAll('.otp-digit').forEach((inp, idx, all) => {
+        inp.addEventListener('input', () => {
+            inp.value = inp.value.replace(/[^0-9]/g,'').slice(-1);
+            if (inp.value && idx < all.length - 1) all[idx + 1].focus();
+        });
+        inp.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && !inp.value && idx > 0) all[idx - 1].focus();
+        });
+        inp.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const digits = (e.clipboardData.getData('text') || '').replace(/[^0-9]/g,'').slice(0,6);
+            all.forEach((el, i) => { el.value = digits[i] || ''; });
+            all[Math.min(digits.length, 5)].focus();
+        });
+    });
+
+    document.getElementById('otpConfirmBtn').addEventListener('click', async () => {
+        const otp = Array.from(document.querySelectorAll('.otp-digit')).map(i => i.value).join('');
+        if (otp.length < 6) {
+            document.getElementById('otpErr').textContent = 'Please enter the full 6-digit code.';
+            document.getElementById('otpErr').style.display = 'block';
+            return;
+        }
+        const btn = document.getElementById('otpConfirmBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Verifying...';
+        document.getElementById('otpErr').style.display = 'none';
+
+        const { username, email, password, referral, fp } = _pendingReg;
+        const { data, error } = await signUp(username, null, email, password, otp, referral, fp);
+        if (error) {
+            document.getElementById('otpErr').textContent = error.message || 'Verification failed.';
+            document.getElementById('otpErr').style.display = 'block';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check"></i> Verify & Create Account';
+            return;
+        }
+        clearInterval(_otpCountdown);
+        document.getElementById('otpModal').style.display = 'none';
+        const successAlert = document.getElementById('successAlert');
+        successAlert.innerHTML = 'Account created! Please complete your profile to get started.';
+        successAlert.style.display = 'block';
+        setTimeout(() => window.location.href = '/profile', 1800);
+    });
+
+    document.getElementById('otpResendBtn').addEventListener('click', async () => {
+        if (!_pendingReg) return;
+        const { username, email, password } = _pendingReg;
+        document.getElementById('otpResendBtn').disabled = true;
+        document.getElementById('otpResendBtn').textContent = 'Sending...';
+        const { error } = await sendRegistrationOtp(username, email, password);
+        if (error) {
+            document.getElementById('otpErr').textContent = error.message;
+            document.getElementById('otpErr').style.display = 'block';
+        } else {
+            document.querySelectorAll('.otp-digit').forEach(i => i.value = '');
+            document.querySelector('.otp-digit').focus();
+            document.getElementById('otpErr').style.display = 'none';
+            startOtpCountdown();
+        }
+        setTimeout(() => {
+            document.getElementById('otpResendBtn').disabled = false;
+            document.getElementById('otpResendBtn').textContent = 'Resend Code';
+        }, 30000);
+    });
+
+    document.getElementById('otpCancelBtn').addEventListener('click', () => {
+        clearInterval(_otpCountdown);
+        document.getElementById('otpModal').style.display = 'none';
+        _pendingReg = null;
+    });
+    </script>
+
+    <!-- OTP Verification Modal -->
+    <div id="otpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center;padding:20px">
+      <div style="background:linear-gradient(180deg,#0d1b2a 0%,#0a1424 100%);border:1px solid rgba(78,205,196,0.1);border-radius:18px;padding:40px 36px;width:100%;max-width:420px;box-shadow:0 12px 48px rgba(0,0,0,0.6),0 0 80px rgba(78,205,196,0.04)">
+        <div style="text-align:center;margin-bottom:28px">
+          <div style="width:64px;height:64px;background:rgba(78,205,196,0.1);border:1px solid rgba(78,205,196,0.15);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px">
+            <i class="fas fa-envelope-open-text" style="color:#4ecdc4;font-size:24px"></i>
+          </div>
+          <h2 style="color:#fff;font-size:20px;font-weight:700;margin:0 0 8px;letter-spacing:-0.3px;font-family:'Inter',system-ui,sans-serif">Check Your Email</h2>
+          <p style="color:rgba(255,255,255,0.4);font-size:14px;margin:0;font-family:'Inter',system-ui,sans-serif">We sent a 6-digit code to</p>
+          <p style="color:#4ecdc4;font-size:14px;font-weight:600;margin:6px 0 0;font-family:'Inter',system-ui,sans-serif" id="otpEmailDisplay"></p>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:center;margin-bottom:20px">
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.08);border-radius:10px;color:#fff;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:'Inter',system-ui,sans-serif" onfocus="this.style.borderColor='rgba(78,205,196,0.5)';this.style.background='rgba(78,205,196,0.04)';this.style.boxShadow='0 0 0 3px rgba(78,205,196,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.08);border-radius:10px;color:#fff;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:'Inter',system-ui,sans-serif" onfocus="this.style.borderColor='rgba(78,205,196,0.5)';this.style.background='rgba(78,205,196,0.04)';this.style.boxShadow='0 0 0 3px rgba(78,205,196,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.08);border-radius:10px;color:#fff;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:'Inter',system-ui,sans-serif" onfocus="this.style.borderColor='rgba(78,205,196,0.5)';this.style.background='rgba(78,205,196,0.04)';this.style.boxShadow='0 0 0 3px rgba(78,205,196,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.08);border-radius:10px;color:#fff;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:'Inter',system-ui,sans-serif" onfocus="this.style.borderColor='rgba(78,205,196,0.5)';this.style.background='rgba(78,205,196,0.04)';this.style.boxShadow='0 0 0 3px rgba(78,205,196,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.08);border-radius:10px;color:#fff;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:'Inter',system-ui,sans-serif" onfocus="this.style.borderColor='rgba(78,205,196,0.5)';this.style.background='rgba(78,205,196,0.04)';this.style.boxShadow='0 0 0 3px rgba(78,205,196,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.08);border-radius:10px;color:#fff;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:'Inter',system-ui,sans-serif" onfocus="this.style.borderColor='rgba(78,205,196,0.5)';this.style.background='rgba(78,205,196,0.04)';this.style.boxShadow='0 0 0 3px rgba(78,205,196,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
+        </div>
+
+        <div style="text-align:center;margin-bottom:18px">
+          <span style="color:rgba(255,255,255,0.4);font-size:13px;font-family:'Inter',system-ui,sans-serif">Code expires in </span>
+          <span id="otpTimer" style="color:#4ecdc4;font-weight:700;font-size:13px;font-family:'Inter',monospace">05:00</span>
+        </div>
+
+        <div id="otpErr" style="display:none;background:rgba(248,113,113,0.07);border:1px solid rgba(248,113,113,0.18);color:#fca5a5;padding:11px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;font-family:'Inter',system-ui,sans-serif;font-weight:500"></div>
+
+        <button id="otpConfirmBtn" style="width:100%;background:linear-gradient(135deg,#4ecdc4 0%,#44b8b0 100%);color:#050b15;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px;font-family:'Inter',system-ui,sans-serif;box-shadow:0 2px 12px rgba(78,205,196,0.2);transition:transform 0.15s,box-shadow 0.2s" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 24px rgba(78,205,196,0.3)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 2px 12px rgba(78,205,196,0.2)'">
+          <i class="fas fa-check"></i> Verify &amp; Create Account
+        </button>
+        <div style="display:flex;gap:10px">
+          <button id="otpResendBtn" style="flex:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:11px;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;font-family:'Inter',system-ui,sans-serif;font-weight:500;transition:border-color 0.2s,background 0.2s" onmouseover="this.style.borderColor='rgba(255,255,255,0.15)';this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)'">Resend Code</button>
+          <button id="otpCancelBtn" style="flex:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:11px;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;font-family:'Inter',system-ui,sans-serif;font-weight:500;transition:border-color 0.2s,background 0.2s" onmouseover="this.style.borderColor='rgba(255,255,255,0.15)';this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)'">Cancel</button>
+        </div>
+      </div>
+    </div>
+</body>
+</html>

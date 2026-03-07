@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>AfricaBased - M-Pesa Deposit</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { margin:0; background:#0f172a; color:#fff; min-height:100vh; padding-top:76px; font-family:'Poppins',sans-serif; }
+        .container { max-width:600px; margin:48px auto; padding:24px; }
+        .card { background:rgba(26,34,56,0.98); padding:28px 24px 36px; border-radius:16px; box-shadow:0 6px 28px rgba(0,0,0,0.4); }
+        label { display:block; font-size:.95rem; margin-bottom:6px; color:rgba(255,255,255,0.9); }
+        input { width:100%; padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:#fff; font-size:1rem; box-sizing:border-box; margin-bottom:4px; }
+        input:focus { outline:none; border-color:#4ecdc4; }
+        .form-row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+        .form-col { flex:1; min-width:160px; }
+        .btn { width:100%; padding:13px 16px; border-radius:12px; border:none; background:linear-gradient(90deg,#4ecdc4,#ff6b6b); color:#111; font-weight:700; font-size:1rem; cursor:pointer; margin-top:14px; display:flex; align-items:center; justify-content:center; gap:8px; transition:opacity 0.2s; }
+        .btn:disabled { opacity:0.6; cursor:not-allowed; }
+        .error-msg { color:#ff6b6b; background:rgba(255,107,107,0.1); border:1px solid rgba(255,107,107,0.3); border-radius:8px; padding:10px 14px; margin-top:12px; font-size:0.9rem; display:none; }
+
+        /* Instructions box */
+        .instructions { background:rgba(78,205,196,0.08); border-radius:10px; padding:16px 18px 14px; margin-bottom:22px; font-size:0.98rem; }
+        .instructions ol { margin:10px 0 0 18px; padding:0; }
+        .instructions li { margin-bottom:5px; }
+
+        /* Overlay modal */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:9999; align-items:center; justify-content:center; }
+        .modal-overlay.active { display:flex; }
+        .modal-box { background:#232c43; padding:36px 28px 28px; border-radius:18px; box-shadow:0 6px 40px rgba(0,0,0,0.5); max-width:360px; width:90%; text-align:center; }
+        .modal-icon { font-size:3.2rem; margin-bottom:14px; }
+        .modal-title { font-size:1.25rem; font-weight:700; margin-bottom:8px; }
+        .modal-msg { color:rgba(255,255,255,0.7); font-size:0.95rem; line-height:1.5; margin-bottom:22px; }
+        .modal-btn { background:linear-gradient(90deg,#4ecdc4,#ff6b6b); color:#111; font-weight:700; border:none; padding:11px 28px; border-radius:10px; cursor:pointer; font-size:1rem; }
+
+        /* Spinner */
+        .spinner { width:28px; height:28px; border:3px solid rgba(78,205,196,0.2); border-top:3px solid #4ecdc4; border-radius:50%; animation:spin 0.9s linear infinite; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+
+        /* Status steps */
+        .status-steps { display:flex; flex-direction:column; gap:8px; margin:16px 0; }
+        .status-step { display:flex; align-items:center; gap:10px; font-size:0.9rem; color:rgba(255,255,255,0.5); }
+        .status-step.done { color:#4ecdc4; }
+        .status-step.active { color:#fff; }
+        .step-icon { width:24px; text-align:center; font-size:1.1rem; }
+
+        /* Back button */
+        .back-btn { background:linear-gradient(90deg,#232c43,#4ecdc4); color:#fff; padding:10px 22px; border-radius:10px; font-weight:600; border:1px solid #4ecdc4; box-shadow:0 2px 8px rgba(78,205,196,0.10); margin-bottom:18px; cursor:pointer; }
+    </style>
+<script src="/js/token.js"></script>
+</head>
+<body>
+    <main class="container">
+        <button class="back-btn" onclick="window.top.location.href = '/home'">&larr; Back to Dashboard</button>
+
+        <div class="card">
+            <h2 style="margin:0 0 6px;"><i class="fas fa-mobile-alt" style="color:#4ecdc4;"></i> M-Pesa Auto Deposit</h2>
+            <p style="color:rgba(255,255,255,0.5);font-size:0.9rem;margin:0 0 20px;">Powered by IntaSend &amp; M-Pesa</p>
+
+            <div class="instructions">
+                <b>How it works</b>
+                <ol>
+                    <li>Enter your M-Pesa phone number and the amount to deposit.</li>
+                    <li>Click <b>Pay with M-Pesa</b>.</li>
+                    <li>An M-Pesa prompt will appear on your phone asking for your PIN.</li>
+                    <li>Enter your PIN to confirm — your deposit is credited automatically.</li>
+                </ol>
+            </div>
+
+            <form id="depositForm">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="mpesaPhone">M-Pesa Phone Number</label>
+                        <input type="tel" id="mpesaPhone" placeholder="e.g. 0712 345 678" maxlength="13" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="mpesaAmount">Amount (KES)</label>
+                        <input type="number" id="mpesaAmount" placeholder="Min. 150" min="1" step="1" required>
+                    </div>
+                </div>
+                <div class="error-msg" id="errorMsg"></div>
+                <button type="submit" class="btn" id="submitBtn">
+                    <i class="fas fa-lock"></i> Pay with M-Pesa
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <!-- Waiting modal -->
+    <div class="modal-overlay" id="waitingModal">
+        <div class="modal-box">
+            <div class="modal-icon" style="color:#4ecdc4;"><div class="spinner" style="margin:0 auto;"></div></div>
+            <div class="modal-title" style="margin-top:16px;">Waiting for Payment</div>
+            <div class="modal-msg" id="waitingMsg">A prompt has been sent to your phone.<br>Please enter your M-Pesa PIN to complete the deposit.</div>
+            <div class="status-steps" id="statusSteps">
+                <div class="status-step done" id="step1"><span class="step-icon"><i class="fas fa-check-circle"></i></span> STK push sent to phone</div>
+                <div class="status-step active" id="step2"><span class="step-icon"><i class="fas fa-circle-notch fa-spin"></i></span> Waiting for PIN entry…</div>
+                <div class="status-step" id="step3"><span class="step-icon"><i class="fas fa-hourglass-half"></i></span> Confirming payment</div>
+            </div>
+            <p style="color:rgba(255,255,255,0.4);font-size:0.82rem;margin-top:12px;">This may take up to 60 seconds.<br>Do not close this page.</p>
+            <button class="modal-btn" style="background:rgba(255,255,255,0.1);color:#fff;margin-top:16px;" onclick="cancelWaiting()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Success modal -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal-box">
+            <div class="modal-icon" style="color:#4ecdc4;"><i class="fas fa-check-circle"></i></div>
+            <div class="modal-title" style="color:#4ecdc4;">Deposit Successful!</div>
+            <div class="modal-msg" id="successMsg">Your deposit has been confirmed and credited to your account.</div>
+            <button class="modal-btn" onclick="window.top.location.href = '/home'">Go to Dashboard</button>
+        </div>
+    </div>
+
+    <!-- Failed modal -->
+    <div class="modal-overlay" id="failedModal">
+        <div class="modal-box">
+            <div class="modal-icon" style="color:#ff6b6b;"><i class="fas fa-times-circle"></i></div>
+            <div class="modal-title" style="color:#ff6b6b;">Payment Failed</div>
+            <div class="modal-msg" id="failedMsg">The payment was not completed. You may have cancelled it or it timed out.</div>
+            <button class="modal-btn" style="background:rgba(255,107,107,0.8);" onclick="resetForm()">Try Again</button>
+        </div>
+    </div>
+
+<script>
+    let pollInterval = null;
+    let currentCheckoutId = null;
+
+    function showError(msg) {
+        const el = document.getElementById('errorMsg');
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+
+    function hideError() {
+        document.getElementById('errorMsg').style.display = 'none';
+    }
+
+    function resetForm() {
+        document.getElementById('failedModal').classList.remove('active');
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('submitBtn').innerHTML = '<i class="fas fa-lock"></i> Pay with M-Pesa';
+        currentCheckoutId = null;
+    }
+
+    function cancelWaiting() {
+        clearInterval(pollInterval);
+        document.getElementById('waitingModal').classList.remove('active');
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('submitBtn').innerHTML = '<i class="fas fa-lock"></i> Pay with M-Pesa';
+        currentCheckoutId = null;
+    }
+
+    function startPolling(checkoutId) {
+        let attempts = 0;
+        const maxAttempts = 20; // 60 seconds total (3s * 20)
+        document.getElementById('waitingModal').classList.add('active');
+
+        pollInterval = setInterval(async () => {
+            attempts++;
+            try {
+                const res = await fetch(`/api/mpesa/status/${checkoutId}`, {
+                    headers: { Authorization: `Bearer ${getABToken()}` }
+                });
+                const data = await res.json();
+
+                if (data.status === 'completed') {
+                    clearInterval(pollInterval);
+                    document.getElementById('waitingModal').classList.remove('active');
+                    const code = data.mpesaCode ? ` M-Pesa code: <strong>${data.mpesaCode}</strong>` : '';
+                    document.getElementById('successMsg').innerHTML = `Your deposit has been confirmed and credited to your account.${code ? '<br>' + code : ''}`;
+                    document.getElementById('successModal').classList.add('active');
+                } else if (data.status === 'failed') {
+                    clearInterval(pollInterval);
+                    document.getElementById('waitingModal').classList.remove('active');
+                    document.getElementById('failedModal').classList.add('active');
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(pollInterval);
+                    document.getElementById('waitingModal').classList.remove('active');
+                    document.getElementById('failedMsg').textContent = 'The payment timed out. If you entered your PIN, please contact support.';
+                    document.getElementById('failedModal').classList.add('active');
+                }
+            } catch (e) {
+                console.error('Poll error:', e);
+            }
+        }, 3000);
+    }
+
+    document.getElementById('depositForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        hideError();
+
+        const phone  = document.getElementById('mpesaPhone').value.trim();
+        const amount = document.getElementById('mpesaAmount').value.trim();
+        const token  = getABToken();
+
+        if (!token) {
+            showError('You must be logged in to make a deposit.');
+            return;
+        }
+
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Sending prompt…';
+
+        try {
+            const res = await fetch('/api/mpesa/stkpush', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ phone, amount: Number(amount) })
+            });
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                showError(data.error || 'Failed to initiate M-Pesa payment. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-lock"></i> Pay with M-Pesa';
+                return;
+            }
+
+            currentCheckoutId = data.invoiceId;
+            startPolling(currentCheckoutId);
+        } catch (err) {
+            showError('Network error. Please check your connection and try again.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-lock"></i> Pay with M-Pesa';
+        }
+    });
+</script>
+</body>
+</html>

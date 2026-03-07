@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Apply - Fixed Salary Promotion</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root{
+            /* Africa brand palette */
+            --bg:#fbfbf7; /* warm off-white */
+            --panel:#ffffff;
+            --accent:#0b6e58; /* deep green */
+            --accent-2:#063a2d; /* dark green */
+            --accent-gold: #d4a51b; /* gold accent */
+            --muted:#6b7280;
+            --danger:#d9534f;
+            --success:#1abc9c;
+            --glass:rgba(7,16,40,0.04)
+        }
+        html,body{height:100%}
+        body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial,Helvetica,sans-serif;background:linear-gradient(180deg,#fcfeff 0%,#f4f6f9 100%);color:#0b1320;padding:28px}
+        .container{max-width:920px;margin:0 auto}
+        .header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+        .logo{width:56px;height:56px;border-radius:10px;background:linear-gradient(180deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px}
+        .title-group h1{margin:0;font-size:20px}
+        .title-group p{margin:4px 0 0;color:var(--muted);font-size:13px}
+        .card{background:var(--panel);padding:22px;border-radius:12px;margin-bottom:16px;border:1px solid var(--glass);box-shadow:0 6px 18px rgba(12,20,30,0.04)}
+        label{display:block;margin-top:12px;font-size:14px;color:#112}
+        input[type=text],input[type=tel],textarea,select{width:100%;padding:12px;border-radius:8px;border:1px solid #e6e9ee;background:transparent;color:#061026;margin-top:8px}
+        textarea{min-height:120px}
+        .row{display:flex;gap:12px}
+        .col{flex:1}
+        .small{font-size:13px;color:var(--muted)}
+        .btn{display:inline-block;padding:10px 14px;background:var(--accent);color:#fff;border-radius:8px;text-decoration:none;font-weight:700;margin-top:12px;border:none;cursor:pointer}
+    .btn.whatsapp{background:linear-gradient(90deg,#0fb956,#0aa84a);box-shadow:0 6px 18px rgba(11,110,88,0.12)}
+    .brand-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+    .brand-logo{width:64px;height:64px;border-radius:8px;background:linear-gradient(180deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    .hide{display:none}
+    .grid-two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .bank-account-input{display:none;margin-top:8px}
+    .form-row{margin-top:12px}
+    .form-actions{margin-top:12px;display:flex;gap:12px;align-items:center}
+    .modal-footer{margin-top:12px;text-align:right}
+    .ocr-text{white-space:pre-wrap;margin:6px 0;padding:8px;background:#fbfcfd;border-radius:6px;border:1px solid #eef2f6}
+    .ocr-status{margin-top:10px}
+    .ocr-extract{margin-top:6px}
+        .btn.secondary{background:transparent;border:1px solid #e6e9ee;color:var(--muted)}
+        .status{margin-top:12px;color:var(--muted);font-size:14px}
+        .hint{font-size:13px;color:var(--muted);margin-top:6px}
+        .field-note{font-size:12px;color:var(--muted);margin-top:6px}
+        .file-preview{margin-top:8px;border:1px dashed #e6e9ee;padding:8px;border-radius:8px;background:#fbfcfd}
+        .progress{height:10px;background:#eef2f6;border-radius:8px;overflow:hidden;margin-top:8px}
+        .progress > div{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#23bfa3);transition:width 300ms ease}
+        /* Modal */
+        .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.45);display:none;align-items:center;justify-content:center}
+        .modal{background:var(--panel);max-width:640px;width:94%;padding:18px;border-radius:12px;border:1px solid var(--glass)}
+        .modal h3{margin:0 0 8px}
+        .muted-block{color:var(--muted);font-size:13px}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    </style>
+<script src="/js/token.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">AB</div>
+            <div class="title-group">
+                <h1>Fixed Salary Promotion Application</h1>
+                <p>Submit your application and required documentation. Applications are reviewed within 7 business days.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <form id="promoForm" aria-label="Promotion application form">
+                <div class="grid">
+                    <div>
+                        <label for="referralCode">Referral Code</label>
+                        <input type="text" id="referralCode" aria-label="Referral code" readonly />
+                        <div class="field-note">This code will be included in your application and in communications.</div>
+                    </div>
+                    <div>
+                        <label for="fullName">Full name</label>
+                        <input type="text" id="fullName" placeholder="Your full name" required />
+                    </div>
+                </div>
+
+                <div class="grid">
+                    <div>
+                        <label for="phone">Phone</label>
+                        <input type="tel" id="phone" placeholder="+2547XXXXXXXX" required />
+                    </div>
+                    <div>
+                        <label for="bankSelect">Bank (for salary)</label>
+                        <select id="bankSelect" required>
+                            <option value="">Select your bank</option>
+                            <option>Equity Bank</option>
+                            <option>KCB Bank</option>
+                            <option>Cooperative Bank</option>
+                            <option>NCBA</option>
+                            <option>Standard Chartered</option>
+                            <option>Absa Bank</option>
+                            <option>Family Bank</option>
+                            <option>Other</option>
+                        </select>
+                        <input type="text" id="bankAccount" placeholder="Account number" class="bank-account-input" />
+                        <div id="bankNote" class="field-note">We will use this account for salary payments if your application is approved.</div>
+                    </div>
+                </div>
+
+                <label for="answerWhy">Why do you qualify for the promotion?</label>
+                <textarea id="answerWhy" placeholder="Explain key achievements" required></textarea>
+
+                <label for="answerMaintain">How will you maintain the required activity monthly?</label>
+                <textarea id="answerMaintain" placeholder="Short operational plan" required></textarea>
+
+                <label>Required supporting documents — FRONT and BACK of your government ID (images only)</label>
+                <div class="grid">
+                    <div>
+                        <label for="documentFront">ID front (JPG or PNG) — max 5MB</label>
+                        <input type="file" id="documentFront" accept="image/jpeg,image/png" aria-describedby="docHintFront" />
+                        <div id="docHintFront" class="hint">Upload a clear photo of the front of your ID.</div>
+                    </div>
+                    <div>
+                        <label for="documentBack">ID back (JPG or PNG) — max 5MB</label>
+                        <input type="file" id="documentBack" accept="image/jpeg,image/png" aria-describedby="docHintBack" />
+                        <div id="docHintBack" class="hint">Upload a clear photo of the back of your ID.</div>
+                    </div>
+                </div>
+
+                <div id="filePreview" class="file-preview hide grid-two-col"></div>
+                <div id="uploadProgress" class="progress hide"><div></div></div>
+
+                <div id="ocrStatus" class="muted-block ocr-status hide">OCR Status: <span id="ocrMsg"></span></div>
+                <div id="ocrExtract" class="muted-block ocr-extract hide">Extracted (front ID): <pre id="ocrText" class="ocr-text"></pre></div>
+
+                <div class="form-row">
+                    <input type="checkbox" id="agreeCheck" /> <label for="agreeCheck" class="small">I confirm that the information provided is accurate and I authorize verification of my referrals and earnings.</label>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" id="submitBtn" class="btn">Submit Application</button>
+                    <a id="cancelBtn" class="btn secondary" href="progress.html">Cancel</a>
+                    <button type="button" id="downloadWhatsappBtn" class="btn whatsapp">Download & Send via WhatsApp</button>
+                    <div id="status" class="status"></div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Confirmation modal -->
+        <div id="modal" class="modal-backdrop" role="dialog" aria-modal="true">
+            <div class="modal">
+                <h3>Application submitted</h3>
+                <p class="muted-block">Thank you — your application has been recorded. Our team will review it and contact you within 7 business days.</p>
+                <div class="modal-footer">
+                    <button id="modalOk" class="btn">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { supabase } from './supabaseClient.js';
+        // sessionUtils may not exist; create a lightweight shim if missing
+        let getSession = async ()=>{ try{ const mod = await import('./js/sessionUtils.js'); return mod.getSession ? await mod.getSession() : null; }catch(e){ return null; } };
+
+        // helper to load external script
+        function loadScript(src){ return new Promise((res, rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+        // Manager WhatsApp contact (update as needed)
+        const managerWhatsApp = '+254700000000';
+
+        // Load Tesseract via CDN (client-side OCR). We'll create a dynamic import to avoid breaking when offline.
+        async function loadTesseract(){
+            if (window.Tesseract) return window.Tesseract;
+            try{
+                await new Promise((res, rej)=>{
+                    const s = document.createElement('script');
+                    s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js';
+                    s.onload = res; s.onerror = rej; document.head.appendChild(s);
+                });
+                return window.Tesseract;
+            }catch(e){ console.warn('Tesseract load failed', e); return null; }
+        }
+
+        // Helper: read local data
+        function getLocalData(){
+            let summary = {};
+            try{ summary = JSON.parse(localStorage.getItem('statisticsSummary') || '{}'); }catch(e){ summary = {}; }
+            const referralCode = localStorage.getItem('referralCode') || '';
+            return { summary, referralCode };
+        }
+
+                // Eligibility check — fetches live from API
+        // Requirements: 50+ active referrals, KES 5,000 total commission earned, active investment
+        async function checkPromotionEligibility(){
+            try {
+                const token = getABToken();
+                if (!token) return { eligible: false, data: null };
+                const res = await fetch('/api/referral', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (!res.ok) throw new Error('API error');
+                const data = await res.json();
+                const activeRefs          = data.active_referrals || 0;
+                const totalCommEarned     = data.total_commission_earned || 0;
+                const hasActiveInvestment = data.has_investment || false;
+                const eligible = (activeRefs >= 50) && (totalCommEarned >= 5000) && hasActiveInvestment;
+                return { eligible, data, activeRefs, totalCommEarned, hasActiveInvestment };
+            } catch(e) {
+                console.warn('Eligibility check failed', e);
+                return { eligible: false, data: null };
+            }
+        }
+
+        function showBlockedAccess(activeRefs, totalCommEarned, hasInvestment){
+            const card = document.querySelector('.card');
+            if (!card) return;
+            card.innerHTML = '';
+            const missing = [];
+            if ((activeRefs || 0) < 50)         missing.push('At least 50 active referrals (you have ' + (activeRefs || 0) + ')');
+            if ((totalCommEarned || 0) < 5000)  missing.push('KES 5,000 total commission earned (you have KES ' + Math.floor(totalCommEarned || 0).toLocaleString() + ')');
+            if (!hasInvestment)                 missing.push('An active investment on your account');
+            const container = document.createElement('div');
+            container.innerHTML = `
+                <div style="padding:18px">
+                    <h2 style="margin-top:0;color:var(--accent)">Access restricted</h2>
+                    <p class="muted-block">This application page can only be used by members who meet the Fixed Salary Promotion requirements.</p>
+                    <ul class="muted-block">
+                        ${missing.map(m => `<li>${m}</li>`).join('')}
+                    </ul>
+                    <div style="margin-top:12px">
+                        <a href="progress.html" class="btn secondary">Back to Progress</a>
+                    </div>
+                </div>
+            `;
+            card.appendChild(container);
+        }
+
+        // Convert File to base64 for local fallback storage
+        function fileToDataURL(file){
+            return new Promise((res, rej)=>{
+                const reader = new FileReader();
+                reader.onload = ()=>res(reader.result);
+                reader.onerror = rej;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Upload file to Supabase storage (if available)
+        async function uploadFileToSupabase(file, userId){
+            if (!supabase) return { error: 'no-supabase' };
+            const timestamp = Date.now();
+            const safeName = `${userId || 'anon'}_${timestamp}_${file.name}`.replace(/[^a-zA-Z0-9._-]/g,'_');
+            try{
+                const { error } = await supabase.storage.from('promotions').upload(safeName, file, { cacheControl: '3600', upsert: false });
+                if (error) return { error };
+                const { publicURL, error: urlErr } = supabase.storage.from('promotions').getPublicUrl(safeName);
+                if (urlErr) return { error: urlErr };
+                return { publicURL };
+            }catch(err){ return { error: err }; }
+        }
+
+        // Insert application row into Supabase DB
+        async function insertApplicationToSupabase(payload){
+            if (!supabase) return { error: 'no-supabase' };
+            try{
+                const { data, error } = await supabase.from('promotion_applications').insert([payload]).select().single();
+                return { data, error };
+            }catch(err){ return { error: err }; }
+        }
+
+        document.addEventListener('DOMContentLoaded', async ()=>{
+            const referralInput = document.getElementById('referralCode');
+            const statusEl = document.getElementById('status');
+            const form = document.getElementById('promoForm');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Enforce eligibility: if user is not eligible, block access and show guidance
+            const eligResult = await checkPromotionEligibility();
+            if (!eligResult.eligible){ showBlockedAccess(eligResult.activeRefs, eligResult.totalCommEarned, eligResult.hasActiveInvestment); return; }
+
+            const { referralCode } = getLocalData();
+            referralInput.value = referralCode || '';
+
+            // Try to prefill user info from session if possible
+            try{
+                const session = await getSession();
+                if (!session) { /* don't force redirect; allow offline apply */ }
+            }catch(e){ /* ignore */ }
+
+            const filePreview = document.getElementById('filePreview');
+            const uploadProgress = document.getElementById('uploadProgress');
+            const uploadBar = uploadProgress ? uploadProgress.querySelector('div') : null;
+
+            const ocrStatus = document.getElementById('ocrStatus');
+            const ocrMsg = document.getElementById('ocrMsg');
+            const ocrExtract = document.getElementById('ocrExtract');
+            const ocrText = document.getElementById('ocrText');
+
+            const frontInput = document.getElementById('documentFront');
+            const backInput = document.getElementById('documentBack');
+            const bankSelectEl = document.getElementById('bankSelect');
+            const bankAccountEl = document.getElementById('bankAccount');
+
+            bankSelectEl.addEventListener('change', ()=>{
+                if (bankSelectEl.value === 'Other'){
+                    bankAccountEl.style.display = 'block';
+                    bankAccountEl.placeholder = 'Bank name and account number';
+                    bankAccountEl.required = true;
+                } else {
+                    bankAccountEl.style.display = 'block';
+                    bankAccountEl.placeholder = 'Account number';
+                    bankAccountEl.required = true;
+                }
+            });
+
+            // Helper to validate image file: type, size, and dimensions
+            async function validateImageFile(file){
+                if (!file) return { ok:false, reason: 'No file' };
+                if (!['image/jpeg','image/png'].includes(file.type)) return { ok:false, reason: 'Unsupported file type' };
+                if (file.size > 5 * 1024 * 1024) return { ok:false, reason: 'File too large' };
+                // check dimensions
+                const url = URL.createObjectURL(file);
+                const img = new Image();
+                const dims = await new Promise((res)=>{ img.onload = ()=>{ res({w:img.naturalWidth,h:img.naturalHeight}); URL.revokeObjectURL(url); }; img.onerror = ()=>{ res(null); }; img.src = url; });
+                if (!dims) return { ok:false, reason: 'Invalid image' };
+                if (dims.w < 600 || dims.h < 400) return { ok:false, reason: 'Image resolution too low (min 600x400)' };
+                return { ok:true, width:dims.w, height:dims.h };
+            }
+
+            // Compute Laplacian variance (simple) to detect blur. Returns variance number.
+            function computeLaplacianVariance(image) {
+                // image is an HTMLImageElement already loaded
+                const canvas = document.createElement('canvas');
+                const w = Math.min(800, image.naturalWidth);
+                const h = Math.min(600, image.naturalHeight);
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(image, 0, 0, w, h);
+                const imgd = ctx.getImageData(0,0,w,h);
+                // convert to grayscale
+                const gray = new Float32Array(w*h);
+                for (let i=0, p=0; i<imgd.data.length; i+=4, p++){
+                    gray[p] = 0.299*imgd.data[i] + 0.587*imgd.data[i+1] + 0.114*imgd.data[i+2];
+                }
+                // Laplacian kernel convolution
+                const lap = new Float32Array(w*h);
+                const kernel = [0,1,0,1,-4,1,0,1,0];
+                for (let y=1;y<w-1;y++){
+                    for (let x=1;x<h-1;x++){
+                        let sum=0; let idx = x + y*w;
+                        // apply kernel centered at idx
+                        // using offsets for readability
+                        sum += gray[idx - w] * 0; // top-left
+                        sum += gray[idx - w + 1] * 1; // top
+                        sum += gray[idx - w + 2] * 0; // top-right
+                        sum += gray[idx - 1] * 1; // left
+                        sum += gray[idx] * -4; // center
+                        sum += gray[idx + 1] * 1; // right
+                        sum += gray[idx + w] * 0; // bottom-left
+                        sum += gray[idx + w + 1] * 1; // bottom
+                        sum += gray[idx + w + 2] * 0; // bottom-right
+                        lap[idx] = sum;
+                    }
+                }
+                // variance
+                let mean = 0; let cnt = 0;
+                for (let i=0;i<lap.length;i++){ mean += lap[i]; cnt++; }
+                mean = mean / cnt;
+                let variance = 0;
+                for (let i=0;i<lap.length;i++){ const d = lap[i]-mean; variance += d*d; }
+                variance = variance / cnt;
+                return variance;
+            }
+
+            async function renderPreviews(){
+                const f = frontInput.files && frontInput.files[0];
+                const b = backInput.files && backInput.files[0];
+                if (!f && !b) { filePreview.style.display='none'; return; }
+                filePreview.style.display = 'grid';
+                filePreview.innerHTML = '';
+                const addCard = (file, label) => {
+                    if (!file) return `<div class="muted-block">No file for ${label}</div>`;
+                    const url = URL.createObjectURL(file);
+                    return `<div><div style="font-weight:700;margin-bottom:6px">${label}</div><img data-src="${url}" src="${url}" style="width:100%;max-height:240px;object-fit:contain;border-radius:6px" alt="${label}" /><div class="muted-block">${file.name} — ${Math.round(file.size/1024)} KB</div><div class="muted-block" data-blur-msg id="blur-${label}"></div></div>`;
+                };
+                filePreview.innerHTML = addCard(f,'Front') + addCard(b,'Back');
+                // compute blur for each displayed image
+                await new Promise(res=>setTimeout(res,40)); // allow image to load
+                const imgs = filePreview.querySelectorAll('img');
+                for (const img of imgs){
+                    try{
+                        if (!img.complete) await new Promise(r=>img.onload=r);
+                        const variance = computeLaplacianVariance(img);
+                        const label = img.alt;
+                        const msgEl = document.getElementById('blur-' + label);
+                        // threshold - tuned empirically: below ~200 indicates blur
+                        if (variance < 200) {
+                            if (msgEl) msgEl.textContent = 'Warning: image appears blurry. Please retake a clearer photo.';
+                            img.style.opacity = '0.8';
+                        } else {
+                            if (msgEl) msgEl.textContent = '';
+                        }
+                        console.debug('Laplacian variance', img.alt, variance);
+                    }catch(e){ /* ignore */ }
+                }
+
+                // Run OCR on the front image (best-effort). Show extracted text and basic name/phone candidates.
+                try{
+                    const tesseract = await loadTesseract();
+                    if (!tesseract) { ocrStatus.style.display='block'; ocrMsg.textContent = 'OCR not available'; ocrExtract.style.display='none'; return; }
+                    // find front img element
+                    const frontImg = filePreview.querySelector('img[alt="Front"]');
+                    if (!frontImg) { ocrStatus.style.display='none'; ocrExtract.style.display='none'; return; }
+                    ocrStatus.style.display='block'; ocrMsg.textContent = 'Running OCR...'; ocrExtract.style.display='none';
+                    const worker = tesseract.createWorker({ logger: m=>console.debug('TESS:',m) });
+                    await worker.load(); await worker.loadLanguage('eng'); await worker.initialize('eng');
+                    const { data: { text } } = await worker.recognize(frontImg.src || frontImg.getAttribute('data-src'));
+                    await worker.terminate();
+                    ocrExtract.style.display='block'; ocrText.textContent = text;
+                    ocrMsg.textContent = 'OCR completed';
+                    console.debug('OCR extracted text', text);
+                    // basic parsing: look for a phone-like sequence and lines that look like a name
+                    const phoneMatch = text.match(/(\+?\d[\d\-\s]{6,}\d)/g);
+                    const cleanedPhones = phoneMatch ? phoneMatch.map(s=>s.replace(/[^\d\+]/g,'')).filter(Boolean) : [];
+                    // name heuristic: find capitalized words lines
+                    const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+                    let candidateName = '';
+                    for (const ln of lines){
+                        if (/^[A-Z][A-Za-z'\- ]+$/.test(ln) && ln.split(' ').length>=2){ candidateName = ln; break; }
+                    }
+                    // attach parsed results to preview DOM for validation
+                    filePreview.dataset.ocrName = candidateName || '';
+                    filePreview.dataset.ocrPhones = JSON.stringify(cleanedPhones || []);
+                }catch(err){ console.warn('OCR failed', err); ocrStatus.style.display='block'; ocrMsg.textContent='OCR failed'; }
+            }
+
+            frontInput.addEventListener('change', async ()=>{ await renderPreviews(); });
+            backInput.addEventListener('change', async ()=>{ await renderPreviews(); });
+
+            form.addEventListener('submit', async (ev)=>{
+                ev.preventDefault();
+                statusEl.textContent = '';
+
+                // Require agreement
+                const agree = document.getElementById('agreeCheck');
+                if (!agree || !agree.checked) { statusEl.textContent = 'Please confirm the authorization checkbox before applying.'; return; }
+
+                const fullName = document.getElementById('fullName').value.trim();
+                const phone = document.getElementById('phone').value.trim();
+                const bankAccount = document.getElementById('bankAccount').value.trim();
+                const bankSelect = document.getElementById('bankSelect').value;
+                const answerWhy = document.getElementById('answerWhy').value.trim();
+                const answerMaintain = document.getElementById('answerMaintain').value.trim();
+                const frontFile = frontInput.files && frontInput.files[0];
+                const backFile = backInput.files && backInput.files[0];
+
+                // require both front and back images
+                if (!frontFile || !backFile) { statusEl.textContent = 'Please upload both front and back images of your ID.'; return; }
+
+                if (!fullName || !phone || !bankAccount || !answerWhy || !answerMaintain) {
+                    statusEl.textContent = 'Please fill all required fields.';
+                    return;
+                }
+
+                submitBtn.disabled = true; submitBtn.textContent = 'Submitting...';
+
+                let session;
+                try{ session = await getSession(); }catch(e){ session = null; }
+
+                const payload = {
+                    user_id: session && session.user ? session.user.id : null,
+                    referral_code: referralInput.value || null,
+                    full_name: fullName,
+                    phone,
+                    bank_account: bankAccount,
+                    bank_name: bankSelect || null,
+                    answer_why: answerWhy,
+                    answer_maintain: answerMaintain,
+                    status: 'pending',
+                    created_at: new Date().toISOString()
+                };
+
+                // handle file: try upload to supabase, else include base64 in local payload
+                let fileUrl = null;
+                if (frontFile && backFile){
+                    // validate both
+                    const vf = await validateImageFile(frontFile);
+                    const vb = await validateImageFile(backFile);
+                    if (!vf.ok) { statusEl.textContent = `Front ID error: ${vf.reason}`; submitBtn.disabled=false; submitBtn.textContent='Submit Application'; return; }
+                    if (!vb.ok) { statusEl.textContent = `Back ID error: ${vb.reason}`; submitBtn.disabled=false; submitBtn.textContent='Submit Application'; return; }
+
+                    // run blur detection on both
+                    try{
+                        const imgF = new Image(); imgF.src = URL.createObjectURL(frontFile); await new Promise(r=>imgF.onload=r);
+                        const imgB = new Image(); imgB.src = URL.createObjectURL(backFile); await new Promise(r=>imgB.onload=r);
+                        const varF = computeLaplacianVariance(imgF);
+                        const varB = computeLaplacianVariance(imgB);
+                        const threshold = 200;
+                        if (varF < threshold) { statusEl.textContent = 'Front ID image is too blurry. Please retake a clearer photo.'; submitBtn.disabled=false; submitBtn.textContent='Submit Application'; return; }
+                        if (varB < threshold) { statusEl.textContent = 'Back ID image is too blurry. Please retake a clearer photo.'; submitBtn.disabled=false; submitBtn.textContent='Submit Application'; return; }
+                    }catch(err){ console.warn('Blur check failed', err); }
+
+                    // OCR-based validation: ensure extracted name/phone (if any) matches entered info
+                    try{
+                        const preview = document.getElementById('filePreview');
+                        const ocrName = preview && preview.dataset && preview.dataset.ocrName ? preview.dataset.ocrName.trim() : '';
+                        const ocrPhones = preview && preview.dataset && preview.dataset.ocrPhones ? JSON.parse(preview.dataset.ocrPhones || '[]') : [];
+                        console.debug('OCR validation candidates', ocrName, ocrPhones);
+                        if (ocrName){
+                            // normalize names: lowercase, remove extra spaces
+                            const normEntered = fullName.replace(/\s+/g,' ').trim().toLowerCase();
+                            const normOcr = ocrName.replace(/\s+/g,' ').trim().toLowerCase();
+                            if (normEntered !== normOcr){ statusEl.textContent = 'Full name does not match the name detected on the ID. Please ensure the name on the form exactly matches your ID.'; submitBtn.disabled=false; submitBtn.textContent='Submit Application'; return; }
+                        }
+                        if (ocrPhones && ocrPhones.length){
+                            const cleanedEnteredPhone = phone.replace(/[^\d\+]/g,'');
+                            const matches = ocrPhones.some(p=> cleanedEnteredPhone.endsWith(p.replace(/^\+/,'')) || p.endsWith(cleanedEnteredPhone.replace(/^\+/,'')) );
+                            if (!matches){ statusEl.textContent = 'Phone number does not match the phone detected on the ID. Please ensure the phone number is the same as on your account/ID.'; submitBtn.disabled=false; submitBtn.textContent='Submit Application'; return; }
+                        }
+                    }catch(e){ console.warn('OCR validation error', e); }
+
+                    try{
+                        if (supabase && session && session.user){
+                            // show progress UI
+                            if (uploadProgress) uploadProgress.style.display = 'block';
+                            try{
+                                // Supabase JS doesn't give a progress event for upload; emulate progress to give user feedback
+                                if (uploadBar) { uploadBar.style.width = '10%'; }
+                                // upload front
+                                const upF = await uploadFileToSupabase(frontFile, session.user.id + '_front');
+                                if (uploadBar) { uploadBar.style.width = '50%'; }
+                                // upload back
+                                const upB = await uploadFileToSupabase(backFile, session.user.id + '_back');
+                                if (uploadBar) { uploadBar.style.width = '90%'; }
+                                if (upF && upF.publicURL) payload.document_front_url = upF.publicURL; else { payload.document_front_data_url = await fileToDataURL(frontFile); payload.document_front_name = frontFile.name; }
+                                if (upB && upB.publicURL) payload.document_back_url = upB.publicURL; else { payload.document_back_data_url = await fileToDataURL(backFile); payload.document_back_name = backFile.name; }
+                                if (uploadBar) uploadBar.style.width = '100%';
+                            }catch(err){
+                                console.warn('Upload failed', err);
+                                payload.document_front_data_url = await fileToDataURL(frontFile);
+                                payload.document_front_name = frontFile.name;
+                                payload.document_back_data_url = await fileToDataURL(backFile);
+                                payload.document_back_name = backFile.name;
+                                if (uploadBar) uploadBar.style.width = '100%';
+                            } finally { if (uploadProgress) setTimeout(()=>uploadProgress.style.display='none',600); }
+                        } else {
+                            // fallback: store as data URL for offline submission
+                            payload.document_front_data_url = await fileToDataURL(frontFile);
+                            payload.document_front_name = frontFile.name;
+                            payload.document_back_data_url = await fileToDataURL(backFile);
+                            payload.document_back_name = backFile.name;
+                        }
+                    }catch(err){
+                        console.warn('File handling failed, storing locally', err);
+                        try{ payload.document_front_data_url = await fileToDataURL(frontFile); payload.document_front_name = frontFile.name; payload.document_back_data_url = await fileToDataURL(backFile); payload.document_back_name = backFile.name; }catch(e){}
+                    }
+                }
+
+                // Try to insert into Supabase table
+                if (supabase && session && session.user){
+                    try{
+                        const { data, error } = await insertApplicationToSupabase(payload);
+                        if (error){
+                            console.warn('Insert application failed, saving locally', error);
+                            // save locally
+                            const existing = JSON.parse(localStorage.getItem('pendingPromotionApplications') || '[]');
+                            existing.unshift(payload);
+                            localStorage.setItem('pendingPromotionApplications', JSON.stringify(existing.slice(0,50)));
+                            trySyncPendingApplications();
+                            // Show modal with saved message
+                            showModal('Application saved locally', 'Your application was saved locally and will sync when the server is available.');
+                        } else {
+                            // Show modal success
+                            showModal('Application submitted', 'Your application was submitted successfully. We will review and contact you within 7 business days.');
+                        }
+                    }catch(err){
+                        console.warn('Insert error', err);
+                        const existing = JSON.parse(localStorage.getItem('pendingPromotionApplications') || '[]');
+                        existing.unshift(payload);
+                        localStorage.setItem('pendingPromotionApplications', JSON.stringify(existing.slice(0,50)));
+                        trySyncPendingApplications();
+                        statusEl.textContent = 'Application saved locally. We will sync when server is available.';
+                    }
+                } else {
+                    // No server available; store locally for admin retrieval
+                    const existing = JSON.parse(localStorage.getItem('pendingPromotionApplications') || '[]');
+                    existing.unshift(payload);
+                    localStorage.setItem('pendingPromotionApplications', JSON.stringify(existing.slice(0,50)));
+                    trySyncPendingApplications();
+                    // show modal saved locally
+                    showModal('Application saved locally', 'Your application was saved locally. Please reconnect to the internet later to sync or contact support.');
+                }
+                submitBtn.disabled = false; submitBtn.textContent = 'Submit Application';
+                // do not auto-redirect; wait for user to dismiss modal
+            });
+
+            // Modal helpers
+            const modal = document.getElementById('modal');
+            const modalOk = document.getElementById('modalOk');
+            function showModal(title, message){
+                modal.style.display = 'flex';
+                modal.querySelector('h3').textContent = title;
+                modal.querySelector('.muted-block').textContent = message;
+            }
+            modalOk.addEventListener('click', ()=>{ modal.style.display = 'none'; window.location.href = '/progress'; });
+
+            // --- PDF / WhatsApp flow ---
+            const downloadBtn = document.getElementById('downloadWhatsappBtn');
+            downloadBtn.addEventListener('click', async ()=>{
+                // ensure libs loaded
+                if (typeof html2canvas === 'undefined'){
+                    try{ await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'); }catch(e){ alert('Failed to load pdf helper (html2canvas). Please check your connection.'); return; }
+                }
+                if (typeof window.jspdf === 'undefined' && typeof window.jspdf === 'undefined'){
+                    try{ await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'); }catch(e){ alert('Failed to load pdf helper (jsPDF). Please check your connection.'); return; }
+                }
+                // create a hidden printable area with branding and form values
+                const printArea = document.createElement('div');
+                printArea.style.width = '800px'; printArea.style.padding = '20px'; printArea.style.background = '#fff'; printArea.style.color='#061026'; printArea.style.fontFamily='Arial,Helvetica,sans-serif'; printArea.style.border='4px solid #0b6e58'; printArea.style.borderRadius='8px';
+                printArea.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                        <div style="width:64px;height:64px;border-radius:8px;background:linear-gradient(180deg,#0b6e58,#063a2d);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700">AF</div>
+                        <div>
+                            <div style="font-size:18px;font-weight:700">Africa Financial Services</div>
+                            <div style="font-size:12px;color:#6b7280">Fixed Salary Promotion Application</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:6px">
+                        <div style="font-weight:700">Referral Code:</div><div>${document.getElementById('referralCode').value || ''}</div>
+                        <div style="font-weight:700;margin-top:8px">Full name:</div><div>${document.getElementById('fullName').value || ''}</div>
+                        <div style="font-weight:700;margin-top:8px">Phone:</div><div>${document.getElementById('phone').value || ''}</div>
+                        <div style="font-weight:700;margin-top:8px">Bank:</div><div>${document.getElementById('bankSelect').value || ''} ${document.getElementById('bankAccount').value ? (' - ' + document.getElementById('bankAccount').value) : ''}</div>
+                        <div style="font-weight:700;margin-top:8px">Why qualify:</div><div>${(document.getElementById('answerWhy').value||'').replace(/\n/g,'<br/>')}</div>
+                        <div style="font-weight:700;margin-top:8px">How maintain:</div><div>${(document.getElementById('answerMaintain').value||'').replace(/\n/g,'<br/>')}</div>
+                    </div>
+                    <div id="printImages" style="display:flex;gap:8px;margin-top:12px"></div>
+                    <div style="margin-top:12px;font-size:12px;color:#6b7280">Please attach this PDF when sending your application to the manager via WhatsApp.</div>
+                `;
+                document.body.appendChild(printArea);
+                const imagesContainer = printArea.querySelector('#printImages');
+                // include images if present
+                if (frontInput.files && frontInput.files[0]){ const url = URL.createObjectURL(frontInput.files[0]); imagesContainer.innerHTML += `<div style="flex:1"><div style="font-weight:700">ID Front</div><img src="${url}" style="width:100%;max-height:200px;object-fit:contain;border:1px solid #eef2f6;border-radius:6px"/></div>`; }
+                if (backInput.files && backInput.files[0]){ const url2 = URL.createObjectURL(backInput.files[0]); imagesContainer.innerHTML += `<div style="flex:1"><div style="font-weight:700">ID Back</div><img src="${url2}" style="width:100%;max-height:200px;object-fit:contain;border:1px solid #eef2f6;border-radius:6px"/></div>`; }
+
+                try{
+                    const canvas = await html2canvas(printArea, { scale: 1 });
+                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                    const { jsPDF } = window.jspdf || window.jspdf || window.jspdf; // from UMD
+                    const pdf = new jsPDF({orientation:'portrait',unit:'px',format:[canvas.width, canvas.height]});
+                    pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+                    const blob = pdf.output('blob');
+                    const fileName = `Promotion_Application_${(document.getElementById('fullName').value||'app').replace(/\s+/g,'_')}.pdf`;
+                    // trigger download
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
+
+                    // open WhatsApp with prefilled message (user must attach file manually)
+                    const message = encodeURIComponent(`Hello, I am submitting my Fixed Salary Promotion application. I have attached the application PDF named ${fileName}. Please review.\nName: ${document.getElementById('fullName').value || ''}\nReferral: ${document.getElementById('referralCode').value || ''}`);
+                    const waUrl = `https://wa.me/${managerWhatsApp.replace(/[^\d]/g,'') }?text=${message}`;
+                    window.open(waUrl, '_blank');
+                    showModal('PDF downloaded', 'A PDF of your filled application was downloaded. Please open WhatsApp and attach the PDF to send to the manager.');
+                }catch(err){ console.error('PDF generation failed', err); alert('PDF generation failed: ' + (err && err.message)); }
+                printArea.remove();
+            });
+        });
+    </script>
+    <script type="module">
+        import { supabase } from './supabaseClient.js';
+
+        // Attempts to sync locally queued pendingPromotionApplications to Supabase.
+        // Non-destructive: only removes items that were successfully inserted.
+        async function trySyncPendingApplications(){
+            if (!window.supabase) return;
+            let queued = [];
+            try{ queued = JSON.parse(localStorage.getItem('pendingPromotionApplications') || '[]'); }catch(e){ queued = []; }
+            if (!Array.isArray(queued) || !queued.length) return;
+            const remaining = [];
+            for(const item of queued){
+                try{
+                    // upload images if present and data URLs
+                    if (item.document_front_data_url && !item.document_front_url){
+                        const blob = await (async ()=>{ const res = await fetch(item.document_front_data_url); return await res.blob(); })();
+                        const { error: upErr } = await window.supabase.storage.from('promotion-applications').upload(`applications/auto_${Date.now()}_front.jpg`, blob, { upsert: false });
+                        if (upErr) throw upErr;
+                        const { data: urlData } = window.supabase.storage.from('promotion-applications').getPublicUrl(`applications/auto_${Date.now()}_front.jpg`);
+                        item.document_front_url = urlData && urlData.publicUrl;
+                    }
+                    if (item.document_back_data_url && !item.document_back_url){
+                        const blob = await (async ()=>{ const res = await fetch(item.document_back_data_url); return await res.blob(); })();
+                        const { error: upErr } = await window.supabase.storage.from('promotion-applications').upload(`applications/auto_${Date.now()}_back.jpg`, blob, { upsert: false });
+                        if (upErr) throw upErr;
+                        const { data: urlData } = window.supabase.storage.from('promotion-applications').getPublicUrl(`applications/auto_${Date.now()}_back.jpg`);
+                        item.document_back_url = urlData && urlData.publicUrl;
+                    }
+
+                    // insert into DB
+                    const mapped = {
+                        full_name: item.fullName || item.full_name || null,
+                        phone: item.phone || null,
+                        referral_code: item.referralCode || item.referral_code || null,
+                        front_image_url: item.document_front_url || null,
+                        back_image_url: item.document_back_url || null,
+                        meta: item.answers || null,
+                        status: 'submitted',
+                        created_at: new Date().toISOString()
+                    };
+                    const { data, error } = await window.supabase.from('promotion_applications').insert([mapped]);
+                    if (error) { throw error; }
+                    // success — do not keep this item
+                }catch(err){
+                    console.warn('Sync failed for pending application, keeping locally', err);
+                    remaining.push(item);
+                }
+            }
+            try{ localStorage.setItem('pendingPromotionApplications', JSON.stringify(remaining.slice(0,50))); }catch(e){ console.warn('Failed to update pendingPromotionApplications', e); }
+        }
+
+        // Try to sync on load and every 5 minutes
+        trySyncPendingApplications();
+        setInterval(trySyncPendingApplications, 5 * 60 * 1000);
+    </script>
+</body>
+</html>

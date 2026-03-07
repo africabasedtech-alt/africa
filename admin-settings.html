@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Settings - AfricaBased</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --accent: #4ecdc4;
+            --accent-gradient: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            --background: #0f172a;
+            --surface: rgba(26,34,56,0.98);
+            --text: #fff;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        
+        .settings-panel {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .section {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .section h3 {
+            color: var(--accent);
+            margin-top: 0;
+        }
+        
+        .settings-action-btn {
+            background: var(--accent-gradient);
+            color: var(--text);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .settings-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(78,205,196,0.2);
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 8px 12px;
+            margin: 8px 0 16px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(15,23,42,0.5);
+            color: var(--text);
+            font-size: 1rem;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        label {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9rem;
+        }
+        
+        .item-list > div {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: rgba(15,23,42,0.5);
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        button.delete {
+            background: linear-gradient(45deg, #ff6b6b, #ee5253);
+        }
+    </style>
+</head>
+<body>
+    <div style="margin: 24px 0 0 24px; display: flex; gap: 16px;">
+        <a href="/Admin-panel" class="settings-action-btn" style="text-decoration:none;">&larr; Back to Admin Panel</a>
+        <a href="/home" class="settings-action-btn" style="text-decoration:none;">Go to Home Page</a>
+    </div>
+
+    <div class="settings-panel">
+
+        <!-- Homepage Categories & Opportunities Management Section -->
+        <div class="section">
+            <h3>Homepage Categories & Opportunities</h3>
+            <div id="categoryList" class="item-list"></div>
+            <button id="addCategoryBtn" class="settings-action-btn">Add Category</button>
+            <div id="addCategoryForm" style="display:none; margin-top:12px; background:var(--surface); padding:18px; border-radius:8px;">
+                <label>Category Name:</label><input id="categoryName" placeholder="e.g. Real Estate">
+                <label>Category Image URL:</label><input id="categoryImg" placeholder="https://...">
+                <label>Category Description:</label><textarea id="categoryDesc" rows="2" placeholder="Describe this category..."></textarea>
+                <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:1rem;">
+                    <button id="saveCategoryBtn" class="settings-action-btn">Save</button>
+                    <button id="cancelCategoryBtn" class="settings-action-btn" style="background:rgba(15,23,42,0.5);">Cancel</button>
+                </div>
+            </div>
+            <hr style="margin:2rem 0; border:0; border-top:1px solid rgba(255,255,255,0.1);">
+            <h4 style="color:#4ecdc4;margin:0 0 12px;font-size:1rem;letter-spacing:0.05em;">Investment Opportunities</h4>
+            <div id="opportunityList" class="item-list"></div>
+            <button id="addOpportunityBtn" class="settings-action-btn" style="margin-top:8px;"><i class="fas fa-plus"></i> Add Opportunity</button>
+            <div id="addOpportunityForm" style="display:none; margin-top:12px; background:var(--surface); padding:18px; border-radius:8px;">
+                <label>Name:</label><input id="opportunityName" placeholder="e.g. Solar Farm Project">
+                <label>Description:</label><textarea id="opportunityDesc" rows="3" placeholder="Describe the investment opportunity..."></textarea>
+                <label>Category: <span style="color:rgba(255,255,255,0.45);font-size:0.8rem;">(type a new one or pick existing)</span></label>
+                <input id="opportunityCategory" list="opportunityCategoryList" placeholder="e.g. Real Estate, Agriculture, Technology">
+                <datalist id="opportunityCategoryList"></datalist>
+                <label>Price (KSH):</label><input id="opportunityPrice" type="number" placeholder="e.g. 1000000">
+                <label>Image URL: <span style="color:rgba(255,255,255,0.45);font-size:0.8rem;">(optional — leave blank for auto-generated)</span></label>
+                <input id="opportunityImg" placeholder="https://...">
+                <div style="margin:12px 0;">
+                    <label style="display:inline-flex;align-items:center;gap:8px;">
+                        <input type="checkbox" id="opportunityFeatured" style="width:auto;margin:0;">
+                        Featured Opportunity
+                    </label>
+                </div>
+                <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:1rem;">
+                    <button id="saveOpportunityBtn" class="settings-action-btn">Save</button>
+                    <button id="cancelOpportunityBtn" class="settings-action-btn" style="background:rgba(15,23,42,0.5);">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Testimonials Section -->
+        <div class="section">
+            <h3>What Our Clients Say (Testimonials)</h3>
+            <div id="testimonialList" class="item-list"></div>
+            <button id="addTestimonialBtn" class="settings-action-btn">Add Testimonial</button>
+            <div id="addTestimonialForm" style="display:none; margin-top:12px; background:var(--surface); padding:18px; border-radius:8px;">
+                <label>Client Name:</label><input id="testimonialName">
+                <label>Role/Title:</label><input id="testimonialRole">
+                <label>Location:</label><input id="testimonialLocation" placeholder="e.g. Kenya, Nigeria, etc.">
+                <label>Photo URL:</label><input id="testimonialImg">
+                <label>Testimonial Text:</label><textarea id="testimonialText" rows="3"></textarea>
+                <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:1rem;">
+                    <button id="saveTestimonialBtn" class="settings-action-btn">Save</button>
+                    <button id="cancelTestimonialBtn" class="settings-action-btn" style="background:rgba(15,23,42,0.5);">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+    
+        <!-- Admin PIN Management — super admin only -->
+        <div class="section" id="pinSection" style="display:none;">
+            <h3><i class="fas fa-lock" style="margin-right:8px;"></i>Admin PIN Management</h3>
+            <p style="color:rgba(255,255,255,0.5);font-size:0.88rem;margin-top:0;">
+                Set the 4-digit PINs required to access any admin page. Changes take effect immediately.
+            </p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                <div>
+                    <label>Super Admin PIN</label>
+                    <input type="password" id="superPinInput" maxlength="4" inputmode="numeric"
+                           pattern="[0-9]*" placeholder="4 digits" autocomplete="off"
+                           style="letter-spacing:8px;font-size:1.3rem;font-weight:700;text-align:center;">
+                </div>
+                <div>
+                    <label>Sub-Admin PIN</label>
+                    <input type="password" id="subPinInput" maxlength="4" inputmode="numeric"
+                           pattern="[0-9]*" placeholder="4 digits" autocomplete="off"
+                           style="letter-spacing:8px;font-size:1.3rem;font-weight:700;text-align:center;">
+                </div>
+            </div>
+            <div style="margin-top:16px;display:flex;align-items:center;gap:14px;">
+                <button id="savePinsBtn" class="settings-action-btn">
+                    <i class="fas fa-save" style="margin-right:6px;"></i>Save PINs
+                </button>
+                <span id="pinMsg" style="font-size:0.85rem;"></span>
+            </div>
+        </div>
+
+    </div>
+        <div id="toast" style="display:none;position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#4ecdc4;color:#0f172a;padding:10px 24px;border-radius:8px;font-weight:700;font-size:1rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.3);"></div>
+    <script src="js/admin-settings.js" defer></script>
+
+
+<script>
+(function() {
+  var isSuper = localStorage.getItem('superAdmin') === 'true' || sessionStorage.getItem('superAdmin') === 'true';
+  if (!isSuper) return;
+  var sec = document.getElementById('pinSection');
+  if (sec) sec.style.display = 'block';
+  var ADMIN_KEY = '1540568e';
+  fetch('/api/admin/pins', { headers: { 'x-admin-key': ADMIN_KEY } })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.superPin) document.getElementById('superPinInput').value = d.superPin;
+      if (d.subPin)   document.getElementById('subPinInput').value   = d.subPin;
+    }).catch(function() {});
+  document.getElementById('savePinsBtn').addEventListener('click', function() {
+    var sp = document.getElementById('superPinInput').value.replace(/\D/g,'').slice(0,4);
+    var su = document.getElementById('subPinInput').value.replace(/\D/g,'').slice(0,4);
+    var msg = document.getElementById('pinMsg');
+    if (sp.length !== 4 || su.length !== 4) {
+      msg.style.color = '#ff6b6b';
+      msg.textContent = 'Each PIN must be exactly 4 digits.';
+      return;
+    }
+    msg.style.color = 'rgba(255,255,255,0.4)';
+    msg.textContent = 'Saving…';
+    fetch('/api/admin/pins', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+      body: JSON.stringify({ superPin: sp, subPin: su })
+    }).then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.success) {
+          msg.style.color = '#4ecdc4';
+          msg.textContent = 'PINs updated successfully.';
+          sessionStorage.removeItem('ab_adm_pin_ok');
+        } else {
+          msg.style.color = '#ff6b6b';
+          msg.textContent = d.error || 'Failed to update PINs.';
+        }
+      }).catch(function() {
+        msg.style.color = '#ff6b6b';
+        msg.textContent = 'Network error. Please try again.';
+      });
+  });
+  ['superPinInput','subPinInput'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', function() {
+      this.value = this.value.replace(/\D/g,'').slice(0,4);
+    });
+  });
+})();
+</script>
+
+<script>
+(function() {
+  if (localStorage.getItem('ab_sub_admin')) {
+    document.querySelectorAll('a[href="/Admin-panel"]').forEach(function(a) {
+      a.href = '/sub-admin-panel';
+      var t = a.textContent.trim();
+      if (t.includes('Admin Panel') || t === 'Back') a.textContent = '← Back to Dashboard';
+    });
+  }
+})();
+</script>
+<script src="/js/admin-pin.js"></script>
+</body>
+</html>

@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+        <script>
+            // Removed hardcoded Supabase URL/anon key initialization.
+            if (!window.supabase && window.supabaseClient) window.supabase = window.supabaseClient;
+            if (!window.supabase) {
+                window.supabase = null;
+                console.warn('Supabase client not initialized. Call initSupabaseClient(url, anonKey) from a secure runtime.');
+            }
+        </script>
+    <script src="supabaseClient.js"></script>
+    <style>
+        .info-item i {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .commission-tiers {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: rgba(78, 205, 196, 0.05);
+            border-radius: 12px;
+        }
+
+        .commission-tiers h3 {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+
+        .tier-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .tier-item {
+            padding: 1.5rem;
+            background: var(--card-color);
+            border-radius: 8px;
+            text-align: center;
+            transition: var(--transition);
+            border: 1px solid rgba(78, 205, 196, 0.1);
+        }
+
+        .tier-item i {
+            font-size: 1.8rem;
+            margin-bottom: 0.8rem;
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tier-item h4 {
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+
+        .commission-rate {
+            display: block;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 0.5rem 0;
+        }
+
+        .tier-item p {
+            font-size: 0.9rem;
+            color: var(--text-color-secondary);
+        }
+
+        .tier-item[data-level="active"] { border-color: rgba(78, 205, 196, 0.2); }
+        .tier-item[data-level="basic"] { border-color: rgba(255, 213, 79, 0.2); }
+        .tier-item[data-level="premium"] { border-color: rgba(255, 107, 107, 0.2); }
+        .tier-item[data-level="gold"] { border-color: rgba(255, 184, 108, 0.2); }
+
+        .primary-btn {
+            background: var(--primary-color);
+            color: #fff;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        .primary-btn:hover {
+            background: var(--primary-dark);
+        }
+    </style>
+    <script src="supabaseClient.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referrals - AfricaBased</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/referrals.css">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script type="module" src="supabaseClient.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/sessionUtils.js"></script>
+    <style>
+        :root {
+            --primary-color: #1abc9c;
+            --primary-dark: #159c88;
+            --secondary-color: #22223b;
+            --accent-color: #ffd54f;
+            --background-color: #0f172a;
+            --card-color: rgba(26, 34, 56, 0.95);
+            --menu-bg: rgba(26, 34, 56, 0.98);
+            --success-color: #27AE60;
+            --warning-color: #F39C12;
+            --danger-color: #E74C3C;
+            --text-color: #fff;
+            --text-color-secondary: rgba(255, 255, 255, 0.7);
+            --shadow: 0 8px 32px rgba(78, 205, 196, 0.15);
+            --transition: all 0.3s cubic-bezier(.4,0,.2,1);
+            --gradient-accent: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            background-attachment: fixed;
+            background-size: cover;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            background: var(--gradient-accent);
+            opacity: 0.1;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: var(--card-color);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-btn {
+            color: var(--text-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .back-btn:hover {
+            color: var(--accent-color);
+        }
+
+        .referral-code {
+            font-size: 0.8em;
+            background: rgba(78, 205, 196, 0.1);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            margin-left: 1rem;
+            border: 1px solid rgba(78, 205, 196, 0.2);
+            color: var(--primary-color);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-color);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(78, 205, 196, 0.1);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(78, 205, 196, 0.05),
+                transparent
+            );
+            transition: 0.5s;
+        }
+
+        .stat-card i {
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
+        }
+
+        .stat-card i {
+            font-size: 2rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+
+        .stat-card p {
+            color: var(--text-color-secondary);
+            font-size: 0.9rem;
+        }
+
+        .referral-link-card {
+            background: var(--card-color);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .referral-link-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 5px;
+            height: 100%;
+            background: var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .referral-link-card:hover::after {
+            width: 7px;
+            background: var(--primary-dark);
+        }
+
+        .referral-input-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            align-items: center;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: rgba(78, 205, 196, 0.1);
+            border: 1px solid rgba(78, 205, 196, 0.2);
+            border-radius: 8px;
+            padding: 0.2rem;
+        }
+
+        .input-icon {
+            padding: 0.8rem;
+            color: var(--primary-color);
+        }
+
+        .referral-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 0.8rem;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .share-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .share-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .share-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .share-btn.whatsapp { background: #25D366; }
+        .share-btn.telegram { background: #0088cc; }
+        .share-btn.twitter { background: #1DA1F2; }
+        .share-btn.facebook { background: #4267B2; }
+
+        .referral-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(78, 205, 196, 0.1);
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            color: var(--text-color-secondary);
+        }
+
+        .info-item i {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .copy-btn {
+            background: var(--primary-color);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .copy-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .copy-btn i {
+            font-size: 1.1rem;
+        }
+
+        .referrals-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .referral-card {
+            background: var(--card-color);
+            padding: 1.5rem;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(78, 205, 196, 0.1);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .referral-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                45deg,
+                transparent,
+                rgba(78, 205, 196, 0.05),
+                transparent
+            );
+            transform: translateX(-100%);
+            transition: 0.5s;
+        }
+
+        .referral-card:hover {
+            transform: translateY(-2px);
+            border-color: #4ecdc4;
+            box-shadow: 0 4px 20px rgba(78, 205, 196, 0.2);
+        }
+
+        .referral-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .copy-btn {
+            background: var(--gradient-accent);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
+        }
+
+        .referral-info {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .referral-avatar {
+            width: 50px;
+            height: 50px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 168, 89, 0.3);
+            transition: var(--transition);
+        }
+
+        .referral-card:hover .referral-avatar {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 168, 89, 0.4);
+        }
+
+        .referral-details h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .referral-details p {
+            font-size: 0.9rem;
+            color: var(--text-color-secondary);
+        }
+
+        .commission {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--success-color);
+        }
+
+        .level-progress-card {
+            background: var(--card-color);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(78, 205, 196, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .level-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .level-card {
+            background: rgba(78, 205, 196, 0.05);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            transition: var(--transition);
+            border: 1px solid rgba(78, 205, 196, 0.1);
+            opacity: 0.7;
+            backdrop-filter: blur(5px);
+        }
+
+        .level-card.active {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.15), rgba(255, 107, 107, 0.15));
+            border-color: #4ecdc4;
+            opacity: 1;
+            box-shadow: 0 4px 20px rgba(78, 205, 196, 0.2);
+        }
+
+        .level-card.completed {
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.15), rgba(78, 205, 196, 0.15));
+            border-color: var(--success-color);
+            opacity: 1;
+            box-shadow: 0 4px 20px rgba(39, 174, 96, 0.2);
+        }
+
+        .level-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-color);
+        }
+
+        .level-card h3 {
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .level-card p {
+            font-size: 0.9rem;
+            color: var(--text-color-secondary);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+    </style>
+<script src="/js/token.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <a href="home.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Dashboard</span>
+            </a>
+            <h1>Referral Program</h1>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-users-rectangle"></i>
+                <h3 id="totalReferrals">0</h3>
+                <p>Total Referrals</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-sack-dollar"></i>
+                <h3 id="totalCommission">KES 0</h3>
+                <p>Total Commission</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-user-shield"></i>
+                <h3 id="activeReferrals">0</h3>
+                <p>Active Referrals</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-crown"></i>
+                <h3 id="membershipLevel">-</h3>
+                <p>Membership Level</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-users"></i>
+                <h3 id="nextLevelProgress">0/5</h3>
+                <p>Progress to Next Level</p>
+            </div>
+        </div>
+
+        <div class="level-progress-card">
+            <h2>Membership Levels</h2>
+            <div class="level-cards">
+                <div class="level-card" id="inactiveLevel">
+                    <div class="level-icon"><i class="fas fa-user-slash"></i></div>
+                    <h3>Inactive</h3>
+                    <p>No active investments</p>
+                </div>
+                <div class="level-card" id="activeLevel">
+                    <div class="level-icon"><i class="fas fa-user-check"></i></div>
+                    <h3>Active</h3>
+                    <p>Has invested in a product</p>
+                </div>
+                <div class="level-card" id="basicLevel">
+                    <div class="level-icon"><i class="fas fa-star"></i></div>
+                    <h3>Basic</h3>
+                    <p>5+ active referrals</p>
+                </div>
+                <div class="level-card" id="premiumLevel">
+                    <div class="level-icon"><i class="fas fa-gem"></i></div>
+                    <h3>Premium</h3>
+                    <p>60+ active referrals</p>
+                </div>
+                <div class="level-card" id="goldLevel">
+                    <div class="level-icon"><i class="fas fa-crown"></i></div>
+                    <h3>Gold</h3>
+                    <p>300+ active referrals</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="referral-link-card">
+            <h2>Your Referral Link</h2>
+            <div class="referral-input-group">
+                <input type="text" id="referralLink" class="referral-input" readonly>
+                <button class="copy-btn" onclick="copyReferralLink()">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+            <div id="referralLinkDisplay" class="referral-link-display">
+                <a id="referralLinkAnchor" href="#" target="_blank" style="color:var(--primary-color);text-decoration:underline;word-break:break-all;display:inline-block;padding-top:4px;"></a>
+            </div>
+            </div>
+        </div>
+
+        <div class="referrals-list" id="referralsList">
+            <!-- Referrals will be loaded here dynamically -->
+        </div>
+    </div>
+
+    <script type="module">
+    import { supabase } from './supabaseClient.js';
+        import { checkAuthState, redirectToLogin } from './js/auth.js';
+        import { getSession } from './js/sessionUtils.js';
+
+        // Check authentication on load
+        checkAuthState();
+
+        // Function to format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-KE', {
+                style: 'currency',
+                currency: 'KES'
+            }).format(amount);
+        }
+
+        // Function to generate referral link
+        async function generateReferralLink() {
+            try {
+                const token = getABToken();
+                if (!token) return window.location.origin + '/register.html';
+                const res = await fetch('/api/referral', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (!res.ok) throw new Error('API error');
+                const data = await res.json();
+                const link = data.referral_link;
+                localStorage.setItem('referralCode', data.referral_code);
+                localStorage.setItem('referralLink', link);
+                setTimeout(() => {
+                    const anchor = document.getElementById('referralLinkAnchor');
+                    const input  = document.getElementById('referralLink');
+                    if (anchor) { anchor.href = link; anchor.textContent = link; anchor.style.display = 'inline-block'; }
+                    if (input)  { input.value = link; }
+                }, 0);
+                return link;
+            } catch (e) {
+                console.error('Error generating referral link:', e);
+                const fallback = window.location.origin + '/register.html';
+                setTimeout(() => {
+                    const anchor = document.getElementById('referralLinkAnchor');
+                    if (anchor) { anchor.href = fallback; anchor.textContent = fallback; anchor.style.display = 'inline-block'; }
+                }, 0);
+                return fallback;
+            }
+        }
+
+        // Function to copy referral link
+        function copyReferralLink() {
+            const referralLink = document.getElementById('referralLink');
+            referralLink.select();
+            document.execCommand('copy');
+            
+            const copyBtn = document.querySelector('.copy-btn');
+            copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            setTimeout(() => {
+                copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy Link';
+            }, 2000);
+        }
+
+        // Social sharing functions
+        function shareOnWhatsApp() {
+            const referralLink = document.getElementById('referralLink').value;
+            const text = encodeURIComponent(`Join me on AfricaBased and start investing! Use my referral link: ${referralLink}`);
+            window.open(`https://wa.me/?text=${text}`, '_blank');
+        }
+
+        function shareOnTelegram() {
+            const referralLink = document.getElementById('referralLink').value;
+            const text = encodeURIComponent(`Join me on AfricaBased and start investing! Use my referral link: ${referralLink}`);
+            window.open(`https://t.me/share/url?url=${referralLink}&text=${text}`, '_blank');
+        }
+
+        function shareOnTwitter() {
+            const referralLink = document.getElementById('referralLink').value;
+            const text = encodeURIComponent(`Join me on AfricaBased and start investing! Use my referral link:`);
+            window.open(`https://twitter.com/intent/tweet?text=${text}&url=${referralLink}`, '_blank');
+        }
+
+        function shareOnFacebook() {
+            const referralLink = document.getElementById('referralLink').value;
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(referralLink)}`, '_blank');
+        }
+
+        // Expose onclick handlers globally (required for module scripts)
+        window.copyReferralLink = copyReferralLink;
+        window.shareOnWhatsApp  = shareOnWhatsApp;
+        window.shareOnTelegram  = shareOnTelegram;
+        window.shareOnTwitter   = shareOnTwitter;
+        window.shareOnFacebook  = shareOnFacebook;
+
+        // Function to determine membership level and commission rate
+        function determineMembershipLevel(activeReferralsCount, hasInvestment) {
+            if (!hasInvestment) return { level: 'Inactive', commission: 0 };
+            if (activeReferralsCount >= 300) return { level: 'Gold', commission: 12 };
+            if (activeReferralsCount >= 60) return { level: 'Premium', commission: 9 };
+            if (activeReferralsCount >= 5) return { level: 'Basic', commission: 6 };
+            return { level: 'Active', commission: 3 };
+        }
+
+        // Function to calculate daily commission
+        async function calculateDailyCommission(referralId, userLevel) {
+            try {
+                // Get referral's daily income
+                const { data: incomeData, error: incomeError } = await supabase
+                    .from('daily_earnings')
+                    .select('amount')
+                    .eq('user_id', referralId)
+                    .single();
+
+                if (incomeError) throw incomeError;
+
+                const dailyIncome = incomeData?.amount || 0;
+                const { commission } = determineMembershipLevel(userLevel);
+                
+                return (dailyIncome * commission) / 100;
+            } catch (error) {
+                console.error('Error calculating commission:', error);
+                return 0;
+            }
+        }
+
+        // Function to get next level requirements
+        function getNextLevelRequirements(currentLevel, activeReferralsCount) {
+            switch(currentLevel) {
+                case 'Inactive':
+                    return { required: 0, progress: 0, next: 'Active', message: 'Invest in any product' };
+                case 'Active':
+                    return { required: 5, progress: activeReferralsCount, next: 'Basic' };
+                case 'Basic':
+                    return { required: 60, progress: activeReferralsCount, next: 'Premium' };
+                case 'Premium':
+                    return { required: 300, progress: activeReferralsCount, next: 'Gold' };
+                case 'Gold':
+                    return { required: 300, progress: 300, next: null };
+                default:
+                    return { required: 0, progress: 0, next: null };
+            }
+        }
+
+        // Function to update level display
+        function updateLevelDisplay(level, activeReferralsCount) {
+            const nextLevel = getNextLevelRequirements(level, activeReferralsCount);
+            document.getElementById('membershipLevel').textContent = level;
+            
+            // Update progress display
+            if (nextLevel.next) {
+                document.getElementById('nextLevelProgress').textContent = 
+                    `${nextLevel.progress}/${nextLevel.required}`;
+            } else {
+                document.getElementById('nextLevelProgress').textContent = 'Max Level';
+            }
+
+            // Update level cards
+            const levels = ['inactive', 'active', 'basic', 'premium', 'gold'];
+            const currentLevelIndex = levels.indexOf(level.toLowerCase());
+
+            levels.forEach((lvl, index) => {
+                const card = document.getElementById(`${lvl}Level`);
+                card.classList.remove('active', 'completed');
+                
+                if (index === currentLevelIndex) {
+                    card.classList.add('active');
+                } else if (index < currentLevelIndex) {
+                    card.classList.add('completed');
+                }
+            });
+        }
+
+        // Function to load referrals
+        async function loadReferrals() {
+            try {
+                const token = getABToken();
+                if (!token) { redirectToLogin(); return; }
+                const apiRes = await fetch('/api/referral', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (!apiRes.ok) throw new Error('API error ' + apiRes.status);
+                const apiData = await apiRes.json();
+
+                const l1Users        = apiData.referred_users || [];
+                const l2Users        = apiData.l2_users || [];
+                const l3Users        = apiData.l3_users || [];
+                const lvls           = apiData.levels || {};
+                const activeReferrals = apiData.active_referrals || 0;
+                const hasInvestment   = apiData.has_investment || false;
+                const membershipLevel = apiData.membership_level || 'Inactive';
+                const isEligible      = apiData.is_eligible || false;
+                const dailyCommission = apiData.total_daily_commission || 0;
+                const totalNetwork    = l1Users.length + l2Users.length + l3Users.length;
+
+                document.getElementById('totalReferrals').textContent  = l1Users.length;
+                document.getElementById('totalCommission').textContent = formatCurrency(dailyCommission) + '/day';
+                document.getElementById('activeReferrals').textContent = activeReferrals;
+
+                updateLevelDisplay(membershipLevel, activeReferrals);
+
+                document.querySelectorAll('.tier-item').forEach(item => {
+                    const lvl = item.getAttribute('data-level');
+                    if (lvl === membershipLevel.toLowerCase()) {
+                        item.style.transform   = 'scale(1.05)';
+                        item.style.boxShadow   = '0 8px 24px rgba(78,205,196,0.2)';
+                        item.style.borderWidth = '2px';
+                    }
+                });
+
+                const referralLink = await generateReferralLink();
+                const referralLinkInput = document.getElementById('referralLink');
+                if (referralLinkInput) {
+                    referralLinkInput.value = referralLink;
+                    referralLinkInput.addEventListener('click', function() { this.select(); });
+                }
+
+                const referralCode = apiData.referral_code || localStorage.getItem('referralCode');
+                if (referralCode) {
+                    const headerTitle = document.querySelector('.header h1');
+                    if (headerTitle) headerTitle.innerHTML = 'Referral Program <span class="referral-code">Your Code: ' + referralCode + '</span>';
+                }
+
+                // ── Commission breakdown panel ─────────────────────────────────
+                let commPanel = document.getElementById('commissionBreakdownPanel');
+                if (!commPanel) {
+                    commPanel = document.createElement('div');
+                    commPanel.id = 'commissionBreakdownPanel';
+                    commPanel.style.cssText = 'background:rgba(78,205,196,0.07);border:1px solid rgba(78,205,196,0.2);border-radius:12px;padding:16px 20px;margin:16px 0;';
+                    const refList = document.getElementById('referralsList');
+                    refList.parentNode.insertBefore(commPanel, refList);
+                }
+                const l1d = lvls.l1 || {}, l2d = lvls.l2 || {}, l3d = lvls.l3 || {};
+                commPanel.innerHTML = isEligible
+                    ? '<div style="font-size:0.78rem;color:rgba(255,255,255,0.5);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Daily Commission Breakdown</div>' +
+                      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center">' +
+                      '<div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:10px">' +
+                        '<div style="font-size:1.1rem;font-weight:700;color:#4ecdc4">' + formatCurrency(l1d.commission || 0) + '</div>' +
+                        '<div style="font-size:0.75rem;color:rgba(255,255,255,0.5)">B · 10%</div>' +
+                        '<div style="font-size:0.72rem;color:rgba(255,255,255,0.35);margin-top:2px">' + (l1d.active || 0) + ' active downlines</div>' +
+                      '</div>' +
+                      '<div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:10px">' +
+                        '<div style="font-size:1.1rem;font-weight:700;color:#4ecdc4">' + formatCurrency(l2d.commission || 0) + '</div>' +
+                        '<div style="font-size:0.75rem;color:rgba(255,255,255,0.5)">C · 6%</div>' +
+                        '<div style="font-size:0.72rem;color:rgba(255,255,255,0.35);margin-top:2px">' + (l2d.active || 0) + ' active downlines</div>' +
+                      '</div>' +
+                      '<div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:10px">' +
+                        '<div style="font-size:1.1rem;font-weight:700;color:#4ecdc4">' + formatCurrency(l3d.commission || 0) + '</div>' +
+                        '<div style="font-size:0.75rem;color:rgba(255,255,255,0.5)">D · 1%</div>' +
+                        '<div style="font-size:0.72rem;color:rgba(255,255,255,0.35);margin-top:2px">' + (l3d.active || 0) + ' active downlines</div>' +
+                      '</div>' +
+                      '</div>' +
+                      '<div style="text-align:center;margin-top:10px;font-size:0.8rem;color:rgba(255,255,255,0.4)">Total network: ' + totalNetwork + ' members across 3 levels</div>'
+                    : '<div style="color:rgba(255,255,255,0.5);font-size:0.875rem;text-align:center">' +
+                        (!hasInvestment
+                            ? '<i class="fas fa-info-circle" style="color:#ffd54f;margin-right:6px"></i>Invest in a product first to become eligible for commission.'
+                            : '<i class="fas fa-info-circle" style="color:#ffd54f;margin-right:6px"></i>You need <strong style="color:#fff">' + Math.max(0, 5 - activeReferrals) + ' more active referral' + (Math.max(0, 5 - activeReferrals) === 1 ? '' : 's') + '</strong> to reach Basic tier and start earning (B: 10%, C: 6%, D: 1%).'
+                        ) + '</div>';
+
+                // ── Collect button ─────────────────────────────────────────────
+                let collectBtn = document.getElementById('collectCommissionBtn');
+                if (!collectBtn) {
+                    const btnContainer = document.createElement('div');
+                    btnContainer.style.cssText = 'text-align:center;margin:0 0 12px;';
+                    collectBtn = document.createElement('button');
+                    collectBtn.id = 'collectCommissionBtn';
+                    collectBtn.style.cssText = 'background:linear-gradient(135deg,#4ecdc4,#44a08d);color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:1rem;font-weight:700;cursor:pointer;';
+                    collectBtn.innerHTML = '<i class="fas fa-hand-holding-dollar"></i> Collect Commission';
+                    btnContainer.appendChild(collectBtn);
+                    const refList = document.getElementById('referralsList');
+                    refList.parentNode.insertBefore(btnContainer, refList);
+                    collectBtn.addEventListener('click', collectCommission);
+                }
+
+                collectBtn.disabled = false;
+                collectBtn.style.opacity = '1';
+                collectBtn.style.cursor = 'pointer';
+                collectBtn.innerHTML = '<i class="fas fa-hand-holding-dollar"></i> Collect Commission (' + formatCurrency(dailyCommission) + ')';
+
+                const lastCollected = apiData.last_commission_collected_at;
+                if (lastCollected) {
+                    const hoursSince = (Date.now() - new Date(lastCollected).getTime()) / 3600000;
+                    if (hoursSince < 24) {
+                        const nextTime = new Date(new Date(lastCollected).getTime() + 86400000);
+                        collectBtn.disabled = true;
+                        collectBtn.style.opacity = '0.5';
+                        collectBtn.style.cursor = 'not-allowed';
+                        collectBtn.innerHTML = '<i class="fas fa-clock"></i> Next collection: ' + nextTime.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+                    }
+                }
+                if (!isEligible || dailyCommission <= 0) {
+                    collectBtn.disabled = true;
+                    collectBtn.style.opacity = '0.5';
+                    collectBtn.style.cursor = 'not-allowed';
+                    if (!isEligible) collectBtn.innerHTML = '<i class="fas fa-lock"></i> Not Eligible Yet';
+                }
+
+                // ── L1 referral list ───────────────────────────────────────────
+                const referralsList = document.getElementById('referralsList');
+                if (l1Users.length === 0) {
+                    referralsList.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><p>No referrals yet. Share your referral link to get started!</p></div>';
+                } else {
+                    referralsList.innerHTML = '<h3 style="font-size:0.85rem;color:rgba(255,255,255,0.5);margin:0 0 10px;text-transform:uppercase;letter-spacing:.05em">B — Your Direct Referrals (10%)</h3>' +
+                        l1Users.map(u => {
+                            const name    = u.username || u.email || 'Member';
+                            const date    = new Date(u.created_at).toLocaleDateString();
+                            const active  = u.has_investment;
+                            const dayEarn = parseFloat(u.daily_earnings) || 0;
+                            const myComm  = isEligible ? dayEarn * 0.10 : 0;
+                            return '<div class="referral-card">' +
+                                '<div class="referral-info">' +
+                                '<div class="referral-avatar"><i class="fas fa-user"></i></div>' +
+                                '<div class="referral-details"><h3>' + name + '</h3><p>Joined ' + date + '</p></div>' +
+                                '</div>' +
+                                '<div class="referral-status ' + (active ? 'active' : 'inactive') + '">' + (active ? 'Active' : 'Inactive') + '</div>' +
+                                '<div class="commission">' + (active && isEligible ? formatCurrency(myComm) + '/day' : '—') + '</div>' +
+                                '</div>';
+                        }).join('');
+
+                    if (l2Users.length > 0) {
+                        referralsList.innerHTML += '<h3 style="font-size:0.85rem;color:rgba(255,255,255,0.5);margin:18px 0 10px;text-transform:uppercase;letter-spacing:.05em">C — B\'s Referrals (6%)</h3>' +
+                            l2Users.map(u => {
+                                const name    = u.username || u.email || 'Member';
+                                const date    = new Date(u.created_at).toLocaleDateString();
+                                const active  = u.has_investment;
+                                const dayEarn = parseFloat(u.daily_earnings) || 0;
+                                const myComm  = isEligible ? dayEarn * 0.06 : 0;
+                                return '<div class="referral-card" style="border-left:3px solid rgba(255,213,79,0.4)">' +
+                                    '<div class="referral-info">' +
+                                    '<div class="referral-avatar" style="background:rgba(255,213,79,0.1)"><i class="fas fa-user" style="color:#ffd54f"></i></div>' +
+                                    '<div class="referral-details"><h3>' + name + '</h3><p>Joined ' + date + '</p></div>' +
+                                    '</div>' +
+                                    '<div class="referral-status ' + (active ? 'active' : 'inactive') + '">' + (active ? 'Active' : 'Inactive') + '</div>' +
+                                    '<div class="commission">' + (active && isEligible ? formatCurrency(myComm) + '/day' : '—') + '</div>' +
+                                    '</div>';
+                            }).join('');
+                    }
+
+                    if (l3Users.length > 0) {
+                        referralsList.innerHTML += '<h3 style="font-size:0.85rem;color:rgba(255,255,255,0.5);margin:18px 0 10px;text-transform:uppercase;letter-spacing:.05em">D — C\'s Referrals (1%)</h3>' +
+                            l3Users.map(u => {
+                                const name    = u.username || u.email || 'Member';
+                                const date    = new Date(u.created_at).toLocaleDateString();
+                                const active  = u.has_investment;
+                                const dayEarn = parseFloat(u.daily_earnings) || 0;
+                                const myComm  = isEligible ? dayEarn * 0.01 : 0;
+                                return '<div class="referral-card" style="border-left:3px solid rgba(255,107,107,0.4)">' +
+                                    '<div class="referral-info">' +
+                                    '<div class="referral-avatar" style="background:rgba(255,107,107,0.1)"><i class="fas fa-user" style="color:#ff6b6b"></i></div>' +
+                                    '<div class="referral-details"><h3>' + name + '</h3><p>Joined ' + date + '</p></div>' +
+                                    '</div>' +
+                                    '<div class="referral-status ' + (active ? 'active' : 'inactive') + '">' + (active ? 'Active' : 'Inactive') + '</div>' +
+                                    '<div class="commission">' + (active && isEligible ? formatCurrency(myComm) + '/day' : '—') + '</div>' +
+                                    '</div>';
+                            }).join('');
+                    }
+                }
+
+            } catch (error) {
+                console.error('Error loading referrals:', error);
+                alert('Failed to load referrals. Please try again.');
+            }
+        }
+
+        async function collectCommission() {
+            const btn = document.getElementById('collectCommissionBtn');
+            if (!btn || btn.disabled) return;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Collecting...';
+            try {
+                const token = getABToken();
+                const res = await fetch('/api/referral/collect', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.error || 'Failed to collect commission');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-hand-holding-dollar"></i> Collect Commission';
+                    return;
+                }
+                alert('Commission credited! KES ' + parseFloat(data.commission_credited).toFixed(2) + ' added to your Account Balance.');
+                loadReferrals();
+            } catch (e) {
+                alert('Error collecting commission. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-hand-holding-dollar"></i> Collect Commission';
+            }
+        }
+
+        window.collectCommission = collectCommission;
+
+        // Helper to add a referral (attempt server insert first, fallback to local)
+        window.recordReferral = async function(ref) {
+            try {
+                if (!ref || typeof ref !== 'object') throw new Error('Invalid referral object');
+                const session = await getSession();
+                if (!session || !session.user) throw new Error('No active session');
+
+                const payload = Object.assign({ referrer_id: session.user.id, created_at: new Date().toISOString() }, ref);
+                if (supabase) {
+                    const { data, error } = await supabase.from('referrals').insert([payload]).select().single();
+                    if (error) {
+                        console.warn('Failed to insert referral to supabase:', error.message);
+                    } else {
+                        // Update local storage and UI
+                        try {
+                            const existing = JSON.parse(localStorage.getItem('referrals') || '[]');
+                            existing.unshift(data);
+                            localStorage.setItem('referrals', JSON.stringify(existing.slice(0, 500)));
+                        } catch (e) { console.warn('Failed to persist inserted referral locally', e); }
+                        // reload UI
+                        loadReferrals();
+                        return data;
+                    }
+                }
+
+                // Fallback: update localStorage and UI
+                try {
+                    const existing = JSON.parse(localStorage.getItem('referrals') || '[]');
+                    const fallback = Object.assign({ id: 'local-' + Date.now(), status: ref.status || 'pending', commission_amount: ref.commission_amount || 0, referred_user: ref.referred_user || null, created_at: new Date().toISOString() }, ref);
+                    existing.unshift(fallback);
+                    localStorage.setItem('referrals', JSON.stringify(existing.slice(0,500)));
+                } catch (e) { console.warn('Failed to persist fallback referral locally', e); }
+                loadReferrals();
+                return ref;
+            } catch (err) {
+                console.error('recordReferral failed', err);
+                throw err;
+            }
+        };
+
+        // Load referrals when page loads
+        document.addEventListener('DOMContentLoaded', loadReferrals);
+
+        // For admin integration
+        function syncWithAdmin() {
+            // Send referrals data to admin panel
+            const referrals = JSON.parse(localStorage.getItem('referrals')) || [];
+            // Implement API call to sync with admin panel
+        }
+    </script>
+</body>
+</html>

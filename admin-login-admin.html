@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AfricaBased - Admin Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="robots" content="noindex, nofollow">
+    <style>
+        :root {
+            --primary: #1a2238;
+            --accent: #4ecdc4;
+            --danger: #ff6b6b;
+            --bg: #0f172a;
+            --text: #ffffff;
+            --muted: rgba(255,255,255,0.6);
+            --card: rgba(255,255,255,0.05);
+            --gradient: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .container { background: var(--primary); padding: 2rem; border-radius: 1rem; width: 100%; max-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); position: relative; }
+        h1 { font-size: 1.5rem; color: var(--accent); text-align: center; margin-bottom: 0.25rem; }
+        .subtitle { color: var(--muted); font-size: 0.9rem; text-align: center; margin-bottom: 1.75rem; }
+        .form-group { margin-bottom: 1.25rem; position: relative; }
+        label { display: block; margin-bottom: 0.4rem; color: var(--muted); font-size: 0.9rem; }
+        input { width: 100%; padding: 0.75rem 2.5rem 0.75rem 1rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 0.5rem; background: var(--card); color: var(--text); font-size: 1rem; transition: border 0.2s; }
+        input:focus { outline: none; border-color: var(--accent); }
+        .toggle { position: absolute; right: 0.75rem; top: 2.35rem; color: var(--muted); cursor: pointer; }
+        .code-box { background: var(--card); border: 1px solid rgba(78,205,196,0.3); border-radius: 0.5rem; text-align: center; padding: 0.85rem; font-family: monospace; font-size: 1.4rem; letter-spacing: 4px; color: var(--accent); margin-bottom: 1.25rem; }
+        .btn { width: 100%; padding: 0.9rem; background: var(--gradient); color: #fff; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .error { color: var(--danger); background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem; text-align: center; display: none; font-size: 0.9rem; }
+        .info { background: rgba(78,205,196,0.1); border: 1px solid rgba(78,205,196,0.2); border-radius: 0.5rem; padding: 0.85rem 1rem; margin-top: 1rem; color: var(--muted); font-size: 0.88rem; display: flex; gap: 0.5rem; align-items: flex-start; }
+        .spinner-overlay { display: none; position: absolute; inset: 0; background: rgba(26,34,56,0.9); border-radius: 1rem; justify-content: center; align-items: center; }
+        .spinner { width: 40px; height: 40px; border: 4px solid rgba(78,205,196,0.15); border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 0.9s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .no-token { text-align: center; padding: 1rem 0; }
+        .no-token i { font-size: 3rem; color: var(--danger); margin-bottom: 1rem; display: block; }
+        .no-token p { color: var(--muted); font-size: 0.95rem; }
+    </style>
+</head>
+<body>
+<div class="container" id="loginBox">
+    <div class="spinner-overlay" id="spinner"><div class="spinner"></div></div>
+
+    <h1><i class="fas fa-user-shield"></i> Admin Login</h1>
+    <p class="subtitle">Enter your credentials to access the admin panel</p>
+
+    <div class="error" id="errorMsg"></div>
+
+    <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="email" autocomplete="off" placeholder="admin@example.com">
+    </div>
+    <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password">
+        <i class="toggle fas fa-eye" onclick="toggleVis('password',this)"></i>
+    </div>
+    <div class="form-group">
+        <label>API Key</label>
+        <input type="password" id="apiKey" placeholder="Your API key">
+        <i class="toggle fas fa-eye" onclick="toggleVis('apiKey',this)"></i>
+    </div>
+
+    <div class="code-box" id="securityCode"></div>
+    <div class="form-group">
+        <label>Security Code (copy from above)</label>
+        <input type="text" id="secCode" autocomplete="off" placeholder="Enter code shown above">
+    </div>
+
+    <button class="btn" id="loginBtn" onclick="doLogin()">Login</button>
+
+    <div class="info">
+        <i class="fas fa-shield-alt" style="color:var(--accent);margin-top:2px;"></i>
+        <span>This login requires an invite link from the super admin. If you don't have one, contact your administrator.</span>
+    </div>
+</div>
+
+<script>
+    // ── Security code ─────────────────────────────────────────────────────────
+    function genCode() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
+    let currentSecCode = genCode();
+    document.getElementById('securityCode').textContent = currentSecCode;
+
+    // ── Read token from URL ───────────────────────────────────────────────────
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteToken = urlParams.get('token');
+
+    if (!inviteToken) {
+        document.getElementById('loginBox').innerHTML = `
+            <div class="no-token">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h1 style="color:var(--danger);margin-bottom:0.5rem;">No Invite Link</h1>
+                <p>This page requires a valid admin invite link.<br>Please contact your super administrator.</p>
+            </div>`;
+    }
+
+    // ── Toggle password visibility ────────────────────────────────────────────
+    function toggleVis(id, icon) {
+        const el = document.getElementById(id);
+        el.type = el.type === 'password' ? 'text' : 'password';
+        icon.classList.toggle('fa-eye'); icon.classList.toggle('fa-eye-slash');
+    }
+
+    // ── Show error ────────────────────────────────────────────────────────────
+    function showError(msg) {
+        const el = document.getElementById('errorMsg');
+        el.textContent = msg; el.style.display = 'block';
+    }
+
+    function refreshSecCode() {
+        currentSecCode = genCode();
+        document.getElementById('securityCode').textContent = currentSecCode;
+        document.getElementById('secCode').value = '';
+    }
+
+    // ── Login ─────────────────────────────────────────────────────────────────
+    async function doLogin() {
+        const email    = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const apiKey   = document.getElementById('apiKey').value.trim();
+        const entered  = document.getElementById('secCode').value.trim();
+
+        document.getElementById('errorMsg').style.display = 'none';
+
+        if (!email || !password || !apiKey || !entered) {
+            showError('Please fill in all fields.'); return;
+        }
+        if (entered.toUpperCase() !== currentSecCode) {
+            showError('Incorrect security code. A new code has been generated above.');
+            refreshSecCode();
+            return;
+        }
+
+        const btn = document.getElementById('loginBtn');
+        btn.disabled = true; btn.textContent = 'Verifying...';
+        document.getElementById('spinner').style.display = 'flex';
+
+        try {
+            const res = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: inviteToken, email, password, api_key: apiKey, security_code: entered, expected_code: currentSecCode })
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                showError(data.error || 'Login failed.');
+                btn.disabled = false; btn.textContent = 'Login';
+                document.getElementById('spinner').style.display = 'none';
+                return;
+            }
+
+            // Store admin session
+            const adminData = {
+                isLoggedIn: true,
+                isSubAdmin: true,
+                id: data.admin.id,
+                name: data.admin.name,
+                email: data.admin.email,
+                phone: data.admin.phone || '',
+                privileges: data.admin.privileges || [],
+                api_key: apiKey,
+                exchange_limit: data.admin.exchange_limit || 0,
+                exchange_generated: data.admin.exchange_generated || 0,
+                lastLogin: Date.now(),
+                token: inviteToken
+            };
+            localStorage.setItem('admin', 'true');
+            localStorage.setItem('adminEmail', data.admin.email);
+            localStorage.setItem('adminData', JSON.stringify(adminData));
+            localStorage.setItem('adminPrivileges', JSON.stringify(data.admin.privileges || []));
+            sessionStorage.setItem('admin', 'true');
+            sessionStorage.setItem('adminData', JSON.stringify(adminData));
+
+            await fetch('/api/admin/set-page-session', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ key: apiKey }) }).catch(()=>{});
+            window.location.href = '/sub-admin-panel';
+        } catch (e) {
+            showError('Connection error. Please try again.');
+            btn.disabled = false; btn.textContent = 'Login';
+            document.getElementById('spinner').style.display = 'none';
+        }
+    }
+
+    // Allow Enter key to submit
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exchange - AfricaBased</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        // Auth check using Replit database
+        (async function checkAuth() {
+            const token = getABToken();
+            if (!token) { window.location.href = '/login'; return; }
+            try {
+                const res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (!res.ok) { localStorage.removeItem('ab_token'); window.location.href = '/login'; }
+            } catch(e) { /* offline — let them through */ }
+        })();
+    </script>
+    <style>
+        /* Common styles */
+        :root {
+            --primary: #1a2238;
+            --accent: #4ecdc4;
+            --accent-color: #4ecdc4;
+            --accent-gradient: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            --secondary: #ff6b6b;
+            --text: #ffffff;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --bg: #0f172a;
+            --bg-dark: #0f172a;
+            --border: #e0e0e0;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            --color-dashboard: #4ecdc4;
+            --color-exchange: #ff6b6b;
+            --color-services: #9b59b6;
+            --color-withdraw: #e74c3c;
+            --color-products: #3498db;
+            --color-deposit: #2ecc71;
+            --color-active: #f1c40f;
+            --color-referrals: #1abc9c;
+            --color-statistics: #34495e;
+            --color-profile: #8e44ad;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --nav-bg: rgba(26, 34, 56, 0.98);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --hover-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+            --transition: all 0.3s ease;
+            --primary-color: var(--primary);
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 500px;
+            margin: 60px auto;
+            background: rgba(26,34,56,0.98);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            padding: 2rem;
+        }
+        .modal {
+            display: block;
+            position: relative;
+            background: #1a2238;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .modal-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .modal-form {
+            margin: 1.5rem 0;
+        }
+        .input-wrapper {
+            margin-bottom: 1rem;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid transparent;
+            border-radius: 15px;
+            color: #fff;
+            font-size: 1.1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            letter-spacing: 2px;
+        }
+        .modal-input:focus {
+            outline: none;
+            border-color: #4ecdc4;
+            box-shadow: 0 0 0 3px rgba(78,205,196,0.2);
+        }
+        .modal-button {
+            width: 100%;
+            background: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            color: white;
+            padding: 1rem;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .modal-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+        }
+        .status-message {
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            text-align: center;
+            display: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .status-message.success {
+            background: rgba(72, 187, 120, 0.2);
+            color: #48bb78;
+            border: 1px solid #48bb78;
+        }
+        .status-message.error {
+            background: rgba(245, 101, 101, 0.2);
+            color: #f56565;
+            border: 1px solid #f56565;
+        }
+        .exchange-history {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(26,34,56,0.98);
+            border-radius: 15px;
+        }
+        .exchange-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .exchange-table th,
+        .exchange-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .exchange-table th {
+            font-weight: 600;
+            background: rgba(255,255,255,0.05);
+        }
+        .code-type {
+            font-size: 0.8em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+        .type-single .code-type {
+            background: rgba(78,205,196,0.2);
+            color: #4ecdc4;
+        }
+        .type-random .code-type {
+            background: rgba(255,213,79,0.2);
+            color: #ffd54f;
+        }
+        .type-user .code-type {
+            background: rgba(129,140,248,0.2);
+            color: #818cf8;
+        }
+        .status-badge {
+            background: rgba(72,187,120,0.2);
+            color: #48bb78;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        
+        /* Redemption Success Modal Styles */
+        .redemption-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+        }
+        
+        .redemption-modal.show {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .redemption-modal-content {
+            background: linear-gradient(145deg, #1a2238, #232845);
+            padding: 2.5rem;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            transform: translateY(20px);
+            transition: transform 0.3s ease-out;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+        
+        .redemption-modal.show .redemption-modal-content {
+            transform: translateY(0);
+        }
+        
+        .success-icon {
+            font-size: 4rem;
+            color: #4ecdc4;
+            margin-bottom: 1.5rem;
+            animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            70% { transform: scale(0.9); opacity: 0.9; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .redemption-modal h2 {
+            background: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .success-details {
+            margin: 1.5rem 0;
+        }
+        
+        .success-message {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .amount-display, .wallet-update {
+            background: rgba(255,255,255,0.05);
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 0.75rem 0;
+        }
+        
+        .amount-label, .balance-label {
+            display: block;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .amount-value, .balance-value {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4ecdc4;
+            margin-top: 0.25rem;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .close-modal-btn {
+            background: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .close-modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 213, 79, 0.2);
+        }
+        
+        .close-modal-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* Success Modal Styles */
+        .success-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .success-modal.show {
+            opacity: 1;
+        }
+        
+        .success-modal-content {
+            background: linear-gradient(145deg, #1a2238, #232845);
+            padding: 2.5rem;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+        
+        .success-modal.show .success-modal-content {
+            transform: translateY(0);
+        }
+        
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .success-modal.type-single .success-icon {
+            color: var(--primary-color);
+        }
+        
+        .success-modal.type-random .success-icon {
+            color: var(--accent-color);
+        }
+        
+        .success-modal.type-user .success-icon {
+            color: #818cf8;
+        }
+        
+        .code-type-indicator {
+            margin: 1rem 0;
+        }
+        
+        #successMessage {
+            color: rgba(255,255,255,0.8);
+            margin: 1rem 0;
+            line-height: 1.5;
+        }
+        
+        #redeemedAmount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 1.5rem 0;
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .modal-button {
+            padding: 1rem;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .modal-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+        }
+        .modal-message {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+        .message-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .modal-message.success .message-icon {
+            color: #4ecdc4;
+        }
+        .modal-message.error .message-icon {
+            color: #ff6b6b;
+        }
+        .modal-message h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .modal-message .amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #4ecdc4;
+            margin: 1rem 0;
+        }
+        .modal-message p {
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 1.5rem;
+        }
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+            z-index: 2;
+        }
+        .modal-close:hover {
+            opacity: 1;
+        }
+        .back-btn-container {
+            text-align: left;
+            margin-bottom: 1.5rem;
+        }
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            font-size: 1rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.3s ease;
+        }
+        .back-btn:hover {
+            color: #45b7af;
+        }
+    </style>
+<script src="/js/token.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="back-btn-container">
+            <button class="back-btn" onclick="window.history.back()">&#8592; Back</button>
+        </div>
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Exchange Code</h2>
+                <p>Enter your exchange code below to redeem</p>
+            </div>
+            <div class="modal-form">
+                <div class="input-wrapper">
+                    <input type="text" id="exchangeCode" class="modal-input" placeholder="Enter exchange code" required>
+                </div>
+                <button id="redeemButton" class="modal-button">
+                    <i class="fas fa-exchange-alt"></i>
+                    Redeem Code
+                </button>
+                <div id="statusMessage" class="status-message"></div>
+            </div>
+        </div>
+        <div id="exchangeHistory" class="exchange-history">
+            <h3>Exchange History</h3>
+            <table class="exchange-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Code</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="exchangeHistoryBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Success Redemption Modal -->
+        <div id="redemptionSuccessModal" class="redemption-modal">
+            <div class="redemption-modal-content">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h2>Success! 🎉</h2>
+                <div class="success-details">
+                    <p class="success-message">Code Successfully Redeemed</p>
+                    <div class="amount-display">
+                        <span class="amount-label">Amount Received:</span>
+                        <span class="amount-value" id="redeemedAmountValue"></span>
+                    </div>
+                    <div class="wallet-update">
+                        <span class="wallet-label">New Account Balance:</span>
+                        <span class="wallet-value" id="newWalletBalance"></span>
+                    </div>
+                </div>
+                <button class="close-modal-btn" onclick="hideRedemptionModal()">
+                    <i class="fas fa-check"></i> Continue
+                </button>
+            </div>
+        </div>
+
+        <script>
+        const TOKEN = getABToken();
+
+        function getTypeLabel(type, codeType) {
+            if (type === 'single' || type === 'bulk') {
+                if (!codeType || codeType.toLowerCase() === 'normal reward') return 'Reward';
+                if (codeType.toLowerCase() === 'referral bonus') return 'Referral Bonus';
+                if (codeType.toLowerCase() === 'weekly salary') return 'Weekly Salary';
+                if (codeType.toLowerCase() === 'monthly salary') return 'Monthly Salary';
+                return codeType;
+            }
+            if (type === 'random') return 'Random Codes';
+            if (type === 'referral') return 'Referral Reward';
+            if (type === 'user') return 'User Assigned';
+            return type || '';
+        }
+
+        function updateExchangeHistory() {
+            if (!TOKEN) return;
+            const historyBody = document.getElementById('exchangeHistoryBody');
+            historyBody.innerHTML = '<tr><td colspan="4" style="text-align:center;opacity:0.6;">Loading...</td></tr>';
+            fetch('/api/exchange/history', { headers: { 'Authorization': 'Bearer ' + TOKEN } })
+            .then(r => r.json())
+            .then(data => {
+                const history = data.history || [];
+                historyBody.innerHTML = '';
+                if (!history.length) {
+                    historyBody.innerHTML = '<tr><td colspan="4" style="text-align:center;opacity:0.6;">No exchange history yet.</td></tr>';
+                    return;
+                }
+                history.forEach(ex => {
+                    const typeClass = ex.type ? 'type-' + ex.type : '';
+                    const label = getTypeLabel(ex.type, ex.code_type);
+                    const row = document.createElement('tr');
+                    row.className = typeClass;
+                    row.innerHTML = `
+                        <td>${new Date(ex.redeemed_at).toLocaleString()}</td>
+                        <td>${ex.code} ${label ? '<span class="code-type ' + typeClass + '">' + label + '</span>' : ''}</td>
+                        <td>${parseFloat(ex.amount).toLocaleString('en-US', {minimumFractionDigits:2})} KSH</td>
+                        <td><span class="status-badge">Redeemed</span></td>
+                    `;
+                    historyBody.appendChild(row);
+                });
+            })
+            .catch(() => {
+                historyBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ff6b6b;">Failed to load history.</td></tr>';
+            });
+        }
+
+        document.getElementById('redeemButton').addEventListener('click', function() {
+            const code = document.getElementById('exchangeCode').value.trim();
+            if (!code) { showStatus('Please enter an exchange code', 'error'); return; }
+            if (!TOKEN) { showStatus('Please login to redeem codes', 'error'); return; }
+
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Redeeming...';
+
+            fetch('/api/exchange/redeem', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+                body: JSON.stringify({ code })
+            })
+            .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
+            .then(({ ok, data }) => {
+                btn.disabled = false;
+                btn.textContent = 'Redeem Code';
+                if (!ok) {
+                    showStatus(data.error || 'Failed to redeem code', 'error');
+                    return;
+                }
+                document.getElementById('exchangeCode').value = '';
+                showRedemptionSuccess(data.amount, data.new_account_balance, data.code_type);
+                updateExchangeHistory();
+            })
+            .catch(e => {
+                btn.disabled = false;
+                btn.textContent = 'Redeem Code';
+                showStatus('Network error. Please try again.', 'error');
+            });
+        });
+
+        function showStatus(message, type) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = message;
+            statusMessage.className = 'status-message ' + type;
+            statusMessage.style.display = 'block';
+            setTimeout(() => { statusMessage.style.display = 'none'; }, 5000);
+        }
+
+        function showRedemptionSuccess(amount, newBalance, codeType) {
+            const formattedAmount = parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const formattedBalance = parseFloat(newBalance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('redeemedAmountValue').textContent = formattedAmount + ' KSH';
+            document.getElementById('newWalletBalance').textContent = formattedBalance + ' KSH';
+            const modal = document.getElementById('redemptionSuccessModal');
+            const successMsg = document.querySelector('.success-message');
+            switch(codeType) {
+                case 'random': successMsg.textContent = 'Random Pool Code Successfully Redeemed!'; break;
+                case 'user': successMsg.textContent = 'Your Personal Code Has Been Redeemed!'; break;
+                case 'referral': successMsg.textContent = 'Referral Code Successfully Redeemed!'; break;
+                default: successMsg.textContent = 'Code Successfully Redeemed!';
+            }
+            modal.style.display = 'flex';
+            requestAnimationFrame(() => { modal.classList.add('show'); });
+        }
+
+        function hideRedemptionModal() {
+            const modal = document.getElementById('redemptionSuccessModal');
+            modal.classList.remove('show');
+            setTimeout(() => { modal.style.display = 'none'; }, 300);
+        }
+
+        updateExchangeHistory();
+    </script>
+    </div>
+</body>
+</html>
+    </div>
+</body>
+</html>
+

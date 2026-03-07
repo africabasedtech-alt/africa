@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pending Approvals — AfricaBased Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #0d1117; min-height: 100vh; color: #c9d1d9; }
+
+        /* ── TOP BAR ── */
+        .topbar {
+            background: #161b22; border-bottom: 1px solid #30363d;
+            padding: 14px 24px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+        }
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: #21262d; border: 1px solid #30363d; color: #c9d1d9;
+            padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 0.84rem;
+            text-decoration: none; transition: background 0.15s;
+        }
+        .back-btn:hover { background: #30363d; }
+        .topbar-title { font-size: 1rem; font-weight: 700; color: #e6edf3; display: flex; align-items: center; gap: 8px; }
+        .topbar-title i { color: #3fb950; }
+        .badge-live {
+            background: rgba(63,185,80,0.15); color: #3fb950; border: 1px solid rgba(63,185,80,0.35);
+            font-size: 0.7rem; font-weight: 700; padding: 2px 9px; border-radius: 20px; letter-spacing: 0.4px;
+        }
+        .ml-auto { margin-left: auto; }
+        .refresh-btn {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: #21262d; border: 1px solid #30363d; color: #58a6ff;
+            padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.84rem; font-weight: 600;
+            transition: background 0.15s;
+        }
+        .refresh-btn:hover { background: #30363d; }
+
+        /* ── CONTENT ── */
+        .content { padding: 24px; max-width: 1200px; margin: 0 auto; }
+
+        /* ── SUMMARY STRIP ── */
+        .summary-strip { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
+        .sum-card {
+            flex: 1; min-width: 140px; background: #161b22; border: 1px solid #30363d;
+            border-radius: 10px; padding: 16px 20px;
+        }
+        .sum-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.6px; color: #8b949e; margin-bottom: 6px; }
+        .sum-val { font-size: 1.55rem; font-weight: 700; }
+        .sum-card.dep .sum-val { color: #58a6ff; }
+        .sum-card.dep-amt .sum-val { color: #3fb950; }
+        .sum-card.wth .sum-val { color: #f0883e; }
+        .sum-card.wth-amt .sum-val { color: #f85149; }
+
+        /* ── SECTION ── */
+        .section { margin-bottom: 36px; }
+        .section-head {
+            display: flex; align-items: center; gap: 10px;
+            background: #161b22; border: 1px solid #30363d; border-bottom: none;
+            border-radius: 10px 10px 0 0; padding: 14px 20px;
+        }
+        .section-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; }
+        .icon-dep { background: rgba(88,166,255,0.1); color: #58a6ff; }
+        .icon-wth { background: rgba(248,81,73,0.1); color: #f85149; }
+        .section-title { font-size: 0.95rem; font-weight: 700; color: #e6edf3; }
+        .count-pill {
+            margin-left: auto; font-size: 0.72rem; font-weight: 700;
+            padding: 3px 11px; border-radius: 20px;
+        }
+        .count-pill.has { background: rgba(248,130,20,0.15); color: #f0883e; border: 1px solid rgba(248,130,20,0.35); }
+        .count-pill.none { background: rgba(139,148,158,0.1); color: #8b949e; border: 1px solid #30363d; }
+
+        /* ── TABLE ── */
+        .tbl-wrap { overflow-x: auto; border: 1px solid #30363d; border-radius: 0 0 10px 10px; }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        thead { background: #161b22; border-bottom: 1px solid #30363d; }
+        th {
+            padding: 10px 16px; text-align: left; font-size: 0.69rem;
+            text-transform: uppercase; letter-spacing: 0.6px; color: #8b949e; font-weight: 600;
+            white-space: nowrap;
+        }
+        tbody tr { background: #0d1117; border-bottom: 1px solid #21262d; transition: background 0.12s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: #161b22; }
+        td { padding: 14px 16px; vertical-align: middle; }
+
+        /* Cell helpers */
+        .user-name { font-weight: 600; font-size: 0.88rem; color: #e6edf3; }
+        .user-sub { font-size: 0.73rem; color: #8b949e; margin-top: 3px; }
+        .amt-main { font-size: 0.95rem; font-weight: 700; color: #e6edf3; }
+        .amt-sub { font-size: 0.72rem; color: #8b949e; margin-top: 2px; }
+
+        .txn-id {
+            font-family: 'Courier New', monospace; font-size: 0.82rem; font-weight: 700;
+            color: #3fb950; background: rgba(63,185,80,0.08);
+            border: 1px solid rgba(63,185,80,0.2); border-radius: 6px;
+            padding: 4px 10px; display: inline-block; letter-spacing: 0.5px;
+        }
+        .txn-id.empty { color: #8b949e; background: rgba(139,148,158,0.06); border-color: #30363d; font-style: italic; font-weight: 400; letter-spacing: 0; }
+
+        .date-cell { font-size: 0.78rem; color: #8b949e; white-space: nowrap; }
+
+        .method-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
+        .method-mpesa { background: rgba(63,185,80,0.1); color: #3fb950; border: 1px solid rgba(63,185,80,0.25); }
+        .method-bank  { background: rgba(88,166,255,0.1); color: #58a6ff; border: 1px solid rgba(88,166,255,0.25); }
+
+        /* ── ACTION BUTTONS ── */
+        .action-cell { white-space: nowrap; }
+        .btn-grp { display: flex; gap: 8px; align-items: center; }
+        .btn-ok {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #238636; color: #fff; border: 1px solid #2ea043;
+            padding: 8px 16px; border-radius: 7px; cursor: pointer;
+            font-size: 0.82rem; font-weight: 700; transition: all 0.15s;
+        }
+        .btn-ok:hover { background: #2ea043; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(46,160,67,0.4); }
+        .btn-ok:active { transform: translateY(0); box-shadow: none; }
+        .btn-no {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: transparent; color: #f85149; border: 1px solid rgba(248,81,73,0.4);
+            padding: 8px 16px; border-radius: 7px; cursor: pointer;
+            font-size: 0.82rem; font-weight: 700; transition: all 0.15s;
+        }
+        .btn-no:hover { background: rgba(248,81,73,0.1); border-color: #f85149; transform: translateY(-1px); }
+        .btn-no:active { transform: translateY(0); }
+
+        /* ── EMPTY STATE ── */
+        .empty-state {
+            padding: 48px 24px; text-align: center;
+            background: #0d1117;
+        }
+        .empty-icon { font-size: 2.2rem; color: #3fb950; margin-bottom: 12px; }
+        .empty-msg { font-size: 0.9rem; color: #8b949e; }
+
+        /* ── REJECT MODAL ── */
+        .overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+            z-index: 999; align-items: center; justify-content: center; padding: 20px;
+        }
+        .overlay.open { display: flex; }
+        .modal {
+            background: #161b22; border: 1px solid #30363d; border-radius: 14px;
+            padding: 28px; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+        .modal-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .modal-header-icon { width: 36px; height: 36px; border-radius: 8px; background: rgba(248,81,73,0.1); color: #f85149; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+        .modal-title { font-size: 1.05rem; font-weight: 700; color: #e6edf3; }
+        .modal-desc { font-size: 0.85rem; color: #8b949e; line-height: 1.6; margin-bottom: 18px; }
+        .modal-label { font-size: 0.8rem; color: #8b949e; margin-bottom: 6px; font-weight: 600; }
+        .modal-input {
+            width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 8px;
+            padding: 11px 14px; color: #e6edf3; font-size: 0.88rem; font-family: inherit;
+            outline: none; margin-bottom: 20px; transition: border-color 0.15s;
+        }
+        .modal-input:focus { border-color: #58a6ff; }
+        .modal-footer { display: flex; gap: 10px; justify-content: flex-end; }
+        .btn-cancel {
+            background: #21262d; border: 1px solid #30363d; color: #c9d1d9;
+            padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.88rem; font-weight: 600;
+        }
+        .btn-cancel:hover { background: #30363d; }
+        .btn-reject-confirm {
+            background: #da3633; border: 1px solid #f85149; color: #fff;
+            padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.88rem; font-weight: 700;
+            display: inline-flex; align-items: center; gap: 7px;
+        }
+        .btn-reject-confirm:hover { background: #f85149; }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+            padding: 12px 24px; border-radius: 10px; font-size: 0.88rem; font-weight: 700;
+            z-index: 9999; display: none; white-space: nowrap;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        .toast.ok  { background: #238636; color: #fff; border: 1px solid #2ea043; }
+        .toast.err { background: #da3633; color: #fff; border: 1px solid #f85149; }
+
+        @media (max-width: 600px) {
+            .content { padding: 14px; }
+            .sum-card { min-width: 100px; padding: 12px 14px; }
+            .btn-ok, .btn-no { padding: 7px 12px; font-size: 0.78rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <a class="back-btn" href="Admin-panel.html"><i class="fas fa-arrow-left"></i> Admin Panel</a>
+        <div class="topbar-title">
+            <i class="fas fa-tasks"></i> Pending Approvals
+            <span class="badge-live">LIVE</span>
+        </div>
+        <div class="ml-auto">
+            <button class="refresh-btn" onclick="loadAll()"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- Summary strip -->
+        <div class="summary-strip">
+            <div class="sum-card dep">
+                <div class="sum-label"><i class="fas fa-arrow-down"></i> Pending Deposits</div>
+                <div class="sum-val" id="sumDepCount">—</div>
+            </div>
+            <div class="sum-card dep-amt">
+                <div class="sum-label"><i class="fas fa-coins"></i> Deposit Volume</div>
+                <div class="sum-val" id="sumDepAmt">—</div>
+            </div>
+            <div class="sum-card wth">
+                <div class="sum-label"><i class="fas fa-arrow-up"></i> Pending Withdrawals</div>
+                <div class="sum-val" id="sumWthCount">—</div>
+            </div>
+            <div class="sum-card wth-amt">
+                <div class="sum-label"><i class="fas fa-money-bill-wave"></i> Withdrawal Volume</div>
+                <div class="sum-val" id="sumWthAmt">—</div>
+            </div>
+        </div>
+
+        <!-- DEPOSITS -->
+        <div class="section">
+            <div class="section-head">
+                <div class="section-icon icon-dep"><i class="fas fa-arrow-circle-down"></i></div>
+                <span class="section-title">Deposits Awaiting Approval</span>
+                <span class="count-pill none" id="depPill">0 pending</span>
+            </div>
+            <div class="tbl-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-user" style="margin-right:5px;"></i>User</th>
+                            <th><i class="fas fa-coins" style="margin-right:5px;"></i>Amount</th>
+                            <th><i class="fas fa-fingerprint" style="margin-right:5px;"></i>Transaction ID</th>
+                            <th><i class="fas fa-mobile-alt" style="margin-right:5px;"></i>Method</th>
+                            <th><i class="fas fa-clock" style="margin-right:5px;"></i>Date &amp; Time</th>
+                            <th style="text-align:center;"><i class="fas fa-sliders-h" style="margin-right:5px;"></i>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="depTbody">
+                        <tr><td colspan="6"><div class="empty-state"><div class="empty-icon"><i class="fas fa-spinner fa-spin"></i></div><div class="empty-msg">Loading deposits…</div></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- WITHDRAWALS -->
+        <div class="section">
+            <div class="section-head">
+                <div class="section-icon icon-wth"><i class="fas fa-arrow-circle-up"></i></div>
+                <span class="section-title">Withdrawals Awaiting Processing</span>
+                <span class="count-pill none" id="wthPill">0 pending</span>
+            </div>
+            <div class="tbl-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-user" style="margin-right:5px;"></i>User</th>
+                            <th><i class="fas fa-coins" style="margin-right:5px;"></i>Amount &amp; Fee</th>
+                            <th><i class="fas fa-paper-plane" style="margin-right:5px;"></i>Destination</th>
+                            <th><i class="fas fa-mobile-alt" style="margin-right:5px;"></i>Method</th>
+                            <th><i class="fas fa-clock" style="margin-right:5px;"></i>Date &amp; Time</th>
+                            <th style="text-align:center;"><i class="fas fa-sliders-h" style="margin-right:5px;"></i>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wthTbody">
+                        <tr><td colspan="6"><div class="empty-state"><div class="empty-icon"><i class="fas fa-spinner fa-spin"></i></div><div class="empty-msg">Loading withdrawals…</div></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Reject modal -->
+    <div class="overlay" id="rejectOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-header-icon"><i class="fas fa-ban"></i></div>
+                <div class="modal-title" id="rejectTitle">Reject</div>
+            </div>
+            <p class="modal-desc" id="rejectDesc"></p>
+            <div class="modal-label">Reason (optional)</div>
+            <input class="modal-input" id="rejectReason" type="text" placeholder="e.g. Payment not received, details mismatch…">
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeReject()">Cancel</button>
+                <button class="btn-reject-confirm" onclick="confirmReject()"><i class="fas fa-times-circle"></i> Confirm Reject</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const AKEY = '1540568e';
+
+        (function() {
+            if (localStorage.getItem('superAdmin') !== 'true') window.location.href = '/ab-secure';
+        })();
+
+        function fmt(n) {
+            return parseFloat(n || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        function fmtDate(d) {
+            if (!d) return '—';
+            const dt = new Date(d);
+            return dt.toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' }) +
+                   ' ' + dt.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' });
+        }
+        function esc(s) {
+            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        let rejectType = null, rejectId = null;
+        let deps = [], wths = [];
+
+        function toast(msg, type) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = 'toast ' + type;
+            el.style.display = 'block';
+            clearTimeout(el._t);
+            el._t = setTimeout(() => el.style.display = 'none', 3600);
+        }
+
+        async function loadAll() { await Promise.all([loadDeps(), loadWths()]); }
+
+        async function loadDeps() {
+            try {
+                const r = await fetch('/api/admin/pending/deposits', { headers: { 'x-admin-key': AKEY } });
+                const d = await r.json();
+                deps = d.deposits || [];
+            } catch { deps = []; }
+            renderDeps();
+        }
+
+        async function loadWths() {
+            try {
+                const r = await fetch('/api/admin/pending/withdrawals', { headers: { 'x-admin-key': AKEY } });
+                const d = await r.json();
+                wths = d.withdrawals || [];
+            } catch { wths = []; }
+            renderWths();
+        }
+
+        function renderDeps() {
+            const pill = document.getElementById('depPill');
+            const n = deps.length;
+            document.getElementById('sumDepCount').textContent = n;
+            const vol = deps.reduce((s, d) => s + parseFloat(d.amount || 0), 0);
+            document.getElementById('sumDepAmt').textContent = 'KES ' + fmt(vol);
+
+            pill.textContent = n + ' pending';
+            pill.className = 'count-pill ' + (n > 0 ? 'has' : 'none');
+
+            const tbody = document.getElementById('depTbody');
+            if (!n) {
+                tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">
+                    <div class="empty-icon" style="color:#3fb950;"><i class="fas fa-check-circle"></i></div>
+                    <div class="empty-msg">No deposits waiting for approval</div>
+                </div></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = deps.map(d => {
+                const method = d.method || 'mpesa';
+                const txnBadge = d.reference
+                    ? `<span class="txn-id">${esc(d.reference)}</span>`
+                    : `<span class="txn-id empty">Not available</span>`;
+                const methodBadge = method === 'bank'
+                    ? `<span class="method-badge method-bank"><i class="fas fa-university"></i> Bank</span>`
+                    : `<span class="method-badge method-mpesa"><i class="fas fa-mobile-alt"></i> M-Pesa</span>`;
+                return `<tr>
+                    <td>
+                        <div class="user-name">${esc(d.username)}</div>
+                        <div class="user-sub">${esc(d.email)}${d.phone ? ' &nbsp;·&nbsp; ' + esc(d.phone) : ''}</div>
+                    </td>
+                    <td><div class="amt-main">KES ${fmt(d.amount)}</div></td>
+                    <td>${txnBadge}</td>
+                    <td>${methodBadge}</td>
+                    <td><div class="date-cell">${fmtDate(d.deposited_at)}</div></td>
+                    <td class="action-cell">
+                        <div class="btn-grp" style="justify-content:center;">
+                            <button class="btn-ok" onclick="approveDeposit('${d.id}')">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="btn-no" onclick="openReject('deposit','${d.id}')">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function renderWths() {
+            const pill = document.getElementById('wthPill');
+            const n = wths.length;
+            document.getElementById('sumWthCount').textContent = n;
+            const vol = wths.reduce((s, w) => s + parseFloat(w.amount || 0), 0);
+            document.getElementById('sumWthAmt').textContent = 'KES ' + fmt(vol);
+
+            pill.textContent = n + ' pending';
+            pill.className = 'count-pill ' + (n > 0 ? 'has' : 'none');
+
+            const tbody = document.getElementById('wthTbody');
+            if (!n) {
+                tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">
+                    <div class="empty-icon" style="color:#3fb950;"><i class="fas fa-check-circle"></i></div>
+                    <div class="empty-msg">No withdrawals waiting for processing</div>
+                </div></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = wths.map(w => {
+                const method = w.method || 'mpesa';
+                let dest;
+                if (method === 'bank') {
+                    dest = `<div class="user-name" style="font-size:0.84rem;">${esc(w.bank_name || '—')}</div>
+                            ${w.paybill ? `<div class="user-sub" style="color:#ffd54f;font-weight:700;">Paybill: ${esc(w.paybill)}</div>` : ''}
+                            <div class="user-sub">Acc: ${esc(w.account_number || '—')}${w.account_name ? ' · ' + esc(w.account_name) : ''}</div>`;
+                } else {
+                    const ph = w.phone ? w.phone.replace(/^254/, '0') : '—';
+                    dest = `<div class="user-name" style="font-size:0.84rem;">${ph}</div>`;
+                }
+                const methodBadge = method === 'bank'
+                    ? `<span class="method-badge method-bank"><i class="fas fa-university"></i> Bank</span>`
+                    : `<span class="method-badge method-mpesa"><i class="fas fa-mobile-alt"></i> M-Pesa</span>`;
+                const fee = parseFloat(w.fee || 0);
+                const total = parseFloat(w.amount || 0) + fee;
+                return `<tr>
+                    <td>
+                        <div class="user-name">${esc(w.username)}</div>
+                        <div class="user-sub">${esc(w.email)}</div>
+                    </td>
+                    <td>
+                        <div class="amt-main">KES ${fmt(w.amount)}</div>
+                        <div class="amt-sub">Fee KES ${fmt(fee)} &nbsp;·&nbsp; Total KES ${fmt(total)}</div>
+                    </td>
+                    <td>${dest}</td>
+                    <td>${methodBadge}</td>
+                    <td><div class="date-cell">${fmtDate(w.requested_at)}</div></td>
+                    <td class="action-cell">
+                        <div class="btn-grp" style="justify-content:center;">
+                            <button class="btn-ok" onclick="approveWithdrawal('${w.id}')">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="btn-no" onclick="openReject('withdrawal','${w.id}')">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function approveDeposit(id) {
+            try {
+                const r = await fetch(`/api/admin/deposits/${id}/approve`, { method: 'POST', headers: { 'x-admin-key': AKEY } });
+                const d = await r.json();
+                if (!r.ok) { toast(d.error || 'Failed to approve deposit', 'err'); return; }
+                toast('Deposit approved — balance credited to user.', 'ok');
+                await loadDeps();
+            } catch { toast('Network error. Please try again.', 'err'); }
+        }
+
+        async function approveWithdrawal(id) {
+            try {
+                const r = await fetch(`/api/admin/withdrawals/${id}/approve`, { method: 'POST', headers: { 'x-admin-key': AKEY } });
+                const d = await r.json();
+                if (!r.ok) { toast(d.error || 'Failed to approve withdrawal', 'err'); return; }
+                toast('Withdrawal approved and marked completed.', 'ok');
+                await loadWths();
+            } catch { toast('Network error. Please try again.', 'err'); }
+        }
+
+        function openReject(type, id) {
+            rejectType = type; rejectId = id;
+            document.getElementById('rejectTitle').textContent = type === 'deposit' ? 'Reject Deposit' : 'Reject Withdrawal';
+            document.getElementById('rejectDesc').textContent = type === 'deposit'
+                ? 'The deposit will be marked as rejected. The user\'s balance will NOT be credited.'
+                : 'The withdrawal will be rejected and the full held amount (including fee) will be refunded to the user\'s balance.';
+            document.getElementById('rejectReason').value = '';
+            document.getElementById('rejectOverlay').classList.add('open');
+        }
+
+        function closeReject() {
+            document.getElementById('rejectOverlay').classList.remove('open');
+            rejectType = null; rejectId = null;
+        }
+
+        async function confirmReject() {
+            if (!rejectType || !rejectId) return;
+            const reason = document.getElementById('rejectReason').value.trim();
+            const url = rejectType === 'deposit'
+                ? `/api/admin/deposits/${rejectId}/reject`
+                : `/api/admin/withdrawals/${rejectId}/reject`;
+            try {
+                const r = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'x-admin-key': AKEY, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason })
+                });
+                const d = await r.json();
+                closeReject();
+                if (!r.ok) { toast(d.error || 'Rejection failed', 'err'); return; }
+                toast(rejectType === 'deposit' ? 'Deposit rejected.' : 'Withdrawal rejected — balance refunded.', 'ok');
+                if (rejectType === 'deposit') await loadDeps(); else await loadWths();
+            } catch { toast('Network error. Please try again.', 'err'); }
+        }
+
+        document.getElementById('rejectOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeReject();
+        });
+
+        loadAll();
+    </script>
+<script src="/js/admin-pin.js"></script>
+</body>
+</html>

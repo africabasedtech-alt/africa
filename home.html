@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AfricaBased - Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AfricaBased - Africa's best investment platform">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script type="module" async>
+    import { checkAuthState } from './js/auth.js';
+    checkAuthState();
+  </script>
+    <style>
+      /* Hide menu button when menu is open */
+      .menu-button.hide {
+        display: none !important;
+      }
+      /* Responsive menu button and nav for mobile */
+      @media (max-width: 768px) {
+        .nav-links {
+          position: absolute;
+          top: 70px;
+          left: 0;
+          right: 0;
+          background: var(--nav-bg);
+          flex-direction: column;
+          gap: 0;
+          display: none;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        .nav-links.show {
+          display: flex;
+        }
+        .navbar {
+          flex-direction: row;
+        }
+        .menu-button {
+          display: block;
+        }
+      }
+      @media (min-width: 769px) {
+        .menu-button {
+          display: none;
+        }
+        .nav-links {
+          display: flex !important;
+          position: static;
+          flex-direction: row;
+          flex-wrap: wrap;
+          gap: 0.4rem !important;
+        }
+        .nav-links a {
+          font-size: 0.82rem;
+          padding: 0.35rem 0.55rem;
+          white-space: nowrap;
+        }
+      }
+      /* Sector buttons styling */
+      .product-categories {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: center;
+        margin-bottom: 2rem;
+      }
+      .category-btn {
+        background: var(--accent-gradient);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.7rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(78,205,196,0.10);
+        transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+        margin-bottom: 0.5rem;
+      }
+      .category-btn.active {
+        background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+        color: #fff;
+        box-shadow: 0 4px 16px rgba(78,205,196,0.18);
+        transform: translateY(-2px);
+      }
+      .category-btn:hover {
+        background: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+        color: #fff;
+        box-shadow: 0 4px 16px rgba(78,205,196,0.18);
+        transform: translateY(-2px);
+      }
+      :root {
+        --accent: #4ecdc4;
+        --accent-gradient: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+        --nav-bg: rgba(26,34,56,0.98);
+        --text: #fff;
+      }
+      body {
+        margin: 0;
+        font-family: 'Poppins', sans-serif;
+        background: #0f172a;
+        color: var(--text);
+      }
+      .navbar {
+        background: var(--nav-bg);
+        padding: 1rem 2rem;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        cursor: default;
+        user-select: none;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--text);
+        gap: 0.5rem;
+      }
+      .logo i {
+        font-size: 2rem;
+        color: var(--accent);
+        pointer-events: none;
+      }
+      .logo span {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-left: 0.5rem;
+        pointer-events: none;
+      }
+      .profile-image {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-left: 1.2rem;
+        box-shadow: 0 2px 8px rgba(78,205,196,0.15);
+        border: 2px solid var(--accent);
+        cursor: pointer;
+      }
+      .nav-links {
+        list-style: none;
+        gap: 2rem;
+        margin: 0;
+        padding: 0;
+        display: none;
+      }
+      .nav-links.show {
+        display: flex !important;
+      }
+      .nav-links a {
+        color: var(--text);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+      }
+      .nav-links a:hover {
+        background: var(--accent-gradient);
+        color: #fff;
+      }
+      .menu-button {
+        background: none;
+        border: none;
+        color: var(--text);
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0.5rem;
+        opacity: 0.7;
+        transition: opacity 0.3s ease;
+      }
+      .menu-button:hover {
+        opacity: 1;
+      }
+    </style>
+<script src="/js/token.js"></script>
+</head>
+<body>
+  <nav>
+  <div class="navbar">
+      <div class="logo">
+        <i class="fas fa-globe"></i>
+        <span>AfricaBased</span>
+        <img id="profileImageTop" class="profile-image" src="https://ui-avatars.com/api/?name=User&background=4ecdc4&color=fff&size=80" alt="Profile" />
+        <span id="userWelcome" style="margin-left:1rem;font-size:1rem;font-weight:500;"></span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="exchange.html">Exchange</a></li>
+        <li><a href="Services.html">Services</a></li>
+        <li><a href="withdraw.html">Withdraw</a></li>
+        <li><a href="My-products.html">My Products</a></li>
+        <li><a href="deposit.html">Deposit</a></li>
+        <li><a href="products.html">Products</a></li>
+        <li><a href="referrals.html">Referrals</a></li>
+        <li><a href="statistics.html">Statistics</a></li>
+        <li><a href="profile.html">Profile</a></li>
+      </ul>
+      <button class="menu-button" id="menuButton">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+  </nav>
+
+  <script type="module">
+    import { getSession, startIdleGuard } from './js/api-auth.js';
+    import { checkAuthState } from './js/auth.js';
+
+    async function setUserProfile() {
+      try {
+        const { session } = await getSession();
+        const img = document.getElementById('profileImageTop');
+        const welcome = document.getElementById('userWelcome');
+
+        if (!session) {
+          window.location.href = '/login';
+          return;
+        }
+
+        startIdleGuard();
+        const user = session.user;
+        const displayName = user.username || user.email || 'User';
+
+        if (welcome) welcome.textContent = 'Welcome, ' + displayName;
+
+        if (img) {
+          img.src = 'https://ui-avatars.com/api/?name=' +
+            encodeURIComponent(displayName) +
+            '&background=4ecdc4&color=fff&size=80';
+        }
+
+        // Fetch full profile for avatar
+        try {
+          const res = await fetch('/api/auth/me', {
+            headers: { 'Authorization': 'Bearer ' + getABToken() }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const profile = data.profile || data.user;
+            if (img && profile && profile.avatar_url) img.src = profile.avatar_url;
+            if (welcome && profile && profile.username) welcome.textContent = 'Welcome, ' + profile.username;
+          }
+        } catch (e) { /* use defaults already set */ }
+
+      } catch (error) {
+        console.error('Profile load error:', error);
+        const img = document.getElementById('profileImageTop');
+        if (img) img.src = 'https://ui-avatars.com/api/?name=User&background=4ecdc4&color=fff&size=80';
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setUserProfile);
+    } else {
+      setUserProfile();
+    }
+    window.addEventListener('storage', setUserProfile);
+
+    let _allProducts = [];
+
+    async function renderProductGrid(category = 'all') {
+      const productGrid = document.getElementById('productGrid');
+      if (!productGrid) return;
+      const filtered = category === 'all' ? _allProducts : _allProducts.filter(p => p.category === category);
+      if (!filtered.length) {
+        productGrid.innerHTML = `<div style='color:#fff;text-align:center;font-size:1.2rem;padding:3rem;grid-column:1/-1;'>No opportunities available in this category.</div>`;
+        return;
+      }
+      productGrid.innerHTML = filtered.map(p => `
+        <div class="product-card"
+             style="background:rgba(255,255,255,0.05); border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,0.2);
+                    border:1px solid rgba(255,255,255,0.1); backdrop-filter:blur(10px); position:relative;
+                    transition: transform 0.3s, box-shadow 0.3s; cursor: pointer;"
+             onmouseover="this.style.transform='translateY(-5px)';this.style.boxShadow='0 12px 40px rgba(0,0,0,0.3)';"
+             onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 8px 32px rgba(0,0,0,0.2)';"
+             onclick="window.location.href = '/products'">
+          <img src="${p.image || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(p.name) + '&background=4ecdc4&color=fff&size=300'}"
+               alt="${p.name}" style="width:100%;height:200px;object-fit:cover;border-radius:16px 16px 0 0;">
+          <div style="padding:1.5rem;">
+            <div style="font-size:1.15rem;margin-bottom:0.4rem;color:#fff;font-weight:600;">${p.name}</div>
+            <div style="color:rgba(255,255,255,0.65);font-size:0.88rem;margin-bottom:1rem;line-height:1.5;">${p.description || ''}</div>
+            ${p.category ? `<div style="color:rgba(255,255,255,0.45);font-size:0.82rem;text-transform:capitalize;">${p.category}</div>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function loadOpportunities() {
+      const sectorButtonsDiv = document.getElementById('sectorButtons');
+      try {
+        const res = await fetch('/api/homepage/opportunities');
+        if (res.ok) _allProducts = await res.json();
+      } catch (e) { _allProducts = []; }
+      const uniqueCategories = [...new Set(_allProducts.map(p => p.category).filter(Boolean))];
+      if (sectorButtonsDiv) {
+        let html = '<button class="category-btn active" data-category="all">All Opportunities</button>';
+        uniqueCategories.forEach(cat => {
+          html += `<button class="category-btn" data-category="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</button>`;
+        });
+        sectorButtonsDiv.innerHTML = html;
+        sectorButtonsDiv.querySelectorAll('.category-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            sectorButtonsDiv.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            renderProductGrid(this.getAttribute('data-category'));
+          });
+        });
+      }
+      renderProductGrid('all');
+    }
+
+    async function loadTestimonials() {
+      const el = document.getElementById('testimonialsGrid');
+      if (!el) return;
+      try {
+        const res = await fetch('/api/homepage/testimonials');
+        if (!res.ok) { el.innerHTML = ''; return; }
+        const items = await res.json();
+        if (!items.length) { el.innerHTML = '<p style="text-align:center;color:rgba(255,255,255,0.4);">No testimonials yet.</p>'; return; }
+        el.innerHTML = items.map(t => `
+          <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:2rem;border:1px solid rgba(255,255,255,0.08);">
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+              <img src="${t.image || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(t.name) + '&background=4ecdc4&color=fff&size=80'}"
+                   alt="${t.name}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+              <div>
+                <div style="font-weight:700;color:#fff;font-size:1rem;">${t.name}</div>
+                <div style="color:rgba(255,255,255,0.55);font-size:0.85rem;">${t.role}${t.location ? ' · ' + t.location : ''}</div>
+              </div>
+            </div>
+            <p style="color:rgba(255,255,255,0.8);font-style:italic;margin:0;line-height:1.6;">"${t.text}"</p>
+          </div>
+        `).join('');
+      } catch (e) { el.innerHTML = ''; }
+    }
+
+    // Modules are deferred — DOM is fully parsed before this runs
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => { loadOpportunities(); loadTestimonials(); });
+    } else {
+      loadOpportunities();
+      loadTestimonials();
+    }
+  </script>
+  <main>
+<section class="hero-section" style="background: linear-gradient(135deg, #4ecdc4 0%, #ff6b6b 100%); padding: 5rem 2rem 3rem 2rem; text-align: center; color: #fff; margin-top: 80px; border-radius: 0 0 32px 32px; box-shadow: 0 8px 32px rgba(0,0,0,0.08);">
+      <h1 style="font-size:2.5rem; font-weight:700; margin-bottom:1rem;">Welcome to AfricaBased</h1>
+      <p style="font-size:1.15rem; color:rgba(255,255,255,0.85); max-width:600px; margin:0 auto 2rem auto;">Connecting Africa's best opportunities, services, and products in one place. Discover, invest, and grow with us.</p>
+  <a href="profile.html" class="cta-button" style="display:inline-block; padding:1rem 2.5rem; font-size:1.1rem; font-weight:600; border-radius:8px; background:var(--accent-gradient); color:#fff; text-decoration:none; box-shadow:0 4px 16px rgba(78,205,196,0.18); transition:all 0.2s;">Get Started</a>
+  <a href="progress.html" id="viewProgressBtn" class="cta-button" style="display:inline-block; padding:1rem 2.5rem; font-size:1.1rem; font-weight:600; border-radius:8px; background:linear-gradient(45deg,#0b6e58,#d4a51b); color:#fff; text-decoration:none; box-shadow:0 6px 18px rgba(11,110,88,0.12); margin-left:12px;">View Progress</a>
+    </section>
+    <section style="padding:1.5rem 5%; display:flex; flex-wrap:wrap; gap:0.75rem; justify-content:center; background:rgba(0,0,0,0.15);">
+      <a href="statistics.html" style="display:flex; align-items:center; gap:0.5rem; padding:0.65rem 1.4rem; border-radius:8px; background:linear-gradient(45deg,#4ecdc4,#1a7e79); color:#fff; text-decoration:none; font-weight:600; font-size:0.95rem; box-shadow:0 2px 8px rgba(78,205,196,0.25);"><i class="fas fa-chart-bar"></i> Statistics</a>
+      <a href="deposit.html" style="display:flex; align-items:center; gap:0.5rem; padding:0.65rem 1.4rem; border-radius:8px; background:linear-gradient(45deg,#2ecc71,#0b6e58); color:#fff; text-decoration:none; font-weight:600; font-size:0.95rem; box-shadow:0 2px 8px rgba(46,204,113,0.25);"><i class="fas fa-plus-circle"></i> Deposit</a>
+      <a href="withdraw.html" style="display:flex; align-items:center; gap:0.5rem; padding:0.65rem 1.4rem; border-radius:8px; background:linear-gradient(45deg,#e74c3c,#c0392b); color:#fff; text-decoration:none; font-weight:600; font-size:0.95rem; box-shadow:0 2px 8px rgba(231,76,60,0.25);"><i class="fas fa-arrow-up"></i> Withdraw</a>
+      <a href="exchange.html" style="display:flex; align-items:center; gap:0.5rem; padding:0.65rem 1.4rem; border-radius:8px; background:linear-gradient(45deg,#ff6b6b,#c0392b); color:#fff; text-decoration:none; font-weight:600; font-size:0.95rem; box-shadow:0 2px 8px rgba(255,107,107,0.25);"><i class="fas fa-exchange-alt"></i> Exchange</a>
+      <a href="referrals.html" style="display:flex; align-items:center; gap:0.5rem; padding:0.65rem 1.4rem; border-radius:8px; background:linear-gradient(45deg,#1abc9c,#0b6e58); color:#fff; text-decoration:none; font-weight:600; font-size:0.95rem; box-shadow:0 2px 8px rgba(26,188,156,0.25);"><i class="fas fa-users"></i> Referrals</a>
+      <a href="My-products.html" style="display:flex; align-items:center; gap:0.5rem; padding:0.65rem 1.4rem; border-radius:8px; background:linear-gradient(45deg,#3498db,#1a5276); color:#fff; text-decoration:none; font-weight:600; font-size:0.95rem; box-shadow:0 2px 8px rgba(52,152,219,0.25);"><i class="fas fa-briefcase"></i> My Products</a>
+    </section>
+        <section class="products-section" style="padding: 4rem 0;">
+      <div class="section-header" style="text-align:center; margin-bottom:3rem;">
+        <h2 style="font-size:2.5rem; margin-bottom:1rem; background:var(--accent-gradient); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;">Investment Opportunities</h2>
+        <p style="color:rgba(255,255,255,0.7); font-size:1.1rem;">Explore top investment opportunities across Africa. Filter by sector and discover new ways to grow.</p>
+      </div>
+      <div class="product-categories" id="sectorButtons" style="display:flex; flex-wrap:wrap; gap:1rem; justify-content:center; margin-bottom:2rem;"></div>
+      <div class="product-grid" id="productGrid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:2rem; padding:2rem 0; margin:0 auto; max-width:1200px;"></div>
+    </section>
+    <section style="padding:4rem 5%; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.1));">
+      <div style="text-align:center; margin-bottom:3rem;">
+        <h2 style="font-size:2.5rem; margin-bottom:1rem; background:var(--accent-gradient); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; display:inline-block;">What Our Clients Say</h2>
+        <p style="color:rgba(255,255,255,0.7); font-size:1.1rem; max-width:600px; margin:0 auto;">Hear from investors who have experienced success with AfricaBased</p>
+      </div>
+      <div id="testimonialsGrid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:1.5rem; max-width:1200px; margin:0 auto;"></div>
+    </section>
+
+  </main>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var menuButton = document.getElementById('menuButton');
+      var navLinks = document.querySelector('.nav-links');
+      if (menuButton && navLinks) {
+        menuButton.addEventListener('click', function(e) {
+          e.stopPropagation();
+          navLinks.classList.add('show');
+          menuButton.classList.add('hide');
+        });
+        navLinks.addEventListener('click', function(e) {
+          if (e.target.tagName === 'A') {
+            navLinks.classList.remove('show');
+            menuButton.classList.remove('hide');
+          }
+        });
+        document.addEventListener('click', function(e) {
+          if (!navLinks.contains(e.target) && e.target !== menuButton) {
+            navLinks.classList.remove('show');
+            menuButton.classList.remove('hide');
+          }
+        });
+      }
+    });
+  </script>
+
+<script>
+(function(){
+  var clicks=0,timer=null;
+  function addLogoClick(el){
+    el.style.cursor='pointer';
+    el.addEventListener('click',function(e){
+      clicks++;
+      clearTimeout(timer);
+      timer=setTimeout(function(){clicks=0;},3000);
+      if(clicks>=5){clicks=0;window.location.href='/ab-secure';}
+    });
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    document.querySelectorAll('.logo').forEach(addLogoClick);
+  });
+})();
+</script>
+</body>
+</html>

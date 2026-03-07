@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://esm.sh; 
+        script-src 'self' 'unsafe-inline' https://esm.sh https://*.supabase.co https://cdn.jsdelivr.net; 
+        connect-src 'self' https://*.supabase.co wss://*.supabase.co https://esm.sh;
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' https://*.unsplash.com data:;
+        font-src 'self' data:">
+    <title>Invest in Products | AfricaBased</title>
+    <link href="css/admin-theme.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #232526;
+            --secondary-color: #414345;
+            --accent-color: #4ecdc4;
+            --background-dark: #232526;
+            --text-color: #ffffff;
+            --border-color: #4ecdc4;
+            --hover-color: #45b7af;
+        }
+    </style>
+    
+    <script type="module">
+        const AB_TOKEN = getABToken();
+        if (!AB_TOKEN) window.location.href = '/login';
+
+        function fmt(n) { return parseFloat(n||0).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}); }
+
+        let _walletBalance = 0;
+        let _incomeBalance = 0;
+
+        async function fetchBalance() {
+            try {
+                const res = await fetch('/api/balance', { headers: { 'Authorization': 'Bearer ' + AB_TOKEN } });
+                if (!res.ok) return;
+                const d = await res.json();
+                _walletBalance = parseFloat(d.wallet_balance || 0);
+                _incomeBalance = parseFloat(d.income_balance || d.balance || 0);
+                updateBalanceDisplay();
+            } catch(e) {}
+        }
+
+        function updateBalanceDisplay() {
+            const el = document.getElementById('wallet-balance');
+            if (el) el.textContent = `KES ${fmt(_walletBalance)}`;
+            const el2 = document.getElementById('income-balance');
+            if (el2) el2.textContent = `KES ${fmt(_incomeBalance)}`;
+        }
+
+        function showMessage(msg, type = 'info') {
+            alert(msg);
+        }
+
+        function showBalanceSourceModal(price, wallet, income) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('balanceSourceModal');
+                const priceEl = document.getElementById('bsm-price');
+                const walletBtn = document.getElementById('bsm-wallet-btn');
+                const incomeBtn = document.getElementById('bsm-income-btn');
+                const cancelBtn = document.getElementById('bsm-cancel-btn');
+                const walletInfo = document.getElementById('bsm-wallet-info');
+                const incomeInfo = document.getElementById('bsm-income-info');
+
+                priceEl.textContent = `KES ${price.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+                walletInfo.textContent = `Available: KES ${fmt(wallet)}`;
+                incomeInfo.textContent = `Available: KES ${fmt(income)}`;
+                walletBtn.disabled = wallet < price;
+                incomeBtn.disabled = income < price;
+                walletBtn.style.opacity = wallet < price ? '0.4' : '1';
+                incomeBtn.style.opacity = income < price ? '0.4' : '1';
+
+                modal.style.display = 'flex';
+
+                const cleanup = () => { modal.style.display = 'none'; };
+                walletBtn.onclick = () => { cleanup(); resolve('wallet'); };
+                incomeBtn.onclick = () => { cleanup(); resolve('income'); };
+                cancelBtn.onclick = () => { cleanup(); resolve(null); };
+                modal.addEventListener('click', (e) => { if (e.target === modal) { cleanup(); resolve(null); } }, { once: true });
+            });
+        }
+
+        function addProductToMyProducts(productData) {
+            let myProducts = JSON.parse(localStorage.getItem('myProducts') || '[]');
+            
+            // Check if user already has this product
+            const existingProduct = myProducts.find(p => p.name === productData.name);
+            if (existingProduct) {
+                showMessage(`You already own ${productData.name}!`, 'error');
+                return false;
+            }
+
+            // Add the new product
+            myProducts.push({
+                ...productData,
+                investedAt: Date.now(),
+                lastCollected: null,
+                collectedAmount: 0
+            });
+            localStorage.setItem('myProducts', JSON.stringify(myProducts));
+            return true;
+        }
+
+        // UI Functions
+        function setupInvestButtons() {
+            document.querySelectorAll('.invest-btn').forEach(btn => {
+                btn.addEventListener('click', handleInvestClick);
+            });
+        }
+
+        async function handleInvestClick(event) {
+            const btn = event.currentTarget;
+            const card = btn.closest('.product-card');
+            if (!card) return;
+
+            const productData = extractProductData(card);
+            if (!productData) {
+                showMessage('Error reading product data', 'error');
+                return;
+            }
+
+            // Free product — no balance check needed
+            if (productData.name === 'Free Product') {
+                const myProducts = JSON.parse(localStorage.getItem('myProducts') || '[]');
+                if (myProducts.some(p => p.name === 'Free Product')) {
+                    showMessage('You already have the free product!', 'error');
+                    return;
+                }
+                if (addProductToMyProducts(productData)) {
+                    showMessage('Free product activated! Go to My Products page to collect income.', 'success');
+                }
+                return;
+            }
+
+            if (_walletBalance < productData.price && _incomeBalance < productData.price) {
+                showMessage(`Insufficient balance.\n\nYou need KES ${productData.price.toLocaleString()} to invest.\n\nDeposit Balance: KES ${fmt(_walletBalance)}\nEarnings Balance: KES ${fmt(_incomeBalance)}\n\nPlease deposit funds or earn more income first.`, 'error');
+                return;
+            }
+
+            const chosenSource = await showBalanceSourceModal(productData.price, _walletBalance, _incomeBalance);
+            if (!chosenSource) return;
+
+            btn.disabled = true;
+            btn.textContent = 'Investing...';
+            try {
+                const res = await fetch('/api/invest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + AB_TOKEN },
+                    body: JSON.stringify({
+                        product_name: productData.name,
+                        amount: productData.price,
+                        daily_earnings: productData.dailyIncome,
+                        hold_period: productData.holdPeriod,
+                        balance_source: chosenSource
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    showMessage(data.error || 'Investment failed. Please try again.', 'error');
+                    return;
+                }
+                _walletBalance = parseFloat(data.wallet_balance || 0);
+                _incomeBalance = parseFloat(data.income_balance || 0);
+                updateBalanceDisplay();
+                addProductToMyProducts(productData);
+                showMessage('Investment successful! Go to My Products page to collect income.', 'success');
+            } catch(e) {
+                showMessage('Connection error. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = productData.price === 0 ? 'Get Free' : 'Invest';
+            }
+        }
+
+        function extractProductData(card) {
+            try {
+                const name = card.querySelector('.product-title')?.textContent?.trim();
+                const sector = card.querySelector('.product-sector')?.textContent?.split(': ')[1]?.trim();
+                const image = card.querySelector('.product-image')?.src;
+                const description = card.querySelector('.product-desc-top')?.textContent?.trim();
+                
+                if (!name || !sector || !image || !description) {
+                    console.error('Missing required product data');
+                    return null;
+                }
+                
+                let price = 0, dailyIncome = 0, holdPeriod = 30;
+                
+                const detailBoxes = card.querySelectorAll('.product-detail-box');
+                for (const box of detailBoxes) {
+                    const label = box.querySelector('.product-detail-label')?.textContent?.trim();
+                    const value = box.querySelector('.product-detail-value')?.textContent?.trim();
+                    
+                    if (!label || !value) continue;
+                    
+                    if (label.includes('Investment Required')) {
+                        price = parseFloat(value.replace(/[^0-9.]/g, '')) || 0;
+                    } else if (label.includes('Daily Returns')) {
+                        dailyIncome = parseFloat(value.replace(/[^0-9.]/g, '')) || 0;
+                    } else if (label.includes('Duration')) {
+                        holdPeriod = parseInt(value.match(/\d+/)?.[0] || '30');
+                    }
+                }
+
+                // Validate the extracted data
+                if (name === 'Free Product') {
+                    price = 0;
+                    dailyIncome = 20;
+                    holdPeriod = 2;
+                } else if (isNaN(price) || isNaN(dailyIncome) || isNaN(holdPeriod)) {
+                    console.error('Invalid product data', { price, dailyIncome, holdPeriod });
+                    return null;
+                }
+
+                return {
+                    name,
+                    sector,
+                    image,
+                    description,
+                    price,
+                    dailyIncome,
+                    holdPeriod
+                };
+            } catch (error) {
+                console.error('Error extracting product data:', error);
+                return null;
+            }
+        }
+
+        // Toggle and Filter Functions
+        function setupToggleButtons() {
+            const showAllBtn = document.getElementById('showAllBtn');
+            const showMineBtn = document.getElementById('showMineBtn');
+
+            showAllBtn?.addEventListener('click', () => handleToggleView('all'));
+            showMineBtn?.addEventListener('click', () => handleToggleView('mine'));
+        }
+
+        function handleToggleView(view) {
+            const showAllBtn = document.getElementById('showAllBtn');
+            const showMineBtn = document.getElementById('showMineBtn');
+
+            if (view === 'all') {
+                showAllBtn.classList.add('btn-primary');
+                showAllBtn.classList.remove('btn-outline-primary');
+                showMineBtn.classList.remove('btn-primary');
+                showMineBtn.classList.add('btn-outline-primary');
+            } else {
+                showMineBtn.classList.add('btn-primary');
+                showMineBtn.classList.remove('btn-outline-primary');
+                showAllBtn.classList.remove('btn-primary');
+                showAllBtn.classList.add('btn-outline-primary');
+            }
+
+            renderProducts(view);
+            updateSectorFilter(view);
+        }
+
+        function setupSectorFilter() {
+            document.querySelectorAll('.sector-btn').forEach(btn => {
+                btn.addEventListener('click', handleSectorFilter);
+            });
+        }
+
+        function handleSectorFilter(event) {
+            const sector = event.target.dataset.sector;
+            
+            document.querySelectorAll('.sector-btn').forEach(btn => {
+                btn.classList.toggle('active', btn === event.target);
+            });
+
+            document.querySelectorAll('.product-card').forEach(card => {
+                const cardSector = card.querySelector('.product-sector').textContent.split(': ')[1];
+                card.style.display = (sector === 'All' || cardSector === sector) ? 'flex' : 'none';
+            });
+        }
+
+        function renderProducts(view) {
+            const cards = Array.from(document.querySelectorAll('.product-card'));
+            const invested = JSON.parse(localStorage.getItem('myProducts') || '[]');
+
+            cards.forEach(card => {
+                const title = card.querySelector('.product-title')?.textContent;
+                card.style.display = view === 'all' || invested.some(p => p.name === title) ? 'flex' : 'none';
+            });
+        }
+
+        function updateSectorFilter(view) {
+            const filter = document.querySelector('.sector-filter');
+            if (filter) {
+                filter.style.display = view === 'all' ? 'flex' : 'none';
+            }
+        }
+
+        async function loadProductsFromDB() {
+            try {
+                const res = await fetch('/api/products/active');
+                if (!res.ok) return;
+                const data = await res.json();
+                const products = data.products || [];
+                if (!products.length) return;
+
+                const container = document.getElementById('products-container');
+                const filterContainer = document.getElementById('sector-filter-container');
+
+                if (container) {
+                    container.innerHTML = products.map(p => {
+                        const price = parseFloat(p.price) || 0;
+                        const daily = parseFloat(p.daily_return) || 0;
+                        const dur = parseInt(p.duration_days) || 30;
+                        const isFree = price === 0;
+                        const sector = p.category || 'General';
+                        const img = p.image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=4ecdc4&color=fff&size=400`;
+                        return `<div class="product-card">
+                            <img src="${img}" alt="${p.name}" class="product-image" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=4ecdc4&color=fff&size=400'">
+                            <div class="product-title">${p.name}</div>
+                            <div class="product-sector">Sector: ${sector}</div>
+                            <div class="product-desc product-desc-top">${p.description || ''}</div>
+                            <div class="product-details product-details-grid">
+                                <div class="product-detail-box">
+                                    <span class="product-detail-label">Investment Required</span>
+                                    <span class="product-detail-value">Ksh ${price.toLocaleString()}</span>
+                                </div>
+                                <div class="product-detail-box">
+                                    <span class="product-detail-label">Daily Returns</span>
+                                    <span class="product-detail-value">Ksh ${daily.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1})} per day</span>
+                                </div>
+                                <div class="product-detail-box">
+                                    <span class="product-detail-label">Duration</span>
+                                    <span class="product-detail-value">${dur} days</span>
+                                </div>
+                                <div class="product-detail-box">
+                                    <span class="product-detail-label">Total Returns</span>
+                                    <span class="product-detail-value">Ksh ${(daily * dur).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</span>
+                                </div>
+                            </div>
+                            <button class="invest-btn">${isFree ? 'Get Free' : 'Invest'}</button>
+                        </div>`;
+                    }).join('');
+                }
+
+                if (filterContainer) {
+                    const cats = [...new Set(products.map(p => p.category).filter(Boolean))];
+                    filterContainer.innerHTML = '<button class="sector-btn active" data-sector="All">All</button>' +
+                        cats.map(c => `<button class="sector-btn" data-sector="${c}">${c}</button>`).join('');
+                }
+
+                setupInvestButtons();
+                setupSectorFilter();
+                renderProducts('all');
+            } catch(e) {
+                console.warn('Could not load products from DB, using static fallback:', e.message);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await fetchBalance();
+
+                setupToggleButtons();
+                setupSectorFilter();
+                setupInvestButtons();
+
+                renderProducts('all');
+                updateSectorFilter('all');
+
+                await loadProductsFromDB();
+            } catch (error) {
+                console.error('Error during page initialization:', error);
+                showMessage('Error initializing the page. Please refresh and try again.', 'error');
+            }
+        });
+        </script>
+        
+    <!-- Removed duplicate/non-module script block. All logic is now handled in the ES module above. -->
+    <style>
+        .balance-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(35, 37, 38, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .balance-modal {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border: 2px solid var(--accent-color);
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 450px;
+            width: 90%;
+            color: #fff;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .balance-modal-title {
+            color: var(--accent-color);
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .balance-modal-message {
+            color: #fff;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .balance-amount {
+            font-size: 1.2rem;
+            color: #4ecdc4;
+            font-weight: 600;
+            margin: 8px 0;
+            display: block;
+        }
+
+        .balance-modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .balance-modal-button {
+            background: linear-gradient(45deg, #4ecdc4, #45b7af);
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .balance-modal-button:hover {
+            background: #4ecdc4;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(78,205,196,0.18);
+        }
+
+        .balance-modal-button.continue {
+            background: linear-gradient(45deg, #ffd54f, #ffca28);
+        }
+
+        .balance-modal-button.continue:hover {
+            background: #ffd54f;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(35, 37, 38, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            border: 2px solid #4ecdc4;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            color: #fff;
+            text-align: center;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-title {
+            color: #4ecdc4;
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .modal-message {
+            color: #fff;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .modal-button {
+            background: linear-gradient(45deg, #4ecdc4, #45b7af);
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .modal-button:hover {
+            background: #4ecdc4;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(78,205,196,0.18);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            margin: 0;
+            padding: 0;
+            color: var(--text-color);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(78, 205, 196, 0.2);
+        }
+        h1 {
+            color: var(--accent-color);
+            margin-bottom: 32px;
+            text-align: center;
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        h1:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: var(--accent-color);
+            border-radius: 2px;
+        }
+        .admin-link {
+            display: block;
+            margin-bottom: 24px;
+            text-align: right;
+        }
+        .admin-link a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .admin-link a:hover {
+            color: var(--hover-color);
+        }
+        .sector-filter {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .sector-btn {
+            background: transparent;
+            color: var(--accent-color);
+            border: 2px solid var(--accent-color);
+            padding: 12px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(78, 205, 196, 0.1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .sector-btn:not(.active):hover {
+            background: rgba(78, 205, 196, 0.1);
+            border-color: var(--hover-color);
+            box-shadow: 0 4px 16px rgba(78, 205, 196, 0.2);
+            transform: translateY(-2px);
+        }
+        .sector-btn.active {
+            background: var(--accent-color);
+            color: var(--primary-color);
+            border-color: var(--accent-color);
+        }
+        .products {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 700px;
+            padding-bottom: 16px;
+        }
+        .product-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+            padding: 0 0 24px 0;
+            text-align: left;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+            height: 520px;
+            min-height: 520px;
+            max-height: 520px;
+            border: 1px solid rgba(78, 205, 196, 0.2);
+        }
+        .product-card:hover {
+            box-shadow: 0 8px 32px rgba(78, 205, 196, 0.2);
+            transform: translateY(-4px);
+            border-color: var(--accent-color);
+        }
+        .product-image {
+            width: 100%;
+            height: 75%;
+            min-height: 390px;
+            max-height: 390px;
+            object-fit: cover;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            margin-bottom: 0;
+            display: block;
+        }
+        .product-title {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .product-sector {
+            font-size: 1rem;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+        }
+        .product-desc-top {
+            margin-bottom: 14px;
+            font-size: 1.05rem;
+            color: var(--text-color);
+            text-align: center;
+        }
+        .product-details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+        .product-detail-box {
+            background: rgba(255,255,255,0.04);
+            border-radius: 6px;
+            padding: 12px 18px;
+            box-shadow: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: none;
+        }
+        .product-detail-label {
+            font-weight: 600;
+            color: #ffd54f;
+            margin-bottom: 4px;
+        }
+        .product-detail-value {
+            color: #80cbc4;
+            font-weight: 500;
+            font-size: 1.08rem;
+        }
+        .product-returns {
+            color: #e67e22;
+            margin-bottom: 8px;
+        }
+        .product-duration {
+            color: #2980b9;
+            margin-bottom: 8px;
+        }
+        .product-desc {
+            color: #7f8c8d;
+            font-size: 0.98rem;
+            margin-bottom: 8px;
+        }
+        .product-limit {
+            color: #c0392b;
+            margin-bottom: 16px;
+        }
+        .invest-btn {
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(255, 107, 0, 0.15);
+        }
+        .invest-btn:hover {
+            background: white;
+            color: var(--primary-color);
+            box-shadow: 0 4px 16px rgba(255, 107, 0, 0.2);
+            transform: translateY(-2px);
+            border: 2px solid var(--primary-color);
+        }
+        .back-btn-container {
+            position: absolute;
+            top: 24px;
+            left: 32px;
+            z-index: 10;
+        }
+        .back-btn {
+            background: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            color: #fff;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(78,205,196,0.10);
+            transition: all 0.3s ease;
+        }
+        .back-btn:hover {
+            background: #fff;
+            color: #4ecdc4;
+            box-shadow: 0 4px 16px rgba(78,205,196,0.18);
+            transform: translateY(-1px);
+        }
+
+        /* Wallet Balance Styles */
+        .wallet-balance-container {
+            text-align: center;
+            margin-bottom: 32px;
+            background: rgba(78, 205, 196, 0.1);
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid rgba(78, 205, 196, 0.3);
+            box-shadow: 0 4px 20px rgba(78, 205, 196, 0.15);
+        }
+        .wallet-balance-text {
+            color: var(--accent-color);
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        .wallet-balance-text #wallet-balance {
+            color: #ffffff;
+            margin-left: 8px;
+        }
+
+        /* Products Toggle */
+        .products-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        /* Toggle Buttons */
+        .btn {
+            background: linear-gradient(45deg, #4ecdc4, #45b7af);
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #4caf50, #81c784);
+        }
+        .btn-outline-primary {
+            background: transparent;
+            color: #4ecdc4;
+            border: 2px solid #4ecdc4;
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(78,205,196,0.18);
+        }
+    </style>
+<script src="/js/token.js"></script>
+</head>
+<body>
+    <div class="back-btn-container">
+        <button class="back-btn" onclick="window.location.href = '/home'">&#8592; Back to Home</button>
+    </div>
+    <div class="container">
+        <h1>Invest in Products</h1>
+        
+        <!-- Balance Display -->
+        <div style="display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-bottom:1.5rem;">
+            <div class="wallet-balance-container" style="flex:1;min-width:200px;">
+                <div style="font-size:0.75rem;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Deposit Balance</div>
+                <div class="wallet-balance-text"><span id="wallet-balance">KES 0.00</span></div>
+                <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:3px;">Deposited funds · Use to invest</div>
+            </div>
+            <div class="wallet-balance-container" style="flex:1;min-width:200px;background:linear-gradient(135deg,rgba(26,188,156,0.15),rgba(11,110,88,0.1));border-color:rgba(26,188,156,0.3);">
+                <div style="font-size:0.75rem;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Earnings Balance</div>
+                <div class="wallet-balance-text"><span id="income-balance">KES 0.00</span></div>
+                <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:3px;">Earnings · Withdraw or invest</div>
+            </div>
+        </div>
+
+        <!-- Balance Source Selection Modal -->
+        <div id="balanceSourceModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:1rem;">
+            <div style="background:#1a1a2e;border:1px solid rgba(78,205,196,0.3);border-radius:16px;padding:2rem;max-width:400px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+                <h3 style="color:#4ecdc4;margin:0 0 0.5rem;font-size:1.2rem;">Choose Funding Source</h3>
+                <p style="color:rgba(255,255,255,0.7);margin:0 0 1.5rem;font-size:0.9rem;">Investment cost: <strong style="color:#fff;" id="bsm-price">KES 0</strong></p>
+                <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                    <button id="bsm-wallet-btn" style="background:linear-gradient(45deg,#4ecdc4,#1a7e79);color:#fff;border:none;border-radius:10px;padding:0.9rem 1.2rem;cursor:pointer;text-align:left;font-size:0.95rem;">
+                        <div style="font-weight:700;">💰 Deposit Balance</div>
+                        <div id="bsm-wallet-info" style="font-size:0.8rem;opacity:0.85;margin-top:3px;"></div>
+                    </button>
+                    <button id="bsm-income-btn" style="background:linear-gradient(45deg,#1abc9c,#0b6e58);color:#fff;border:none;border-radius:10px;padding:0.9rem 1.2rem;cursor:pointer;text-align:left;font-size:0.95rem;">
+                        <div style="font-weight:700;">📈 Earnings Balance</div>
+                        <div id="bsm-income-info" style="font-size:0.8rem;opacity:0.85;margin-top:3px;"></div>
+                    </button>
+                    <button id="bsm-cancel-btn" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:0.7rem 1.2rem;cursor:pointer;font-size:0.9rem;">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toggle for All Products / My Products -->
+        <div id="products-toggle" class="products-toggle">
+            <button id="showAllBtn" class="btn btn-primary">All Products</button>
+            <button id="showMineBtn" class="btn btn-outline-primary">My Products</button>
+        </div>
+
+        <div class="sector-filter" id="sector-filter-container">
+            <button class="sector-btn active" data-sector="All">All</button>
+            <button class="sector-btn" data-sector="Promo">Promo</button>
+            <button class="sector-btn" data-sector="Technology">Technology</button>
+            <button class="sector-btn" data-sector="Real-estate">Real-estate</button>
+            <button class="sector-btn" data-sector="Agriculture">Agriculture</button>
+            <button class="sector-btn" data-sector="Energy">Energy</button>
+        </div>
+        <div class="products" id="products-container">
+            <!-- Free Product -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=800&q=80" alt="Free Product" class="product-image">
+                <div class="product-title">Free Product</div>
+                <div class="product-sector">Sector: Promo</div>
+                <div class="product-desc product-desc-top">A free product for every user. Start earning instantly!</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 0</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 20 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">2 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Available Units</span>
+                        <span class="product-detail-value">1</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Get Free</button>
+            </div>
+            <!-- Technology Sector -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80" alt="Tech Hub Workspace" class="product-image">
+                <div class="product-title">Tech Hub Workspace</div>
+                <div class="product-sector">Sector: Technology</div>
+                <div class="product-desc product-desc-top">Modern coworking space for tech startups with high-speed internet and meeting facilities.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 250</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 20.5 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">25 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Units per Investor</span>
+                        <span class="product-detail-value">1</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+            
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80" alt="Software Development" class="product-image">
+                <div class="product-title">Software Development Academy</div>
+                <div class="product-sector">Sector: Technology</div>
+                <div class="product-desc product-desc-top">Professional coding bootcamp providing tech education to African youth.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 500</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 36.8 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">30 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Units per Investor</span>
+                        <span class="product-detail-value">2</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80" alt="Data Center" class="product-image">
+                <div class="product-title">Cloud Data Center</div>
+                <div class="product-sector">Sector: Technology</div>
+                <div class="product-desc product-desc-top">State-of-the-art data center providing cloud services to African businesses.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 2,000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 75.50 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">40 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Units per Investor</span>
+                        <span class="product-detail-value">2</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1573152958734-1922c188fba3?auto=format&fit=crop&w=800&q=80" alt="Mobile App" class="product-image">
+                <div class="product-title">FinTech Mobile App</div>
+                <div class="product-sector">Sector: Technology</div>
+                <div class="product-desc product-desc-top">Revolutionary mobile banking application for seamless financial transactions.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 5000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 226.4 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">40 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Units per Investor</span>
+                        <span class="product-detail-value">4</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80" alt="Cybersecurity" class="product-image">
+                <div class="product-title">Cybersecurity Solutions</div>
+                <div class="product-sector">Sector: Technology</div>
+                <div class="product-desc product-desc-top">Advanced cybersecurity services protecting African businesses from digital threats.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 15,000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">950.0 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">24 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Available Units</span>
+                        <span class="product-detail-value">2</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <!-- Add Tech Product -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?auto=format&fit=crop&w=800&q=80" alt="AI Research Lab" class="product-image">
+                <div class="product-title">AI Research Laboratory</div>
+                <div class="product-sector">Sector: Technology</div>
+                <div class="product-desc product-desc-top">State-of-the-art AI research facility developing cutting-edge machine learning solutions.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 25,000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 1,575.0 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">30 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Units per Investor</span>
+                        <span class="product-detail-value">1</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <!-- Real Estate Sector -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80" alt="Luxury Apartments" class="product-image">
+                <div class="product-title">Luxury Apartments Complex</div>
+                <div class="product-sector">Sector: Real-estate</div>
+                <div class="product-desc product-desc-top">Modern luxury apartment complex in prime urban location with high rental demand.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 9,000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 390.0 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">40 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Units per Investor</span>
+                        <span class="product-detail-value">1</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=800&q=80" alt="Commercial Office Space" class="product-image">
+                <div class="product-title">Prime Commercial Office Space</div>
+                <div class="product-sector">Sector: Real-estate</div>
+                <div class="product-desc product-desc-top">Grade A office space in business district with established corporate tenants.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 3,500</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 130.5 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">37 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Available Units</span>
+                        <span class="product-detail-value">2</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <!-- Add Real Estate Product -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=800&q=80" alt="Retail Mall" class="product-image">
+                <div class="product-title">Modern Shopping Mall</div>
+                <div class="product-sector">Sector: Real-estate</div>
+                <div class="product-desc product-desc-top">Premium retail space in a high-traffic urban area with established anchor tenants.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 12,000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 480.0 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">45 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Units per Investor</span>
+                        <span class="product-detail-value">2</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <!-- Agriculture Sector -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=800&q=80" alt="Smart Farm" class="product-image">
+                <div class="product-title">Smart Agricultural Farm</div>
+                <div class="product-sector">Sector: Agriculture</div>
+                <div class="product-desc product-desc-top">Tech-enabled farming project using modern irrigation and crop management systems.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 90,000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 3500.6 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">46 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Available Units</span>
+                        <span class="product-detail-value">4</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1595841696677-6489ff3f8cd1?auto=format&fit=crop&w=800&q=80" alt="Greenhouse Project" class="product-image">
+                <div class="product-title">Greenhouse Farming Project</div>
+                <div class="product-sector">Sector: Agriculture</div>
+                <div class="product-desc product-desc-top">Large-scale greenhouse project for premium vegetable production and export.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 120,000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 4000.3 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">47 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Available Units</span>
+                        <span class="product-detail-value">4</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <!-- Add Agriculture Product -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1615811361523-6bd03d7748e7?auto=format&fit=crop&w=800&q=80" alt="Aquaculture" class="product-image">
+                <div class="product-title">Modern Aquaculture Farm</div>
+                <div class="product-sector">Sector: Agriculture</div>
+                <div class="product-desc product-desc-top">High-tech fish farming facility using sustainable aquaculture practices for premium seafood production.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 7,500</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 285.0 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">35 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Units per Investor</span>
+                        <span class="product-detail-value">3</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <!-- Energy Sector -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=800&q=80" alt="Solar Farm" class="product-image">
+                <div class="product-title">Solar Energy Farm</div>
+                <div class="product-sector">Sector: Energy</div>
+                <div class="product-desc product-desc-top">Large-scale solar power generation project with government power purchase agreement.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 20,000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 879.2 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">42 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Available Units</span>
+                        <span class="product-detail-value">3</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <!-- Add Energy Product -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1513828646384-e4c3cb448bbd?auto=format&fit=crop&w=800&q=80" alt="Biogas" class="product-image">
+                <div class="product-title">Biogas Energy Plant</div>
+                <div class="product-sector">Sector: Energy</div>
+                <div class="product-desc product-desc-top">Advanced biogas facility converting organic waste into clean, renewable energy.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 8,000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 320.0 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">38 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Units per Investor</span>
+                        <span class="product-detail-value">2</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&w=800&q=80" alt="Wind Energy" class="product-image">
+                <div class="product-title">Wind Energy Project</div>
+                <div class="product-sector">Sector: Energy</div>
+                <div class="product-desc product-desc-top">Wind farm development in high-potential areas with established power distribution.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 50,000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 1790.4 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">45 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Available Units</span>
+                        <span class="product-detail-value">3</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+        </div>
+    </div>
+    <div id="toastContainer" class="toast-container"></div>
+    <!-- Removed duplicate/conflicting scripts. All logic is now handled in the ES module above. -->
+</body>
+</html>

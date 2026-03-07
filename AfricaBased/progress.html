@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Progress - AfricaBased</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root{
+            --bg:#0f172a; --card:rgba(26,34,56,0.95); --accent:#4ecdc4; --accent2:#ff6b6b; --text:#fff; --muted:rgba(255,255,255,0.7);
+        }
+        *{box-sizing:border-box}
+        body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(180deg,#071028 0%,var(--bg) 100%);color:var(--text);padding:24px}
+        .container{max-width:980px;margin:0 auto}
+        .card{background:var(--card);padding:20px;border-radius:12px;margin-bottom:16px;box-shadow:0 8px 30px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.03)}
+        h1{font-size:22px;margin:0 0 8px}
+        .summary{display:flex;gap:16px;flex-wrap:wrap}
+        .metric{flex:1;min-width:180px;padding:16px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);}
+        .metric h3{margin:0;font-size:14px;color:var(--muted)}
+        .metric p{margin:8px 0 0;font-weight:700;font-size:20px}
+        .metric .sub{font-size:11px;color:var(--muted);margin-top:4px}
+        .progress-wrap{margin-top:16px}
+        .progress-bar{height:18px;background:rgba(255,255,255,0.08);border-radius:10px;overflow:hidden}
+        .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width 400ms ease}
+        .encourage{margin-top:12px;color:var(--muted)}
+        .levels{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+        .level{flex:1;min-width:80px;padding:12px 8px;border-radius:8px;text-align:center;background:rgba(255,255,255,0.02);font-size:13px;}
+        .level.active{box-shadow:0 8px 20px rgba(78,205,196,0.08);border:1px solid rgba(78,205,196,0.3);color:var(--accent);font-weight:700}
+        .level .rate{font-size:11px;color:var(--muted);margin-top:4px}
+        .small{font-size:13px;color:var(--muted)}
+        .cta{display:inline-block;background:var(--accent);color:#021029;padding:8px 12px;border-radius:8px;margin-top:12px;text-decoration:none;font-weight:600}
+        .commission-box{background:rgba(78,205,196,0.07);border:1px solid rgba(78,205,196,0.2);border-radius:10px;padding:14px 16px;margin-top:12px}
+        .commission-box .label{font-size:12px;color:var(--muted);margin-bottom:4px}
+        .commission-box .value{font-size:22px;font-weight:700;color:var(--accent)}
+        .commission-box .breakdown{font-size:12px;color:var(--muted);margin-top:6px}
+        footer{margin-top:26px;text-align:center;color:var(--muted);font-size:13px}
+        .loading-state{text-align:center;padding:30px;color:var(--muted)}
+        .loading-state i{font-size:24px;color:var(--accent);animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+    </style>
+<script src="/js/token.js"></script>
+</head>
+<body>
+    <div class="container">
+        <a href="/home" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:#4ecdc4;font-size:0.9rem;font-weight:600;padding:8px 16px;background:rgba(78,205,196,0.1);border-radius:8px;margin-bottom:1.2rem;"><i class="fas fa-arrow-left"></i> Back to Home</a>
+        <div class="card">
+            <h1>Your Progress</h1>
+            <div class="small">Track how close you are to the next membership level and what actions will get you there.</div>
+
+            <div id="main" class="progress-wrap">
+                <div class="card" id="referralCard">
+                    <div class="small">Your Referral Code</div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+                        <input id="referralCodeInput" readonly style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)" />
+                        <button id="copyReferralBtn" class="cta" style="background:var(--accent);color:#021029">Copy</button>
+                    </div>
+                    <div class="small" style="margin-top:8px">Share this code to invite users and earn commissions based on your tier percentage of their daily investment income.</div>
+                </div>
+
+                <div id="loadingState" class="loading-state">
+                    <i class="fas fa-spinner"></i>
+                    <p>Loading your progress...</p>
+                </div>
+
+                <div id="progressContent" style="display:none">
+
+                    <div class="summary">
+                        <div class="metric">
+                            <h3>Total Referrals</h3>
+                            <p id="totalReferrals">0</p>
+                        </div>
+                        <div class="metric">
+                            <h3>Active Referrals</h3>
+                            <p id="activeReferrals">0</p>
+                            <div class="sub">Downlines with active investments</div>
+                        </div>
+                        <div class="metric">
+                            <h3>Membership Level</h3>
+                            <p id="membershipLevelText">Inactive</p>
+                            <div class="sub" id="commissionRateText"></div>
+                        </div>
+                    </div>
+
+                    <div class="commission-box">
+                        <div class="label">Your Daily Commission Earnings</div>
+                        <div class="value" id="dailyCommission">KES 0</div>
+                        <div class="breakdown" id="commissionBreakdown"></div>
+                        <div id="levelBreakdown" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px"></div>
+                    </div>
+
+                    <div style="margin-top:18px">
+                        <div class="small">Membership Tiers &amp; Commission Rates</div>
+                        <div class="levels" id="levels">
+                            <div class="level" id="lvl-inactive">
+                                Inactive
+                                <div class="rate">No commission</div>
+                                <div class="rate">No investment</div>
+                            </div>
+                            <div class="level" id="lvl-active">
+                                Active
+                                <div class="rate">No commission</div>
+                                <div class="rate">&lt;5 active refs</div>
+                            </div>
+                            <div class="level" id="lvl-basic">
+                                Basic
+                                <div class="rate">B:10% C:6% D:1%</div>
+                                <div class="rate">5+ active refs</div>
+                            </div>
+                            <div class="level" id="lvl-premium">
+                                Premium
+                                <div class="rate">B:10% C:6% D:1%</div>
+                                <div class="rate">60+ active refs</div>
+                            </div>
+                            <div class="level" id="lvl-gold">
+                                Gold
+                                <div class="rate">B:10% C:6% D:1%</div>
+                                <div class="rate">300+ active refs</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:18px" class="card">
+                        <div class="small">Progress to next level</div>
+                        <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
+                            <div style="flex:1">
+                                <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+                            </div>
+                            <div style="min-width:140px;text-align:right"><strong id="progressText">0/5</strong></div>
+                        </div>
+                        <div id="encourage" class="encourage">Loading your progress...</div>
+                        <a id="actionBtn" class="cta" href="#">How to get there</a>
+                    </div>
+
+                    <div class="card" id="promotionCard">
+                        <h3 style="margin:0 0 8px">Fixed Salary Promotion</h3>
+                        <div class="small">Earn a fixed monthly stipend when you reach the required referral performance and maintain activity.</div>
+                        <ul style="margin-top:10px;color:var(--muted);">
+                            <li>Requirement A: Minimum 50 active referrals</li>
+                            <li>Requirement B: At least KES 5,000 total commission earned from downlines</li>
+                            <li>Requirement C: Active investment in at least one product</li>
+                        </ul>
+                        <div style="margin-top:12px;display:flex;gap:12px;align-items:center">
+                            <div style="flex:1">
+                                <div class="small">Progress to promotion</div>
+                                <div class="progress-bar" style="margin-top:6px"><div id="promoFill" class="progress-fill"></div></div>
+                            </div>
+                            <div style="min-width:120px;text-align:right"><strong id="promoText">0%</strong></div>
+                        </div>
+                        <div id="promoMessage" class="encourage" style="margin-top:10px"></div>
+                        <a id="applyPromoBtn" class="cta" href="#" style="margin-top:8px">Apply for Promotion</a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <footer>Progress is loaded live from your account data.</footer>
+    </div>
+
+    <script type="module">
+        import { checkAuthState, redirectToLogin } from './js/auth.js';
+        checkAuthState();
+
+        function fmt(n) {
+            return new Intl.NumberFormat('en-KE', { style:'currency', currency:'KES' }).format(n || 0);
+        }
+
+        async function loadProgress() {
+            const token = getABToken();
+            if (!token) { redirectToLogin(); return; }
+
+            try {
+                const res = await fetch('/api/referral', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (!res.ok) throw new Error('API error ' + res.status);
+                const data = await res.json();
+
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('progressContent').style.display = '';
+
+                const totalReferrals  = (data.referred_users || []).length;
+                const activeReferrals = data.active_referrals || 0;
+                const hasInvestment   = data.has_investment || false;
+                const level           = data.membership_level || 'Inactive';
+                const isEligible      = data.is_eligible || false;
+                const dailyComm       = data.total_daily_commission || 0;
+                const lvls            = data.levels || {};
+                const l1d = lvls.l1 || {}, l2d = lvls.l2 || {}, l3d = lvls.l3 || {};
+
+                document.getElementById('totalReferrals').textContent      = totalReferrals;
+                document.getElementById('activeReferrals').textContent     = activeReferrals;
+                document.getElementById('membershipLevelText').textContent = level;
+                document.getElementById('dailyCommission').textContent     = fmt(dailyComm);
+
+                if (!hasInvestment) {
+                    document.getElementById('commissionRateText').textContent  = 'No investment yet';
+                    document.getElementById('commissionBreakdown').textContent = 'Invest in a product first to become eligible for commission earnings.';
+                } else if (!isEligible) {
+                    document.getElementById('commissionRateText').textContent  = '0% — need 5 active refs';
+                    document.getElementById('commissionBreakdown').textContent =
+                        'You need ' + Math.max(0, 5 - activeReferrals) + ' more active referral' +
+                        (Math.max(0, 5 - activeReferrals) === 1 ? '' : 's') +
+                        ' to reach Basic tier. Then you earn: B: 10%, C: 6%, D: 1% of each downline\'s daily income.';
+                } else {
+                    document.getElementById('commissionRateText').textContent  = 'B: 10% · C: 6% · D: 1%';
+                    document.getElementById('commissionBreakdown').textContent =
+                        'Based on your downlines\' daily investment income across 3 levels:';
+                    document.getElementById('levelBreakdown').innerHTML =
+                        '<div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center">' +
+                            '<div style="font-weight:700;color:#4ecdc4">' + fmt(l1d.commission || 0) + '</div>' +
+                            '<div style="font-size:11px;color:var(--muted)">B · 10%</div>' +
+                            '<div style="font-size:11px;color:var(--muted)">' + (l1d.active||0) + ' active</div>' +
+                        '</div>' +
+                        '<div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center">' +
+                            '<div style="font-weight:700;color:#4ecdc4">' + fmt(l2d.commission || 0) + '</div>' +
+                            '<div style="font-size:11px;color:var(--muted)">C · 6%</div>' +
+                            '<div style="font-size:11px;color:var(--muted)">' + (l2d.active||0) + ' active</div>' +
+                        '</div>' +
+                        '<div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center">' +
+                            '<div style="font-weight:700;color:#4ecdc4">' + fmt(l3d.commission || 0) + '</div>' +
+                            '<div style="font-size:11px;color:var(--muted)">D · 1%</div>' +
+                            '<div style="font-size:11px;color:var(--muted)">' + (l3d.active||0) + ' active</div>' +
+                        '</div>';
+                }
+
+                const referralCode = data.referral_code || localStorage.getItem('referralCode') || '';
+                const referralInput = document.getElementById('referralCodeInput');
+                if (referralInput) referralInput.value = referralCode || '—';
+
+                const lvlIds = ['inactive','active','basic','premium','gold'];
+                lvlIds.forEach(id => {
+                    const el = document.getElementById('lvl-' + id);
+                    if (el) el.classList.remove('active');
+                });
+                const activeEl = document.getElementById('lvl-' + level.toLowerCase());
+                if (activeEl) activeEl.classList.add('active');
+
+                const levelThresholds = {
+                    Inactive: { next: 'Active',   required: 1,   progress: activeReferrals },
+                    Active:   { next: 'Basic',     required: 5,   progress: activeReferrals },
+                    Basic:    { next: 'Premium',   required: 60,  progress: activeReferrals },
+                    Premium:  { next: 'Gold',      required: 300, progress: activeReferrals },
+                    Gold:     { next: null,         required: 300, progress: activeReferrals }
+                };
+                const next = levelThresholds[level] || levelThresholds['Inactive'];
+                const progressFillEl = document.getElementById('progressFill');
+                const progressTextEl = document.getElementById('progressText');
+                const encourageEl    = document.getElementById('encourage');
+                const actionBtn      = document.getElementById('actionBtn');
+
+                if (!next.next) {
+                    progressTextEl.textContent = 'Max Level';
+                    progressFillEl.style.width = '100%';
+                    encourageEl.textContent = 'Amazing work — you are at the highest tier! Keep your downlines active to maintain 12% daily commission.';
+                    actionBtn.textContent = 'View Referrals';
+                    actionBtn.href = 'referrals.html';
+                } else if (level === 'Inactive') {
+                    progressTextEl.textContent = 'Invest first';
+                    progressFillEl.style.width = '0%';
+                    encourageEl.textContent = 'You need an active investment to become eligible. Once invested, invite 5 active downlines to reach Basic and earn 10% of their daily income.';
+                    actionBtn.textContent = 'Invest Now';
+                    actionBtn.href = 'products.html';
+                } else if (level === 'Active') {
+                    const ratio = Math.min(1, activeReferrals / 5);
+                    progressFillEl.style.width = (ratio * 100) + '%';
+                    progressTextEl.textContent = activeReferrals + '/5 active referrals';
+                    const remaining = Math.max(0, 5 - activeReferrals);
+                    encourageEl.textContent = remaining + ' more active referral' + (remaining === 1 ? '' : 's') +
+                        ' to reach Basic tier and start earning: 10% of B, 6% of C, 1% of D daily income.';
+                    actionBtn.textContent = 'Share Referral Link';
+                    actionBtn.href = 'referrals.html';
+                } else {
+                    const ratio = Math.min(1, next.progress / next.required);
+                    progressFillEl.style.width = (ratio * 100) + '%';
+                    progressTextEl.textContent = next.progress + '/' + next.required + ' active referrals';
+                    const remaining = Math.max(0, next.required - next.progress);
+                    const tierLabel = { Premium: 'Premium', Gold: 'Gold' };
+                    encourageEl.textContent = !next.next
+                        ? 'You are at the highest tier! Keep your network active to maintain full commission earnings.'
+                        : remaining + ' more active referral' + (remaining === 1 ? '' : 's') +
+                          ' to reach ' + (next.next || '') + ' tier.';
+                    actionBtn.textContent = 'Share Referral Link';
+                    actionBtn.href = 'referrals.html';
+                }
+
+                const totalCommEarned = data.total_commission_earned || 0;
+                const reqActive       = 50;
+                const reqCommTotal    = 5000;
+                const aProgress = Math.min(1, activeReferrals / reqActive);
+                const cProgress = Math.min(1, totalCommEarned / reqCommTotal);
+                const iProgress = hasInvestment ? 1 : 0;
+                const overall = Math.round(((aProgress + cProgress + iProgress) / 3) * 100);
+
+                const promoFill = document.getElementById('promoFill');
+                const promoText = document.getElementById('promoText');
+                const promoMsg  = document.getElementById('promoMessage');
+                const applyBtn  = document.getElementById('applyPromoBtn');
+                if (promoFill) promoFill.style.width = overall + '%';
+                if (promoText) promoText.textContent = overall + '%';
+
+                let missing = [];
+                if (activeReferrals < reqActive)        missing.push(reqActive - activeReferrals + ' more active referrals');
+                if (totalCommEarned < reqCommTotal)     missing.push('KES ' + (reqCommTotal - Math.floor(totalCommEarned)).toLocaleString() + ' more total commission (earned so far: KES ' + Math.floor(totalCommEarned).toLocaleString() + ')');
+                if (!hasInvestment)                     missing.push('an active investment');
+
+                if (missing.length === 0) {
+                    if (promoMsg) promoMsg.textContent = 'You meet all requirements — you can apply for the fixed salary promotion.';
+                    if (applyBtn) { applyBtn.href = 'apply-promotion.html'; applyBtn.textContent = 'Apply Now'; }
+                } else {
+                    if (promoMsg) promoMsg.textContent = 'Still needed: ' + missing.join(', ') + '.';
+                    if (applyBtn) { applyBtn.href = '#'; applyBtn.textContent = 'Not Eligible Yet'; }
+                }
+
+            } catch (e) {
+                console.error('Progress load error:', e);
+                document.getElementById('loadingState').innerHTML =
+                    '<i class="fas fa-exclamation-triangle" style="color:#ff6b6b;animation:none"></i>' +
+                    '<p>Could not load progress data. Please try refreshing.</p>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProgress();
+
+            const copyBtn = document.getElementById('copyReferralBtn');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', () => {
+                    const referralInput = document.getElementById('referralCodeInput');
+                    try {
+                        if (referralInput && referralInput.value) {
+                            referralInput.select();
+                            document.execCommand('copy');
+                            copyBtn.textContent = 'Copied!';
+                            setTimeout(() => copyBtn.textContent = 'Copy', 1600);
+                        }
+                    } catch (err) { console.warn('Copy failed', err); }
+                });
+            }
+
+            const applyBtn = document.getElementById('applyPromoBtn');
+            if (applyBtn) {
+                applyBtn.addEventListener('click', (e) => {
+                    const href = applyBtn.getAttribute('href');
+                    if (!href || href === '#') { e.preventDefault(); return; }
+                    sessionStorage.setItem('promotionIntent', '1');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

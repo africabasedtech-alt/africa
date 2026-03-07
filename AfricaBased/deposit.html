@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>AfricaBased - Deposit</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #0f172a; color: #fff; min-height: 100vh; padding-top: 76px; }
+
+        .container { max-width: 700px; margin: 0 auto; padding: 32px 20px 60px; }
+
+        .page-title {
+            font-size: 1.4rem; font-weight: 700; color: #fff;
+            display: flex; align-items: center; gap: 10px; margin-bottom: 24px;
+        }
+        .page-title i { color: #4ecdc4; }
+
+        /* Instructions banner — shown in manual mode */
+        .instructions-banner {
+            background: rgba(255,213,79,0.06); border: 1px solid rgba(255,213,79,0.3);
+            border-radius: 14px; padding: 22px 24px; margin-bottom: 22px;
+            display: none;
+        }
+        .instr-header {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+        }
+        .instr-icon {
+            width: 36px; height: 36px; background: rgba(255,213,79,0.12);
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            color: #ffd54f; font-size: 1rem; flex-shrink: 0;
+        }
+        .instr-title { font-size: 0.95rem; font-weight: 700; color: #ffd54f; }
+        .instr-subtitle { font-size: 0.75rem; color: rgba(255,213,79,0.6); margin-top: 2px; }
+        .instr-body {
+            font-size: 0.88rem; color: rgba(255,255,255,0.82); line-height: 1.75;
+            word-break: break-word;
+        }
+        .instr-body ol { margin: 0; padding-left: 22px; }
+        .instr-body ol li { margin-bottom: 8px; }
+        .instr-body ol li:last-child { margin-bottom: 0; }
+        .instr-body p:last-child { margin-bottom: 0; }
+        .instr-body-empty {
+            font-size: 0.85rem; color: rgba(255,255,255,0.35); font-style: italic;
+        }
+
+        /* Mode notice pill */
+        .mode-pill {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 6px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 700;
+            margin-bottom: 18px;
+        }
+        .mode-pill.auto { background: rgba(78,205,196,0.12); color: #4ecdc4; border: 1px solid rgba(78,205,196,0.3); }
+        .mode-pill.manual { background: rgba(255,107,107,0.12); color: #ff6b6b; border: 1px solid rgba(255,107,107,0.3); }
+
+        /* Content card */
+        .deposit-card {
+            background: rgba(26,34,56,0.98); border-radius: 16px;
+            box-shadow: 0 6px 28px rgba(0,0,0,0.4); overflow: hidden;
+        }
+
+        #depositFrame { width: 100%; min-height: 540px; border: none; background: transparent; display: block; }
+
+        .loading-state {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 200px; color: rgba(255,255,255,0.35); gap: 14px;
+        }
+        .loading-state i { font-size: 1.8rem; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <a href="/home" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:#4ecdc4;font-size:0.9rem;font-weight:600;padding:8px 16px;background:rgba(78,205,196,0.1);border-radius:8px;margin-bottom:1.2rem;"><i class="fas fa-arrow-left"></i> Back to Home</a>
+        <div class="page-title"><i class="fas fa-arrow-down-to-line"></i> Deposit Funds</div>
+
+        <div id="modePill" style="display:none;" class="mode-pill auto">
+            <i class="fas fa-circle" style="font-size:0.5rem;"></i>
+            <span id="modePillText"></span>
+        </div>
+
+        <!-- Instructions banner: visible only in manual mode -->
+        <div class="instructions-banner" id="instrBanner">
+            <div class="instr-header">
+                <div class="instr-icon"><i class="fas fa-info-circle"></i></div>
+                <div>
+                    <div class="instr-title">How to Deposit</div>
+                    <div class="instr-subtitle">Follow the steps below to complete your deposit</div>
+                </div>
+            </div>
+            <div class="instr-body" id="instrBody"></div>
+        </div>
+
+        <div class="deposit-card" id="depositCard">
+            <div class="loading-state" id="loadingState">
+                <i class="fas fa-spinner"></i>
+                <span style="font-size:0.9rem;">Loading deposit options…</span>
+            </div>
+            <iframe id="depositFrame" src="" style="display:none;" allowtransparency="true"></iframe>
+        </div>
+    </main>
+
+    <script>
+        function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+        function formatInstructions(text) {
+            const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            if (!lines.length) return '';
+            // Check if most lines look like numbered steps (1. or 1) format)
+            const numberedCount = lines.filter(l => /^\d+[\.\)]\s/.test(l)).length;
+            const isListy = numberedCount >= Math.floor(lines.length * 0.5);
+            if (isListy) {
+                const items = lines.map(l => '<li>' + esc(l.replace(/^\d+[\.\)]\s+/, '')) + '</li>').join('');
+                return '<ol style="margin:0;padding-left:22px;list-style:decimal;">' + items + '</ol>';
+            }
+            // Plain text — wrap each line in a paragraph
+            return lines.map(l => '<p style="margin:0 0 8px;">' + esc(l) + '</p>').join('');
+        }
+
+        async function initDeposit() {
+            try {
+                const res = await fetch('/api/deposit/config');
+                const cfg = await res.json();
+                const mode = cfg.mode || 'auto';
+                const instructions = (cfg.instructions || '').trim();
+
+                const pill = document.getElementById('modePill');
+                const pillText = document.getElementById('modePillText');
+                pill.style.display = 'inline-flex';
+                if (mode === 'manual') {
+                    pill.className = 'mode-pill manual';
+                    pillText.textContent = 'Manual Deposit Mode';
+                } else {
+                    pill.className = 'mode-pill auto';
+                    pillText.textContent = 'Auto Mode — Deposits are credited instantly';
+                }
+
+                if (mode === 'manual') {
+                    const banner = document.getElementById('instrBanner');
+                    const bodyEl = document.getElementById('instrBody');
+                    banner.style.display = 'block';
+                    if (instructions) {
+                        bodyEl.innerHTML = formatInstructions(instructions);
+                    } else {
+                        bodyEl.innerHTML = '<span class="instr-body-empty">No instructions set yet. Contact support for deposit details.</span>';
+                    }
+                }
+
+                const frame = document.getElementById('depositFrame');
+                const loading = document.getElementById('loadingState');
+                frame.src = mode === 'auto' ? 'auto-deposit.html' : 'manual-deposit.html';
+                frame.onload = function() {
+                    loading.style.display = 'none';
+                    frame.style.display = 'block';
+                    try {
+                        const body = frame.contentDocument || frame.contentWindow.document;
+                        if (body) {
+                            const h = body.documentElement.scrollHeight;
+                            if (h > 100) frame.style.minHeight = h + 'px';
+                        }
+                    } catch(e) {}
+                };
+            } catch(e) {
+                document.getElementById('loadingState').innerHTML =
+                    '<i class="fas fa-exclamation-circle" style="color:#ff6b6b;animation:none;"></i>' +
+                    '<span style="font-size:0.88rem;color:rgba(255,255,255,0.5);">Failed to load deposit options. Please refresh.</span>';
+            }
+        }
+
+        initDeposit();
+    </script>
+</body>
+</html>

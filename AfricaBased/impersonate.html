@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Starting session...</title>
+    <style>
+        body { background: #0f1623; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Poppins', sans-serif; margin: 0; }
+        .box { text-align: center; color: #e0e6ed; }
+        .spinner { width: 44px; height: 44px; border: 4px solid rgba(78,205,196,0.15); border-top: 4px solid #4ecdc4; border-radius: 50%; animation: spin 0.9s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .label { color: rgba(255,255,255,0.5); font-size: 0.9rem; }
+        .banner { background: linear-gradient(135deg,#1a2238,#0f1623); border: 1px solid rgba(255,107,107,0.3); border-radius: 12px; padding: 18px 24px; margin-top: 24px; font-size: 0.85rem; color: rgba(255,255,255,0.5); display: none; }
+        .banner strong { color: #ff6b6b; }
+        .err { color: #ff6b6b; font-size: 0.88rem; margin-top: 16px; display: none; }
+    </style>
+</head>
+<body>
+<div class="box">
+    <div class="spinner"></div>
+    <div class="label" id="label">Starting impersonation session...</div>
+    <div class="err" id="err"></div>
+</div>
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const userRaw = params.get('user');
+
+    if (!token || !userRaw) {
+        document.getElementById('label').textContent = 'Invalid impersonation link.';
+        document.getElementById('label').style.color = '#ff6b6b';
+    } else {
+        try {
+            const user = JSON.parse(decodeURIComponent(userRaw));
+            localStorage.setItem('ab_token', token);
+            localStorage.setItem('ab_user', JSON.stringify(user));
+            localStorage.setItem('impersonating_as', JSON.stringify({ username: user.username, id: user.id }));
+            document.getElementById('label').textContent = `Logged in as ${user.username}. Redirecting...`;
+            setTimeout(() => { window.location.href = '/home'; }, 800);
+        } catch(e) {
+            document.getElementById('label').textContent = 'Failed to parse session data.';
+            document.getElementById('label').style.color = '#ff6b6b';
+        }
+    }
+</script>
+<script src="/js/admin-pin.js"></script>
+</body>
+</html>

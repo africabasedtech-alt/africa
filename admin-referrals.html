@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referrals & Commission | AfricaBased Admin</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f0f1a; color: #fff; min-height: 100vh; }
+    .topbar { background: #1a1a2e; border-bottom: 1px solid rgba(78,205,196,0.2); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+    .topbar h1 { font-size: 1.3rem; color: #4ecdc4; }
+    .topbar a { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 0.9rem; }
+    .topbar a:hover { color: #4ecdc4; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem; text-align: center; }
+    .stat-box .num { font-size: 1.8rem; font-weight: 700; color: #4ecdc4; }
+    .stat-box .lbl { font-size: 0.78rem; color: rgba(255,255,255,0.5); margin-top: 4px; }
+    .toolbar { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .search-box { flex: 1; min-width: 200px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 0.6rem 1rem; color: #fff; font-size: 0.9rem; }
+    .search-box::placeholder { color: rgba(255,255,255,0.4); }
+    .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    thead { background: rgba(78,205,196,0.1); }
+    th { padding: 0.75rem 1rem; text-align: left; font-size: 0.75rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+    td { padding: 0.75rem 1rem; border-top: 1px solid rgba(255,255,255,0.06); vertical-align: middle; }
+    tr:hover td { background: rgba(255,255,255,0.03); }
+    .badge { display: inline-block; font-size: 0.68rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 4px; white-space: nowrap; }
+    .badge-gold    { background: rgba(255,213,79,0.2);  color: #ffd54f; border: 1px solid rgba(255,213,79,0.3); }
+    .badge-premium { background: rgba(255,107,107,0.2); color: #ff6b6b; border: 1px solid rgba(255,107,107,0.3); }
+    .badge-basic   { background: rgba(78,205,196,0.2);  color: #4ecdc4; border: 1px solid rgba(78,205,196,0.3); }
+    .badge-active  { background: rgba(46,204,113,0.2);  color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); }
+    .badge-inactive{ background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.12); }
+    .code { font-family: monospace; font-size: 0.82rem; background: rgba(78,205,196,0.1); color: #4ecdc4; padding: 0.15rem 0.45rem; border-radius: 4px; }
+    .empty { text-align: center; padding: 3rem; color: rgba(255,255,255,0.35); }
+    .empty i { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+    .loading { text-align: center; padding: 3rem; color: #4ecdc4; }
+    .loading i { font-size: 2rem; }
+    .tier-filter { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .tier-btn { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 0.4rem 0.9rem; color: rgba(255,255,255,0.6); font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
+    .tier-btn.active, .tier-btn:hover { background: rgba(78,205,196,0.15); border-color: #4ecdc4; color: #4ecdc4; }
+    .referral-tree { font-size: 0.78rem; color: rgba(255,255,255,0.45); }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <h1><i class="fas fa-network-wired" style="margin-right:8px;"></i>Referrals &amp; Commission</h1>
+    <a href="Admin-panel.html"><i class="fas fa-arrow-left"></i> Back to Panel</a>
+  </div>
+
+  <div class="container">
+    <div class="stats-row" id="statsRow">
+      <div class="stat-box"><div class="num" id="statTotal">-</div><div class="lbl">Users with Referral Codes</div></div>
+      <div class="stat-box"><div class="num" id="statActive">-</div><div class="lbl">Active Referrers</div></div>
+      <div class="stat-box"><div class="num" id="statReferrals">-</div><div class="lbl">Total Referrals Made</div></div>
+      <div class="stat-box"><div class="num" id="statActiveRefs">-</div><div class="lbl">Active Referred Users</div></div>
+    </div>
+
+    <div class="toolbar">
+      <input type="text" class="search-box" id="searchBox" placeholder="Search by username, email or referral code...">
+      <div class="tier-filter">
+        <button class="tier-btn active" data-tier="all">All</button>
+        <button class="tier-btn" data-tier="gold">Gold</button>
+        <button class="tier-btn" data-tier="premium">Premium</button>
+        <button class="tier-btn" data-tier="basic">Basic</button>
+        <button class="tier-btn" data-tier="active">Active</button>
+        <button class="tier-btn" data-tier="inactive">Inactive</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Referral Code</th>
+            <th>Membership</th>
+            <th>Total Refs</th>
+            <th>Active Refs</th>
+            <th>Has Investment</th>
+            <th>Last Commission Collected</th>
+            <th>Joined</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td colspan="8" class="loading"><i class="fas fa-spinner fa-spin"></i><br>Loading referral data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let ADMIN_KEY = localStorage.getItem('ab_admin_key') || '';
+    if (!ADMIN_KEY) {
+      try { var ad = JSON.parse(localStorage.getItem('adminData')||'{}'); if (ad.isLoggedIn) { ADMIN_KEY = '1540568e'; localStorage.setItem('ab_admin_key', ADMIN_KEY); } } catch(e){}
+    }
+
+    function getMembershipLevel(hasInvestment, activeRefs) {
+      if (!hasInvestment) return 'Inactive';
+      if (activeRefs >= 300) return 'Gold';
+      if (activeRefs >= 60) return 'Premium';
+      if (activeRefs >= 5) return 'Basic';
+      return 'Active';
+    }
+
+    function levelBadge(level) {
+      const map = { Gold:'gold', Premium:'premium', Basic:'basic', Active:'active', Inactive:'inactive' };
+      const cls = map[level] || 'inactive';
+      return `<span class="badge badge-${cls}">${level}</span>`;
+    }
+
+    function commissionRate(level) {
+      return { Gold:12, Premium:9, Basic:6, Active:3, Inactive:0 }[level] || 0;
+    }
+
+    let allUsers = [];
+    let currentTier = 'all';
+
+    async function loadReferrals() {
+      try {
+        const res = await fetch('/api/admin/referrals', {
+          headers: { 'x-admin-key': ADMIN_KEY }
+        });
+        if (!res.ok) throw new Error('Not authorized or server error');
+        const data = await res.json();
+        allUsers = (data.users || []).map(u => ({
+          ...u,
+          membership: getMembershipLevel(u.has_investment, parseInt(u.active_referrals) || 0)
+        }));
+        updateStats();
+        render();
+      } catch (e) {
+        document.getElementById('tableBody').innerHTML =
+          '<tr><td colspan="8" class="empty"><i class="fas fa-exclamation-triangle"></i>' + e.message + '</td></tr>';
+      }
+    }
+
+    function updateStats() {
+      const total = allUsers.length;
+      const withInvestment = allUsers.filter(u => u.has_investment).length;
+      const totalRefs = allUsers.reduce((s, u) => s + (parseInt(u.total_referrals) || 0), 0);
+      const activeRefs = allUsers.reduce((s, u) => s + (parseInt(u.active_referrals) || 0), 0);
+      document.getElementById('statTotal').textContent = total;
+      document.getElementById('statActive').textContent = withInvestment;
+      document.getElementById('statReferrals').textContent = totalRefs;
+      document.getElementById('statActiveRefs').textContent = activeRefs;
+    }
+
+    function render() {
+      const query = document.getElementById('searchBox').value.toLowerCase();
+      const filtered = allUsers.filter(u => {
+        const matchSearch = !query ||
+          (u.username || '').toLowerCase().includes(query) ||
+          (u.email || '').toLowerCase().includes(query) ||
+          (u.referral_code || '').toLowerCase().includes(query);
+        const matchTier = currentTier === 'all' || u.membership.toLowerCase() === currentTier;
+        return matchSearch && matchTier;
+      });
+
+      if (filtered.length === 0) {
+        document.getElementById('tableBody').innerHTML =
+          '<tr><td colspan="8" class="empty"><i class="fas fa-inbox"></i><br>No users match the current filter.</td></tr>';
+        return;
+      }
+
+      document.getElementById('tableBody').innerHTML = filtered.map(u => {
+        const level = u.membership;
+        const rate = commissionRate(level);
+        const totalRefs = parseInt(u.total_referrals) || 0;
+        const activeRefs = parseInt(u.active_referrals) || 0;
+        const joined = new Date(u.created_at).toLocaleDateString();
+        const lastCol = u.last_commission_collected_at
+          ? new Date(u.last_commission_collected_at).toLocaleString()
+          : '<span style="color:rgba(255,255,255,0.3)">Never</span>';
+        return `<tr>
+          <td>
+            <div style="font-weight:600">${u.username || '—'}</div>
+            <div style="font-size:0.75rem;color:rgba(255,255,255,0.45)">${u.email || ''}</div>
+          </td>
+          <td><span class="code">${u.referral_code || '—'}</span></td>
+          <td>${levelBadge(level)} <span style="font-size:0.75rem;color:rgba(255,255,255,0.4)">${rate}%</span></td>
+          <td>${totalRefs}</td>
+          <td>${activeRefs}</td>
+          <td>${u.has_investment
+            ? '<span style="color:#2ecc71"><i class="fas fa-check-circle"></i> Yes</span>'
+            : '<span style="color:rgba(255,255,255,0.3)"><i class="fas fa-times-circle"></i> No</span>'}</td>
+          <td style="font-size:0.8rem">${lastCol}</td>
+          <td style="font-size:0.78rem;color:rgba(255,255,255,0.4)">${joined}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    document.getElementById('searchBox').addEventListener('input', render);
+
+    document.querySelectorAll('.tier-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentTier = btn.dataset.tier;
+        render();
+      });
+    });
+
+    loadReferrals();
+  </script>
+<script src="/js/admin-pin.js"></script>
+</body>
+</html>

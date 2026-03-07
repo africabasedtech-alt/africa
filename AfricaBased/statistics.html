@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistics Dashboard - AfricaBased</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        if (!getABToken()) {
+            window.location.href = '/login';
+        }
+    </script>
+    <style>
+        :root {
+            --primary: #1a2238;
+            --accent: #4ecdc4;
+            --accent-gradient: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            --secondary: #ff6b6b;
+            --text: #ffffff;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --bg: #0f172a;
+            --background-color: #0f172a;
+            --card-color: rgba(26,34,56,0.98);
+            --success-color: #4ecdc4;
+            --warning-color: #ffd54f;
+            --danger-color: #ff6b6b;
+            --text-color: #ffffff;
+            --text-color-secondary: rgba(255, 255, 255, 0.7);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            background-image: radial-gradient(circle at center, var(--primary) 0%, var(--bg) 100%);
+            padding: 20px;
+            color: var(--text);
+        }
+
+        .statistics-dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background-color: var(--card-color);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header h1 {
+            color: var(--text-color);
+            font-size: 24px;
+        }
+
+        .back-button {
+            background: var(--accent-gradient);
+            color: var(--text);
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+        }
+
+        .back-button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: var(--card-color);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+            box-shadow: 0 8px 32px rgba(78, 205, 196, 0.15);
+            background: linear-gradient(135deg, var(--card-color) 0%, rgba(26,34,56,0.85) 100%);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover .stat-icon {
+            transform: scale(1.1);
+        }
+
+        .wallet-icon {
+            background: var(--accent-gradient);
+            color: white;
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+        }
+
+        .balance-icon {
+            background: var(--accent-gradient);
+            color: white;
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+        }
+
+        .asset-icon {
+            background: linear-gradient(45deg, var(--warning-color), var(--secondary));
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 213, 79, 0.2);
+        }
+
+        .income-icon {
+            background: linear-gradient(45deg, var(--accent), var(--secondary));
+            color: white;
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+        }
+
+        .today-icon {
+            background: var(--accent-gradient);
+            color: white;
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+        }
+
+        .recharge-icon {
+            background: linear-gradient(45deg, var(--secondary), var(--danger-color));
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
+        }
+
+        .stat-icon i {
+            font-size: 24px;
+        }
+
+        .stat-title {
+            color: var(--text-color-secondary);
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            color: var(--text-color);
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-change {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            font-size: 14px;
+            gap: 4px;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+<script src="/js/token.js"></script>
+</head>
+<body>
+    <div class="statistics-dashboard">
+        <div class="header">
+            <h1>Financial Statistics</h1>
+            <a href="home.html" class="back-button">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon wallet-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="stat-title">Deposit Balance</div>
+                </div>
+                <div class="stat-value" id="walletBalanceStat">KSH 0.00</div>
+                <div class="stat-change" id="walletBalanceDesc">Remaining deposited funds available to invest</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon balance-icon">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                    <div class="stat-title">Earnings Balance</div>
+                </div>
+                <div class="stat-value" id="accountBalanceStat">KSH 0.00</div>
+                <div class="stat-change">Earnings · Can withdraw or invest</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon asset-icon">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div class="stat-title">Total Assets</div>
+                </div>
+                <div class="stat-value" id="totalAssetsStat">KSH 0.00</div>
+                <div class="stat-change">Invested product only</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon income-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="stat-title">Total Income</div>
+                </div>
+                <div class="stat-value" id="totalIncomeStat">KSH 0.00</div>
+                <div class="stat-change">Start your journey</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon today-icon">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div class="stat-title">Today's Income</div>
+                </div>
+                <div class="stat-value" id="todayIncomeStat">KSH 0.00</div>
+                <div class="stat-change">Start your journey</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon recharge-icon">
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                    <div class="stat-title">Total Deposit</div>
+                </div>
+                <div class="stat-value" id="totalDepositStat">KSH 0.00</div>
+                <div class="stat-change">All deposits to wallet</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: linear-gradient(45deg, #ff6b6b, #ffd54f); color: #fff; box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);">
+                        <i class="fas fa-arrow-circle-up"></i>
+                    </div>
+                    <div class="stat-title">Total Withdrawal</div>
+                </div>
+                <div class="stat-value" id="totalWithdrawalStat">KSH 0.00</div>
+                <div class="stat-change">Withdrawals from account balance only</div>
+            </div>
+        </div>
+
+        <div style="margin-top:40px;">
+            <h2 style="color:var(--text-color);margin-bottom:16px;">Transaction History</h2>
+            <div style="overflow-x:auto;">
+                <table id="transactionHistoryTable" style="width:100%;background:var(--card-color);color:var(--text-color);border-radius:8px;box-shadow:var(--shadow);border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:var(--primary);color:#fff;">
+                            <th style="padding:10px 8px;">Date</th>
+                            <th style="padding:10px 8px;">Type</th>
+                            <th style="padding:10px 8px;">Amount</th>
+                            <th style="padding:10px 8px;">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionHistoryBody">
+                        <tr><td colspan="4" style="text-align:center;opacity:0.7;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TOKEN = getABToken();
+        if (!TOKEN) window.location.href = '/login';
+
+        let transactionHistory = [];
+
+        // Render transaction history table
+        function renderTransactionHistory() {
+            const tbody = document.getElementById('transactionHistoryBody');
+            if (!tbody) return;
+            if (!transactionHistory.length) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;opacity:0.7;">No transactions found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = transactionHistory.map(tx => `
+                <tr>
+                    <td style="padding:8px 6px;">${tx.date}</td>
+                    <td style="padding:8px 6px;text-transform:capitalize;">${tx.type}</td>
+                    <td style="padding:8px 6px;">${formatCurrency(tx.amount)}</td>
+                    <td style="padding:8px 6px;">${tx.description || ''}</td>
+                </tr>
+            `).join('');
+        }
+        // Format currency
+        function formatCurrency(amount) {
+            return `KSH ${amount.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            })}`;
+        }
+
+        // Initialize statistics with zero values
+        let statistics = {
+            walletBalance: 0,
+            accountBalance: 0,
+            totalAssets: 0,
+            totalIncome: 0,
+            todayIncome: 0,
+            totalDeposit: 0,
+            totalWithdrawal: 0,
+            investedProduct: 0,
+            todayDate: new Date().toISOString().split('T')[0]
+        };
+        
+        // Show loading state
+        function showLoading() {
+            document.querySelectorAll('.stat-value').forEach(el => {
+                el.innerHTML = '<span style="opacity: 0.5">Loading...</span>';
+            });
+        }
+
+        // Show error state
+        function showError(message) {
+            document.querySelectorAll('.stat-value').forEach(el => {
+                el.innerHTML = '<span style="color: var(--danger-color)">Error</span>';
+            });
+            document.querySelectorAll('.stat-change').forEach(el => {
+                el.textContent = message || 'Failed to load data';
+                el.style.color = 'var(--danger-color)';
+                el.style.display = 'block';
+            });
+        }
+
+        // Update display for all statistics
+        function updateDisplay() {
+            try {
+                // Validate statistics object (only numeric keys)
+                Object.entries(statistics).forEach(([key, value]) => {
+                    if (['todayDate'].includes(key)) return;
+                    if (typeof value !== 'number' || isNaN(value)) {
+                        statistics[key] = 0;
+                        console.error(`Invalid value for ${key}, resetting to 0`);
+                    }
+                });
+
+                // Update wallet balance
+                const walletValue = document.getElementById('walletBalanceStat');
+                if (walletValue) {
+                    walletValue.textContent = formatCurrency(statistics.walletBalance);
+                }
+                const walletDesc = document.getElementById('walletBalanceDesc');
+                if (walletDesc) {
+                    walletDesc.textContent = `Remaining deposited funds · Total deposited: KSH ${(statistics.totalDeposit).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+                }
+                // Update account balance
+                const accountValue = document.getElementById('accountBalanceStat');
+                if (accountValue) {
+                    accountValue.textContent = formatCurrency(statistics.accountBalance);
+                }
+                // Update total assets (invested product only)
+                const assetValue = document.getElementById('totalAssetsStat');
+                if (assetValue) {
+                    statistics.totalAssets = statistics.investedProduct;
+                    assetValue.textContent = formatCurrency(statistics.totalAssets);
+                }
+                // Update total income
+                const incomeValue = document.getElementById('totalIncomeStat');
+                if (incomeValue) {
+                    incomeValue.textContent = formatCurrency(statistics.totalIncome);
+                }
+                // Update today's income
+                const todayValue = document.getElementById('todayIncomeStat');
+                if (todayValue) {
+                    todayValue.textContent = formatCurrency(statistics.todayIncome);
+                }
+                // Update total deposit
+                const depositValue = document.getElementById('totalDepositStat');
+                if (depositValue) {
+                    depositValue.textContent = formatCurrency(statistics.totalDeposit);
+                }
+                // Update total withdrawal
+                const withdrawalValue = document.getElementById('totalWithdrawalStat');
+                if (withdrawalValue) {
+                    withdrawalValue.textContent = formatCurrency(statistics.totalWithdrawal);
+                }
+
+                // Persist summary stats and transaction history to localStorage so they survive reloads
+                try {
+                    localStorage.setItem('transactionHistory', JSON.stringify(transactionHistory));
+                    localStorage.setItem('statisticsSummary', JSON.stringify({
+                        walletBalance: statistics.walletBalance,
+                        accountBalance: statistics.accountBalance,
+                        totalAssets: statistics.totalAssets,
+                        totalIncome: statistics.totalIncome,
+                        todayIncome: statistics.todayIncome,
+                        totalDeposit: statistics.totalDeposit,
+                        totalWithdrawal: statistics.totalWithdrawal,
+                        investedProduct: statistics.investedProduct,
+                        todayDate: statistics.todayDate
+                    }));
+                } catch (err) {
+                    console.warn('Failed to persist statistics to localStorage', err);
+                }
+            } catch (err) {
+                console.error('Failed to update display', err);
+            }
+        }
+
+        // Handle different transaction types
+        async function handleTransaction(transaction) {
+            // Check if date changed (midnight passed), reset today's income if so
+            const nowDate = new Date().toISOString().split('T')[0];
+            if (statistics.todayDate !== nowDate) {
+                statistics.todayDate = nowDate;
+                statistics.todayIncome = 0;
+            }
+            // Record transaction in history
+            if (transaction && typeof transaction === 'object') {
+                const tx = {
+                    date: (transaction.created_at ? new Date(transaction.created_at) : new Date()).toLocaleString(),
+                    type: transaction.type || 'unknown',
+                    amount: parseFloat(transaction.amount) || 0,
+                    description: transaction.description || transaction.note || transaction.details || ''
+                };
+                transactionHistory.unshift(tx);
+                // Limit to last 100 transactions for performance
+                if (transactionHistory.length > 100) transactionHistory.length = 100;
+                renderTransactionHistory();
+            }
+            if (!transaction || typeof transaction !== 'object') {
+                console.error('Invalid transaction data received:', transaction);
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            const transactionDate = new Date(transaction.created_at || Date.now()).toISOString().split('T')[0];
+            const amount = parseFloat(transaction.amount) || 0;
+
+            if (isNaN(amount)) {
+                console.error('Invalid transaction amount:', transaction.amount);
+                return;
+            }
+
+            switch (transaction.type) {
+                case 'deposit':
+                    statistics.walletBalance += amount;
+                    statistics.totalDeposit += amount;
+                    break;
+                case 'withdrawal':
+                    // Only count withdrawals from account balance
+                    if (transaction.from_account === 'account' || transaction.source === 'account' || transaction.accountType === 'account') {
+                        statistics.accountBalance -= amount;
+                        statistics.totalWithdrawal += amount;
+                    } else {
+                        statistics.walletBalance -= amount;
+                    }
+                    break;
+                case 'income':
+                case 'reward':
+                case 'bonus':
+                    statistics.accountBalance += amount;
+                    statistics.totalIncome += amount;
+                    if (transactionDate === statistics.todayDate) {
+                        statistics.todayIncome += amount;
+                    }
+                    break;
+                case 'invested':
+                    statistics.investedProduct += amount;
+                    break;
+                case 'exchange':
+                    // For exchange from wallet to account balance
+                    statistics.walletBalance -= amount;
+                    statistics.accountBalance += amount;
+                    break;
+                case 'transfer':
+                    // Handle transfers between wallets if needed
+                    if (transaction.from_wallet === 'main') {
+                        statistics.walletBalance -= amount;
+                    } else if (transaction.to_wallet === 'main') {
+                        statistics.walletBalance += amount;
+                    }
+                    break;
+            }
+
+            // Ensure withdrawable account balance is persisted for other pages (withdraw.html reads 'accountBalance')
+            try {
+                // normalize to number and persist
+                const acct = parseFloat(statistics.accountBalance) || 0;
+                localStorage.setItem('accountBalance', acct);
+            } catch (e) {
+                console.warn('Failed to persist accountBalance to localStorage', e);
+            }
+
+            // Persist the transaction and update display
+            try {
+                // Ensure transactionHistory stores simple serializable objects
+                const storedTx = {
+                    date: (transaction.created_at ? new Date(transaction.created_at) : new Date()).toLocaleString(),
+                    type: transaction.type || 'unknown',
+                    amount: parseFloat(transaction.amount) || 0,
+                    description: transaction.description || transaction.note || transaction.details || ''
+                };
+                transactionHistory.unshift(storedTx);
+                if (transactionHistory.length > 100) transactionHistory.length = 100;
+                // Save immediately to localStorage
+                try { localStorage.setItem('transactionHistory', JSON.stringify(transactionHistory)); } catch (e) { console.warn('Could not write transactions to localStorage', e); }
+            } catch (err) {
+                console.warn('Failed to persist transaction', err);
+            }
+
+            updateDisplay();
+        }
+
+        // Initialize real-time subscription for updates
+        // Recalculate today's income from all transactions (for page load or midnight reset)
+        function recalculateTodayIncome() {
+            const today = new Date().toISOString().split('T')[0];
+            statistics.todayIncome = transactionHistory
+                .filter(tx => ['income','reward','bonus'].includes(tx.type) && tx.date && new Date(tx.date).toISOString().split('T')[0] === today)
+                .reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0);
+        }
+
+        async function loadStats() {
+            showLoading();
+            try {
+                const headers = { 'Authorization': 'Bearer ' + TOKEN };
+                const [balRes, depRes, wdRes, invRes] = await Promise.all([
+                    fetch('/api/balance', { headers }),
+                    fetch('/api/deposits', { headers }),
+                    fetch('/api/withdraw/history', { headers }),
+                    fetch('/api/investments', { headers })
+                ]);
+
+                if (!balRes.ok) { window.location.href = '/login'; return; }
+
+                const balData = await balRes.json();
+                statistics.walletBalance  = parseFloat(balData.wallet_balance  || 0);
+                statistics.accountBalance = parseFloat(balData.income_balance  || balData.balance || 0);
+
+                if (depRes.ok) {
+                    const depData = await depRes.json();
+                    const confirmed = (depData.deposits || []).filter(d => d.status === 'confirmed');
+                    statistics.totalDeposit = confirmed.reduce((s, d) => s + parseFloat(d.amount || 0), 0);
+                    const today = new Date().toISOString().split('T')[0];
+                    const depTx = (depData.deposits || []).map(d => ({
+                        date: new Date(d.deposited_at).toLocaleString(),
+                        rawDate: d.deposited_at,
+                        type: 'deposit',
+                        amount: parseFloat(d.amount || 0),
+                        description: (d.method || 'M-Pesa') + ' · ' + (d.status || '')
+                    }));
+                    transactionHistory.push(...depTx);
+                }
+
+                if (wdRes.ok) {
+                    const wdData = await wdRes.json();
+                    const completed = (wdData.withdrawals || []).filter(w => w.status === 'completed');
+                    statistics.totalWithdrawal = completed.reduce((s, w) => s + parseFloat(w.amount || 0), 0);
+                    const wdTx = (wdData.withdrawals || []).map(w => ({
+                        date: new Date(w.requested_at).toLocaleString(),
+                        rawDate: w.requested_at,
+                        type: 'withdrawal',
+                        amount: parseFloat(w.amount || 0),
+                        description: (w.method || 'M-Pesa') + ' · ' + (w.status || '')
+                    }));
+                    transactionHistory.push(...wdTx);
+                }
+
+                if (invRes.ok) {
+                    const invData = await invRes.json();
+                    statistics.investedProduct = (invData.investments || []).reduce((s, i) => s + parseFloat(i.amount || 0), 0);
+                    statistics.totalAssets = statistics.investedProduct;
+                    const invTx = (invData.investments || []).map(i => ({
+                        date: new Date(i.start_date).toLocaleString(),
+                        rawDate: i.start_date,
+                        type: 'investment',
+                        amount: parseFloat(i.amount || 0),
+                        description: i.product_name || 'Product investment'
+                    }));
+                    transactionHistory.push(...invTx);
+                }
+
+                transactionHistory.sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate));
+                transactionHistory = transactionHistory.slice(0, 100);
+
+                const today = new Date().toISOString().split('T')[0];
+                statistics.todayIncome = transactionHistory
+                    .filter(tx => ['income','reward','bonus'].includes(tx.type) && tx.rawDate && tx.rawDate.startsWith(today))
+                    .reduce((s, tx) => s + tx.amount, 0);
+                statistics.totalIncome = statistics.accountBalance;
+
+                renderTransactionHistory();
+                updateDisplay();
+            } catch (err) {
+                console.error('Failed to load statistics:', err);
+                showError('Failed to load data. Please refresh.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadStats);
+    </script>
+</body>
+</html>

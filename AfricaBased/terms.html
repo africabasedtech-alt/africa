@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+            <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+            <script>
+                // Removed hardcoded Supabase URL/anon key - do not initialize client here.
+                if (!window.supabase && window.supabaseClient) window.supabase = window.supabaseClient;
+                if (!window.supabase) {
+                    window.supabase = null;
+                    console.warn('Supabase client not initialized. Call initSupabaseClient(url, anonKey) from a secure runtime.');
+                }
+            </script>
+    <script src="supabaseClient.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms and Conditions - AfricaBased</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1a2238;
+            --accent: #4ecdc4;
+            --text: #333333;
+            --bg: #f4f6f8;
+            --light-bg: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', Arial, sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--light-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+        }
+
+        h2 {
+            color: var(--primary);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 0.5rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        ol, ul {
+            margin: 1rem 0 1rem 2rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .section {
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--accent);
+            font-size: 1.2rem;
+        }
+
+        .last-updated {
+            text-align: right;
+            font-style: italic;
+            color: #666;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .close-btn-container {
+            margin-bottom: 2rem;
+            text-align: right;
+        }
+
+        .close-btn {
+            background: none;
+            color: var(--primary);
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #3db8a0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <i class="fas fa-globe"></i> AfricaBased
+        </div>
+        
+        <a href="/home" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:#4ecdc4;font-size:0.9rem;font-weight:600;padding:8px 16px;background:rgba(78,205,196,0.1);border-radius:8px;margin-bottom:1.2rem;"><i class="fas fa-arrow-left"></i> Back to Home</a>
+        <h1>Terms and Conditions</h1>
+
+        <div class="close-btn-container">
+            <button class="close-btn" onclick="window.close()">&times;</button>
+        </div>
+
+        <p>Welcome to Africabased. These Terms and Conditions ("Terms") govern your use of our website, platform, services, and any related applications (collectively, the "Services"). By accessing or using Africabased, you confirm that you have read, understood, and agreed to these Terms. If you do not agree, you must immediately discontinue use of our Services.</p>
+
+        <h2>1. Definitions</h2>
+        <p>"We," "Us," "Our" refer to Africabased and its authorized representatives.</p>
+        <p>"User," "You," "Your" refer to any individual or entity accessing or using Africabased.</p>
+        <p>"Account" refers to the registered profile you create to access certain Services.</p>
+        <p>"Content" means any text, images, files, videos, or other materials uploaded or shared on Africabased.</p>
+
+        <h2>2. User Registration</h2>
+        <p>To use certain features of Africabased, you must register for an account. By registering, you agree to:</p>
+        <ol>
+            <li>Provide accurate, complete, and up-to-date personal information during registration.</li>
+            <li>Maintain the accuracy of your details by promptly updating your account information.</li>
+            <li>Be responsible for all activities carried out under your account.</li>
+            <li>Be at least 18 years old or have the consent of a legal guardian if younger.</li>
+            <li>Use your account solely for lawful and legitimate purposes.</li>
+        </ol>
+
+        <h2>3. Account Security</h2>
+        <p>We take account security seriously. As a user, you agree to:</p>
+        <ul>
+            <li>Keep your login credentials (username, password, and any security codes) confidential.</li>
+            <li>Notify Africabased immediately if you suspect unauthorized access or security breaches.</li>
+            <li>Avoid sharing your account details with any third party.</li>
+            <li>Understand that we are not liable for any loss or damage caused by your failure to secure your account.</li>
+        </ul>
+        <p>We may, at our discretion, implement security measures such as two-factor authentication (2FA) or verification codes to protect your account.</p>
+
+        <h2>4. User Conduct</h2>
+        <p>You agree to use Africabased responsibly and in compliance with all applicable laws. You must NOT:</p>
+        <ul>
+            <li>Use our platform for fraudulent, misleading, or unlawful purposes.</li>
+            <li>Engage in harassment, abuse, or threatening behavior towards other users or staff.</li>
+            <li>Upload or distribute harmful content, viruses, or malware.</li>
+            <li>Attempt to gain unauthorized access to our systems or interfere with the proper functioning of the platform.</li>
+            <li>Use automated tools, bots, or scripts to extract data from our platform without prior written consent.</li>
+        </ul>
+        <p>We reserve the right to suspend or terminate your account if you breach these rules.</p>
+
+        <h2>5. Payments and Transactions</h2>
+        <p>If you engage in transactions through Africabased:</p>
+        <ul>
+            <li>You agree to provide valid payment details and authorize us to process payments.</li>
+            <li>All payment instructions provided by the user are final and irrevocable once submitted. It is your sole responsibility to verify the recipient's details, account numbers, and transaction amounts before authorization. Africabased shall not be liable for funds sent to the wrong recipient due to user error</li>                                   <li>Unauthorized chargebacks or frivolous payment disputes are strictly prohibited. If a chargeback is initiated without prior consultation with our support team, we reserve the right to suspend your account indefinitely and pursue the recovery of the disputed amount, including any administrative fees incurred.</li>
+      <li>All transactions are subject to verification and fraud checks.</li>
+            <li>Africabased will not be held responsible for delays or failures caused by third-party payment providers (e.g., banks, mobile money).</li>
+        </ul>
+
+        <h2>6. Intellectual Property</h2>
+        <p>All content, branding, design, and materials on Africabased are the exclusive property of Africabased unless otherwise stated.</p>
+        <p>You may not copy, modify, distribute, or exploit any part of our platform without written permission.</p>
+
+        <h2>7. Privacy Policy</h2>
+        <p>Your privacy matters to us. By using Africabased, you consent to our data collection, storage, and usage practices as described in our Privacy Policy.</p>
+
+        <h2>8. Termination of Services</h2>
+        <p>We reserve the right to suspend or terminate your account without prior notice if:</p>
+        <ul>
+            <li>You violate these Terms;</li>
+            <li>We suspect fraudulent or illegal activity;</li>
+            <li>Your actions harm or threaten the security and integrity of our platform.</li>
+        </ul>
+
+        <h2>9. Limitation of Liability</h2>
+        <p>Africabased is not liable for:</p>
+        <ul>
+            <li>Any loss, damage, or injury caused by your reliance on content or services;</li>
+            <li>Downtime, errors, or service interruptions;</li>
+            <li>Unauthorized access to your account caused by your negligence.</li>
+        </ul>
+
+        <h2>10. Changes to the Terms</h2>
+        <p>Africabased may revise these Terms at any time. Changes will be effective immediately upon posting. Continued use of the platform after updates means you accept the revised Terms.</p>
+
+        <h2>11. Governing Law</h2>
+        <p>These Terms are governed by and construed under the laws of Kenya, and any disputes will be subject to the jurisdiction of the courts in Nairobi, Kenya.</p>
+
+        <p>By using Africabased, you acknowledge that you have read, understood, and agreed to these Terms and Conditions.</p>
+
+        <div class="last-updated">
+            Last Updated: August 15, 2025
+        </div>
+    </div>
+</body>
+</html>
+        <div class="last-updated">
+            Last Updated: August 15, 2025
+        </div>
+    </div>
+</body>
+</html>
