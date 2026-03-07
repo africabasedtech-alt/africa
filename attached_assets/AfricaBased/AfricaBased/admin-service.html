@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Management - AfricaBased Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #0f1623; color: #e0e6ed; min-height: 100vh; }
+
+        .header {
+            background: #1a2238;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            padding: 16px 24px;
+            display: flex; align-items: center; gap: 16px;
+        }
+        .back-btn {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #e0e6ed;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            text-decoration: none;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.12); }
+        .header-title { font-size: 1.1rem; font-weight: 600; color: #fff; }
+
+        .main { max-width: 860px; margin: 0 auto; padding: 28px 20px; }
+
+        .section-card {
+            background: #1a2238;
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title i { color: #25D366; }
+        .add-btn {
+            background: linear-gradient(135deg, #4ecdc4, #25D366);
+            border: none;
+            color: #fff;
+            padding: 9px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .add-btn:hover { opacity: 0.9; }
+
+        /* Items list */
+        .items-list { display: flex; flex-direction: column; gap: 10px; }
+        .item-row {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .item-info { flex: 1; min-width: 0; }
+        .item-name { font-weight: 600; color: #fff; font-size: 0.9rem; }
+        .item-link {
+            color: #25D366;
+            font-size: 0.8rem;
+            word-break: break-all;
+            text-decoration: none;
+        }
+        .item-link:hover { text-decoration: underline; }
+        .item-category {
+            display: inline-block;
+            background: rgba(78,205,196,0.12);
+            color: #4ecdc4;
+            font-size: 0.72rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+        .item-actions { display: flex; gap: 8px; }
+        .icon-btn {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #e0e6ed;
+            width: 32px; height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem;
+            transition: all 0.15s;
+        }
+        .icon-btn.del:hover { background: rgba(255,107,107,0.15); border-color: rgba(255,107,107,0.4); color: #ff6b6b; }
+        .icon-btn.edit:hover { background: rgba(78,205,196,0.12); border-color: rgba(78,205,196,0.3); color: #4ecdc4; }
+
+        .empty-msg {
+            color: rgba(255,255,255,0.3);
+            font-size: 0.88rem;
+            text-align: center;
+            padding: 24px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #1a2238;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 28px;
+            width: 100%;
+            max-width: 440px;
+        }
+        .modal-title { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 20px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.82rem; color: rgba(255,255,255,0.5); margin-bottom: 6px; font-weight: 500; }
+        .form-group input, .form-group select {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: 'Poppins', sans-serif;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: rgba(78,205,196,0.5);
+        }
+        .form-group select option { background: #1a2238; }
+        .preview-link {
+            margin-top: 6px;
+            font-size: 0.78rem;
+            color: #25D366;
+            word-break: break-all;
+        }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-save {
+            flex: 1;
+            background: linear-gradient(135deg, #4ecdc4, #25D366);
+            border: none;
+            color: #fff;
+            padding: 11px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .btn-save:hover { opacity: 0.9; }
+        .btn-cancel {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #e0e6ed;
+            padding: 11px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px; right: 24px;
+            background: #1a2238;
+            border: 1px solid rgba(78,205,196,0.3);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            z-index: 9999;
+            transform: translateY(80px);
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.error { border-color: rgba(255,107,107,0.4); }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="Admin-panel.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
+    <div class="header-title"><i class="fab fa-whatsapp" style="color:#25D366;"></i> Service Management</div>
+</div>
+
+<div class="main">
+
+    <!-- Groups Section -->
+    <div class="section-card">
+        <div class="section-header">
+            <div class="section-title"><i class="fas fa-users"></i> WhatsApp Groups</div>
+            <button class="add-btn" onclick="openModal('group')"><i class="fas fa-plus"></i> Add Group</button>
+        </div>
+        <div class="items-list" id="groupList">
+            <div class="empty-msg">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Managers Section -->
+    <div class="section-card">
+        <div class="section-header">
+            <div class="section-title"><i class="fas fa-headset"></i> WhatsApp Managers</div>
+            <button class="add-btn" onclick="openModal('manager')"><i class="fas fa-plus"></i> Add Manager</button>
+        </div>
+        <div class="items-list" id="managerList">
+            <div class="empty-msg">Loading...</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Add / Edit Modal -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <div class="modal-title" id="modalTitle">Add WhatsApp Group</div>
+
+        <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="inputName" placeholder="e.g. Support Group">
+        </div>
+
+        <div class="form-group" id="groupLinkField">
+            <label>WhatsApp Group Link</label>
+            <input type="text" id="inputGroupLink" placeholder="https://chat.whatsapp.com/...">
+        </div>
+
+        <div class="form-group" id="phoneField" style="display:none;">
+            <label>Phone Number</label>
+            <input type="text" id="inputPhone" placeholder="07XXXXXXXX or 254XXXXXXXXX" oninput="updatePhonePreview()">
+            <div class="preview-link" id="phonePreview"></div>
+        </div>
+
+        <div class="form-group">
+            <label>Category</label>
+            <select id="inputCategory">
+                <option value="Support Group">Support Group</option>
+                <option value="Finance Group">Finance Group</option>
+                <option value="Product Group">Product Group</option>
+                <option value="Main Community Group">Main Community Group</option>
+                <option value="Support Manager">Support Manager</option>
+                <option value="Finance Manager">Finance Manager</option>
+                <option value="Product Manager">Product Manager</option>
+                <option value="General Manager">General Manager</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Minimum Membership Required</label>
+            <select id="inputMinTier">
+                <option value="all">All Members (No restriction)</option>
+                <option value="active">Active (1+ active referral)</option>
+                <option value="basic">Basic (5+ active referrals)</option>
+                <option value="premium">Premium (60+ active referrals)</option>
+                <option value="gold">Gold (300+ active referrals)</option>
+            </select>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn-save" onclick="saveItem()">Save</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    const ADMIN_KEY = '1540568e';
+    let currentType = 'group';
+    let editingId = null;
+    let allServices = [];
+
+    function normPhone(p) {
+        p = String(p).replace(/\s+/g,'').replace(/^(\+)/,'');
+        if (p.startsWith('07') || p.startsWith('01')) p = '254' + p.slice(1);
+        if (!p.startsWith('254')) p = '254' + p;
+        return p;
+    }
+
+    function waLink(phone) {
+        return 'https://wa.me/' + normPhone(phone);
+    }
+
+    function updatePhonePreview() {
+        const val = document.getElementById('inputPhone').value.trim();
+        if (val) {
+            document.getElementById('phonePreview').textContent = 'Link: ' + waLink(val);
+        } else {
+            document.getElementById('phonePreview').textContent = '';
+        }
+    }
+
+    function showToast(msg, isError) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast show' + (isError ? ' error' : '');
+        setTimeout(() => { t.className = 'toast'; }, 3000);
+    }
+
+    async function loadServices() {
+        try {
+            const res = await fetch('/api/services/whatsapp', {
+                headers: { 'x-admin-key': ADMIN_KEY }
+            });
+            const data = await res.json();
+            allServices = data.services || [];
+            renderLists();
+        } catch(e) {
+            document.getElementById('groupList').innerHTML = '<div class="empty-msg">Failed to load services.</div>';
+            document.getElementById('managerList').innerHTML = '<div class="empty-msg">Failed to load services.</div>';
+        }
+    }
+
+    const TIER_LABELS = { all: 'All', active: 'Active+', basic: 'Basic+', premium: 'Premium+', gold: 'Gold' };
+    const TIER_COLORS = { all: '#4ecdc4', active: '#6ec6ff', basic: '#a78bfa', premium: '#f59e0b', gold: '#f7c948' };
+
+    function tierBadge(tier) {
+        const t = tier || 'all';
+        return `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:0.72rem;font-weight:700;background:${TIER_COLORS[t]||'#4ecdc4'};color:#111;margin-left:6px;">${TIER_LABELS[t]||t}</span>`;
+    }
+
+    function renderLists() {
+        const groups = allServices.filter(s => s.type === 'group');
+        const managers = allServices.filter(s => s.type === 'manager');
+
+        const gList = document.getElementById('groupList');
+        if (!groups.length) {
+            gList.innerHTML = '<div class="empty-msg">No groups added yet.</div>';
+        } else {
+            gList.innerHTML = groups.map(g => `
+                <div class="item-row">
+                    <div class="item-info">
+                        <div class="item-name">${escHtml(g.name)}${tierBadge(g.min_tier)}</div>
+                        <a href="${escHtml(g.phone_or_link)}" target="_blank" class="item-link">${escHtml(g.phone_or_link)}</a>
+                        <div><span class="item-category">${escHtml(g.category)}</span></div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="icon-btn edit" onclick="openEditModal(${g.id})" title="Edit"><i class="fas fa-pen"></i></button>
+                        <button class="icon-btn del" onclick="deleteItem(${g.id})" title="Delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>`).join('');
+        }
+
+        const mList = document.getElementById('managerList');
+        if (!managers.length) {
+            mList.innerHTML = '<div class="empty-msg">No managers added yet.</div>';
+        } else {
+            mList.innerHTML = managers.map(m => {
+                const link = waLink(m.phone_or_link);
+                return `
+                <div class="item-row">
+                    <div class="item-info">
+                        <div class="item-name">${escHtml(m.name)}${tierBadge(m.min_tier)}</div>
+                        <a href="${link}" target="_blank" class="item-link">${link}</a>
+                        <div><span class="item-category">${escHtml(m.category)}</span></div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="icon-btn edit" onclick="openEditModal(${m.id})" title="Edit"><i class="fas fa-pen"></i></button>
+                        <button class="icon-btn del" onclick="deleteItem(${m.id})" title="Delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+    }
+
+    function escHtml(str) {
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function openModal(type) {
+        currentType = type;
+        editingId = null;
+        document.getElementById('inputName').value = '';
+        document.getElementById('inputGroupLink').value = '';
+        document.getElementById('inputPhone').value = '';
+        document.getElementById('phonePreview').textContent = '';
+        document.getElementById('inputCategory').value = type === 'group' ? 'Support Group' : 'Support Manager';
+        document.getElementById('inputMinTier').value = 'all';
+        document.getElementById('modalTitle').textContent = type === 'group' ? 'Add WhatsApp Group' : 'Add WhatsApp Manager';
+        document.getElementById('groupLinkField').style.display = type === 'group' ? '' : 'none';
+        document.getElementById('phoneField').style.display = type === 'manager' ? '' : 'none';
+        document.getElementById('modalOverlay').classList.add('active');
+    }
+
+    function openEditModal(id) {
+        const svc = allServices.find(s => s.id === id);
+        if (!svc) return;
+        currentType = svc.type;
+        editingId = id;
+        document.getElementById('inputName').value = svc.name;
+        document.getElementById('inputCategory').value = svc.category;
+        document.getElementById('inputMinTier').value = svc.min_tier || 'all';
+        document.getElementById('modalTitle').textContent = svc.type === 'group' ? 'Edit WhatsApp Group' : 'Edit WhatsApp Manager';
+        document.getElementById('groupLinkField').style.display = svc.type === 'group' ? '' : 'none';
+        document.getElementById('phoneField').style.display = svc.type === 'manager' ? '' : 'none';
+        if (svc.type === 'group') {
+            document.getElementById('inputGroupLink').value = svc.phone_or_link;
+            document.getElementById('inputPhone').value = '';
+            document.getElementById('phonePreview').textContent = '';
+        } else {
+            document.getElementById('inputPhone').value = svc.phone_or_link;
+            document.getElementById('inputGroupLink').value = '';
+            updatePhonePreview();
+        }
+        document.getElementById('modalOverlay').classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('active');
+    }
+
+    async function saveItem() {
+        const name = document.getElementById('inputName').value.trim();
+        const category = document.getElementById('inputCategory').value;
+        let phone_or_link;
+
+        if (currentType === 'group') {
+            phone_or_link = document.getElementById('inputGroupLink').value.trim();
+            if (!phone_or_link) { showToast('Please enter the group link.', true); return; }
+        } else {
+            phone_or_link = document.getElementById('inputPhone').value.trim();
+            if (!phone_or_link) { showToast('Please enter the phone number.', true); return; }
+        }
+
+        if (!name) { showToast('Please enter a name.', true); return; }
+
+        const min_tier = document.getElementById('inputMinTier').value;
+        const body = { type: currentType, name, phone_or_link, category, min_tier };
+        const url = editingId ? `/api/services/whatsapp/${editingId}` : '/api/services/whatsapp';
+        const method = editingId ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (!res.ok) { showToast(data.error || 'Failed to save.', true); return; }
+            closeModal();
+            showToast(editingId ? 'Updated successfully.' : 'Added successfully.');
+            await loadServices();
+        } catch(e) {
+            showToast('Connection error.', true);
+        }
+    }
+
+    async function deleteItem(id) {
+        if (!confirm('Delete this entry?')) return;
+        try {
+            const res = await fetch(`/api/services/whatsapp/${id}`, {
+                method: 'DELETE',
+                headers: { 'x-admin-key': ADMIN_KEY }
+            });
+            const data = await res.json();
+            if (!res.ok) { showToast(data.error || 'Failed to delete.', true); return; }
+            showToast('Deleted.');
+            await loadServices();
+        } catch(e) {
+            showToast('Connection error.', true);
+        }
+    }
+
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    loadServices();
+</script>
+
+<script>
+(function() {
+  if (localStorage.getItem('ab_sub_admin')) {
+    document.querySelectorAll('a[href="Admin-panel.html"]').forEach(function(a) {
+      a.href = 'sub-admin-panel.html';
+      var t = a.textContent.trim();
+      if (t.includes('Admin Panel') || t === 'Back') a.textContent = '← Back to Dashboard';
+    });
+  }
+})();
+</script>
+<script src="/js/admin-pin.js"></script>
+</body>
+</html>

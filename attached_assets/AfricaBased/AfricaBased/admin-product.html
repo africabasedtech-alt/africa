@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Products | AfricaBased Admin</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f0f1a; color: #fff; min-height: 100vh; }
+    .topbar { background: #1a1a2e; border-bottom: 1px solid rgba(78,205,196,0.2); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+    .topbar h1 { font-size: 1.3rem; color: #4ecdc4; }
+    .topbar a { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 0.9rem; }
+    .topbar a:hover { color: #4ecdc4; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .toolbar { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .search-box { flex: 1; min-width: 200px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 0.6rem 1rem; color: #fff; font-size: 0.9rem; }
+    .search-box::placeholder { color: rgba(255,255,255,0.4); }
+    .filter-select { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 0.6rem 1rem; color: #fff; font-size: 0.9rem; cursor: pointer; }
+    .filter-select option { background: #1a1a2e; }
+    .btn { border: none; border-radius: 8px; padding: 0.6rem 1.2rem; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: linear-gradient(45deg, #4ecdc4, #1a7e79); color: #fff; }
+    .btn-danger { background: linear-gradient(45deg, #e74c3c, #c0392b); color: #fff; }
+    .btn-warning { background: linear-gradient(45deg, #f39c12, #d68910); color: #fff; }
+    .btn-success { background: linear-gradient(45deg, #2ecc71, #1a8a45); color: #fff; }
+    .btn-sm { padding: 0.35rem 0.8rem; font-size: 0.8rem; }
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem; text-align: center; }
+    .stat-box .num { font-size: 1.8rem; font-weight: 700; color: #4ecdc4; }
+    .stat-box .lbl { font-size: 0.78rem; color: rgba(255,255,255,0.5); margin-top: 4px; }
+    .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; }
+    .product-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
+    .product-item:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.3); }
+    .product-item.disabled-product { opacity: 0.55; border-color: rgba(231,76,60,0.3); }
+    .product-img { width: 100%; height: 150px; object-fit: cover; display: block; }
+    .product-body { padding: 1rem; }
+    .product-name { font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .badge { font-size: 0.65rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 4px; white-space: nowrap; }
+    .badge-active { background: rgba(46,204,113,0.2); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); }
+    .badge-disabled { background: rgba(231,76,60,0.2); color: #e74c3c; border: 1px solid rgba(231,76,60,0.3); }
+    .product-cat { font-size: 0.75rem; color: #4ecdc4; margin-bottom: 0.5rem; }
+    .product-desc { font-size: 0.8rem; color: rgba(255,255,255,0.55); margin-bottom: 0.75rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .product-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.4rem; margin-bottom: 0.75rem; }
+    .pstat { background: rgba(255,255,255,0.05); border-radius: 6px; padding: 0.4rem 0.5rem; text-align: center; }
+    .pstat-val { font-size: 0.85rem; font-weight: 700; color: #4ecdc4; }
+    .pstat-lbl { font-size: 0.65rem; color: rgba(255,255,255,0.4); }
+    .product-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9000; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #1a1a2e; border: 1px solid rgba(78,205,196,0.3); border-radius: 16px; padding: 2rem; max-width: 560px; width: 100%; max-height: 90vh; overflow-y: auto; }
+    .modal h2 { color: #4ecdc4; margin-bottom: 1.5rem; font-size: 1.2rem; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-bottom: 0.4rem; }
+    input, textarea, select { width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 0.6rem 0.9rem; color: #fff; font-size: 0.9rem; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: #4ecdc4; }
+    textarea { resize: vertical; min-height: 70px; }
+    select option { background: #1a1a2e; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .modal-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; justify-content: flex-end; }
+    .confirm-modal { background: #1a1a2e; border: 1px solid rgba(231,76,60,0.4); border-radius: 12px; padding: 1.5rem; max-width: 360px; width: 100%; text-align: center; }
+    .confirm-modal h3 { color: #e74c3c; margin-bottom: 0.75rem; }
+    .confirm-modal p { color: rgba(255,255,255,0.7); font-size: 0.9rem; margin-bottom: 1.25rem; }
+    .confirm-actions { display: flex; gap: 0.75rem; justify-content: center; }
+    .toast { position: fixed; bottom: 2rem; right: 2rem; background: #1a1a2e; border: 1px solid rgba(78,205,196,0.4); border-radius: 10px; padding: 0.9rem 1.3rem; font-size: 0.9rem; z-index: 9999; transition: opacity 0.3s; max-width: 340px; }
+    .toast.error { border-color: rgba(231,76,60,0.5); color: #ff6b6b; }
+    .toast.success { color: #4ecdc4; }
+    .empty-state { text-align: center; padding: 4rem 2rem; color: rgba(255,255,255,0.4); }
+    .empty-state i { font-size: 3rem; margin-bottom: 1rem; display: block; }
+    .key-section { background: rgba(255,193,7,0.08); border: 1px solid rgba(255,193,7,0.25); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; max-width: 500px; }
+    .key-section h3 { color: #ffd54f; margin-bottom: 0.5rem; font-size: 1rem; }
+    .key-section p { color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-bottom: 1rem; }
+    .key-row { display: flex; gap: 0.75rem; }
+    .key-row input { flex: 1; }
+    .img-preview { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-top: 0.5rem; display: none; }
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <h1><i class="fas fa-boxes" style="margin-right:0.5rem;"></i>Product Manager</h1>
+  <a href="Admin-panel.html"><i class="fas fa-arrow-left" style="margin-right:0.4rem;"></i>Back to Admin Panel</a>
+</div>
+
+<div class="container">
+  <div id="keySection" class="key-section">
+    <h3><i class="fas fa-key" style="margin-right:0.4rem;"></i>Admin Authentication</h3>
+    <p>Enter the admin security key to manage products.</p>
+    <div class="key-row">
+      <input type="password" id="adminKeyInput" placeholder="Admin security key...">
+      <button class="btn btn-primary" onclick="verifyAdminKey()">Unlock</button>
+    </div>
+  </div>
+
+  <div id="mainContent" style="display:none;">
+    <div class="stats-row" id="statsRow"></div>
+
+    <div class="toolbar">
+      <input type="text" class="search-box" placeholder="Search products..." id="searchInput" oninput="renderProducts()">
+      <select class="filter-select" id="categoryFilter" onchange="renderProducts()">
+        <option value="">All Categories</option>
+        <option value="Promo">Promo</option>
+        <option value="Technology">Technology</option>
+        <option value="Real-estate">Real-estate</option>
+        <option value="Agriculture">Agriculture</option>
+        <option value="Energy">Energy</option>
+        <option value="General">General</option>
+      </select>
+      <select class="filter-select" id="statusFilter" onchange="renderProducts()">
+        <option value="">All Status</option>
+        <option value="active">Active Only</option>
+        <option value="disabled">Disabled Only</option>
+      </select>
+      <button class="btn btn-primary" onclick="openAddModal()"><i class="fas fa-plus" style="margin-right:0.4rem;"></i>Add Product</button>
+    </div>
+
+    <div class="products-grid" id="productsGrid">
+      <div class="empty-state"><i class="fas fa-spinner fa-spin"></i>Loading...</div>
+    </div>
+  </div>
+</div>
+
+<div id="addEditModal" class="modal-overlay">
+  <div class="modal">
+    <h2 id="modalTitle">Add New Product</h2>
+    <input type="hidden" id="editProductId">
+    <div class="form-group">
+      <label>Product Name *</label>
+      <input type="text" id="f_name" placeholder="e.g. Solar Energy Farm">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="f_desc" placeholder="Brief description of the product..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Category *</label>
+        <select id="f_category">
+          <option value="Promo">Promo</option>
+          <option value="Technology">Technology</option>
+          <option value="Real-estate">Real-estate</option>
+          <option value="Agriculture">Agriculture</option>
+          <option value="Energy">Energy</option>
+          <option value="General">General</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Investment Required (KES) *</label>
+        <input type="number" id="f_price" placeholder="0" min="0" step="0.01">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Daily Returns (KES) *</label>
+        <input type="number" id="f_daily" placeholder="0.00" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Duration (Days) *</label>
+        <input type="number" id="f_duration" placeholder="30" min="1" step="1">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Image URL</label>
+      <input type="url" id="f_image" placeholder="https://..." oninput="previewImage()">
+      <img id="imgPreview" class="img-preview" alt="Preview">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProduct()"><i class="fas fa-save" style="margin-right:0.4rem;"></i>Save Product</button>
+    </div>
+  </div>
+</div>
+
+<div id="confirmModal" class="modal-overlay">
+  <div class="confirm-modal">
+    <h3><i class="fas fa-trash" style="margin-right:0.4rem;"></i>Delete Product</h3>
+    <p id="confirmMsg">Are you sure you want to delete this product? This cannot be undone.</p>
+    <div class="confirm-actions">
+      <button class="btn" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" style="opacity:0;pointer-events:none;"></div>
+
+<script>
+  let ADMIN_KEY = localStorage.getItem('ab_admin_key') || '';
+  if (!ADMIN_KEY) {
+    try { var ad = JSON.parse(localStorage.getItem('adminData')||'{}');
+      if (ad.isLoggedIn && ad.api_key) { ADMIN_KEY = ad.api_key; localStorage.setItem('ab_admin_key', ADMIN_KEY); }
+      else if (ad.isLoggedIn) { ADMIN_KEY = '1540568e'; localStorage.setItem('ab_admin_key', ADMIN_KEY); }
+    } catch(e){}
+  }
+  let allProducts = [];
+  var myPerms = { canView: true, canAdd: true, canEdit: true, canDelete: true, canEnable: true, canDisable: true, isSuperAdmin: true };
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type;
+    t.style.opacity = '1';
+    t.style.pointerEvents = 'auto';
+    setTimeout(function() { t.style.opacity = '0'; t.style.pointerEvents = 'none'; }, 3000);
+  }
+
+  function verifyAdminKey() {
+    var key = document.getElementById('adminKeyInput').value.trim();
+    if (!key) { showToast('Please enter the admin key', 'error'); return; }
+    ADMIN_KEY = key;
+    localStorage.setItem('ab_admin_key', key);
+    loadPermissionsAndProducts();
+  }
+
+  async function loadPermissions() {
+    try {
+      var res = await fetch('/api/admin/my-permissions', { headers: { 'x-admin-key': ADMIN_KEY } });
+      if (!res.ok) return false;
+      var data = await res.json();
+      var pp = data.product_permissions || [];
+      myPerms.isSuperAdmin = !!data.isSuperAdmin;
+      if (data.isSuperAdmin) {
+        myPerms.canView = myPerms.canAdd = myPerms.canEdit = myPerms.canDelete = myPerms.canEnable = myPerms.canDisable = true;
+      } else {
+        var hasProduct = (data.privileges || []).includes('product');
+        if (!hasProduct) {
+          myPerms.canView = myPerms.canAdd = myPerms.canEdit = myPerms.canDelete = myPerms.canEnable = myPerms.canDisable = false;
+          return true;
+        }
+        var noLimits = pp.length === 0;
+        myPerms.canView = noLimits || pp.includes('product_view');
+        myPerms.canAdd = noLimits || pp.includes('product_add');
+        myPerms.canEdit = noLimits || pp.includes('product_edit');
+        myPerms.canDelete = noLimits || pp.includes('product_delete');
+        myPerms.canEnable = noLimits || pp.includes('product_enable');
+        myPerms.canDisable = noLimits || pp.includes('product_disable');
+      }
+      return true;
+    } catch(e) { return false; }
+  }
+
+  function applyPermissionsToUI() {
+    var addBtn = document.querySelector('.toolbar .btn-primary');
+    if (addBtn && !myPerms.canAdd) addBtn.style.display = 'none';
+  }
+
+  async function loadPermissionsAndProducts() {
+    await loadPermissions();
+    applyPermissionsToUI();
+    if (!myPerms.canView && !myPerms.canAdd && !myPerms.canEdit && !myPerms.canDelete && !myPerms.canEnable && !myPerms.canDisable) {
+      document.getElementById('keySection').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+      document.getElementById('productsGrid').innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><i class="fas fa-lock"></i><br>You do not have product management permissions.</div>';
+      return;
+    }
+    loadProducts();
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    if (ADMIN_KEY) {
+      loadPermissionsAndProducts();
+    }
+    document.getElementById('adminKeyInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') verifyAdminKey();
+    });
+  });
+
+  async function loadProducts() {
+    try {
+      var res = await fetch('/api/products', { headers: { 'x-admin-key': ADMIN_KEY } });
+      if (!res.ok) {
+        document.getElementById('keySection').style.display = 'block';
+        document.getElementById('mainContent').style.display = 'none';
+        showToast('Invalid admin key or access denied', 'error');
+        return;
+      }
+      var data = await res.json();
+      allProducts = data.products || [];
+      document.getElementById('keySection').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+      renderStats();
+      renderProducts();
+    } catch (e) {
+      showToast('Failed to load products', 'error');
+    }
+  }
+
+  function renderStats() {
+    var total = allProducts.length;
+    var active = allProducts.filter(function(p) { return !p.disabled; }).length;
+    var disabled = total - active;
+    var cats = (new Set(allProducts.map(function(p) { return p.category; }))).size;
+    document.getElementById('statsRow').innerHTML =
+      '<div class="stat-box"><div class="num">' + total + '</div><div class="lbl">Total Products</div></div>' +
+      '<div class="stat-box"><div class="num" style="color:#2ecc71;">' + active + '</div><div class="lbl">Active</div></div>' +
+      '<div class="stat-box"><div class="num" style="color:#e74c3c;">' + disabled + '</div><div class="lbl">Disabled</div></div>' +
+      '<div class="stat-box"><div class="num">' + cats + '</div><div class="lbl">Categories</div></div>';
+  }
+
+  function fmt(n) { return parseFloat(n||0).toLocaleString(undefined, {minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+  function renderProducts() {
+    var search = document.getElementById('searchInput').value.toLowerCase();
+    var cat = document.getElementById('categoryFilter').value;
+    var status = document.getElementById('statusFilter').value;
+
+    var filtered = allProducts.filter(function(p) {
+      var matchSearch = !search || p.name.toLowerCase().includes(search) || (p.description||'').toLowerCase().includes(search);
+      var matchCat = !cat || p.category === cat;
+      var matchStatus = !status || (status === 'active' ? !p.disabled : p.disabled);
+      return matchSearch && matchCat && matchStatus;
+    });
+
+    filtered.sort(function(a, b) { return parseFloat(a.price) - parseFloat(b.price); });
+
+    var grid = document.getElementById('productsGrid');
+    if (!filtered.length) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><i class="fas fa-search"></i><br>No products found</div>';
+      return;
+    }
+
+    grid.innerHTML = filtered.map(function(p) {
+      var imgSrc = p.image_url || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(p.name) + '&background=4ecdc4&color=fff&size=400');
+      var fallback = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(p.name) + '&background=4ecdc4&color=fff&size=400';
+      return '<div class="product-item' + (p.disabled ? ' disabled-product' : '') + '">' +
+        '<img class="product-img" src="' + imgSrc + '" alt="' + p.name + '" onerror="this.src=\'' + fallback + '\'">' +
+        '<div class="product-body">' +
+          '<div class="product-name">' + p.name +
+            '<span class="badge ' + (p.disabled ? 'badge-disabled' : 'badge-active') + '">' + (p.disabled ? 'DISABLED' : 'ACTIVE') + '</span>' +
+          '</div>' +
+          '<div class="product-cat"><i class="fas fa-tag" style="margin-right:0.3rem;"></i>' + (p.category || 'General') + '</div>' +
+          '<div class="product-desc">' + (p.description || 'No description') + '</div>' +
+          '<div class="product-stats">' +
+            '<div class="pstat"><div class="pstat-val">KES ' + parseInt(p.price).toLocaleString() + '</div><div class="pstat-lbl">Investment</div></div>' +
+            '<div class="pstat"><div class="pstat-val">KES ' + fmt(p.daily_return) + '</div><div class="pstat-lbl">Daily</div></div>' +
+            '<div class="pstat"><div class="pstat-val">' + p.duration_days + 'd</div><div class="pstat-lbl">Duration</div></div>' +
+          '</div>' +
+          '<div class="product-actions">' +
+            (myPerms.canEdit ? '<button class="btn btn-primary btn-sm" onclick="openEditModal(\'' + p.id + '\')"><i class="fas fa-edit"></i> Edit</button>' : '') +
+            ((p.disabled && myPerms.canEnable) || (!p.disabled && myPerms.canDisable) ?
+              '<button class="btn btn-sm ' + (p.disabled ? 'btn-success' : 'btn-warning') + '" onclick="toggleProduct(\'' + p.id + '\',' + p.disabled + ')">' +
+                '<i class="fas fa-' + (p.disabled ? 'toggle-on' : 'toggle-off') + '"></i> ' + (p.disabled ? 'Enable' : 'Disable') +
+              '</button>' : '') +
+            (myPerms.canDelete ? '<button class="btn btn-danger btn-sm" onclick="confirmDelete(\'' + p.id + '\',\'' + p.name.replace(/'/g,"\\'") + '\')"><i class="fas fa-trash"></i></button>' : '') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function openAddModal() {
+    document.getElementById('modalTitle').textContent = 'Add New Product';
+    document.getElementById('editProductId').value = '';
+    document.getElementById('f_name').value = '';
+    document.getElementById('f_desc').value = '';
+    document.getElementById('f_category').value = 'Technology';
+    document.getElementById('f_price').value = '';
+    document.getElementById('f_daily').value = '';
+    document.getElementById('f_duration').value = '';
+    document.getElementById('f_image').value = '';
+    document.getElementById('imgPreview').style.display = 'none';
+    document.getElementById('addEditModal').classList.add('open');
+  }
+
+  function openEditModal(id) {
+    var p = null;
+    for (var i = 0; i < allProducts.length; i++) { if (allProducts[i].id === id) { p = allProducts[i]; break; } }
+    if (!p) return;
+    document.getElementById('modalTitle').textContent = 'Edit Product';
+    document.getElementById('editProductId').value = id;
+    document.getElementById('f_name').value = p.name;
+    document.getElementById('f_desc').value = p.description || '';
+    document.getElementById('f_category').value = p.category || 'General';
+    document.getElementById('f_price').value = p.price;
+    document.getElementById('f_daily').value = p.daily_return;
+    document.getElementById('f_duration').value = p.duration_days;
+    document.getElementById('f_image').value = p.image_url || '';
+    var prev = document.getElementById('imgPreview');
+    if (p.image_url) { prev.src = p.image_url; prev.style.display = 'block'; } else { prev.style.display = 'none'; }
+    document.getElementById('addEditModal').classList.add('open');
+  }
+
+  function previewImage() {
+    var url = document.getElementById('f_image').value.trim();
+    var prev = document.getElementById('imgPreview');
+    if (url) { prev.src = url; prev.style.display = 'block'; } else { prev.style.display = 'none'; }
+  }
+
+  async function saveProduct() {
+    var id = document.getElementById('editProductId').value;
+    if (id && !myPerms.canEdit) { showToast('You do not have permission to edit products', 'error'); return; }
+    if (!id && !myPerms.canAdd) { showToast('You do not have permission to add products', 'error'); return; }
+    var name = document.getElementById('f_name').value.trim();
+    var price = document.getElementById('f_price').value;
+    var daily = document.getElementById('f_daily').value;
+    var duration = document.getElementById('f_duration').value;
+
+    if (!name || price === '' || !daily || !duration) {
+      showToast('Please fill in all required fields', 'error');
+      return;
+    }
+
+    var body = {
+      name: name,
+      description: document.getElementById('f_desc').value.trim(),
+      category: document.getElementById('f_category').value,
+      price: parseFloat(price),
+      daily_return: parseFloat(daily),
+      duration_days: parseInt(duration),
+      image_url: document.getElementById('f_image').value.trim()
+    };
+
+    var url = id ? ('/api/admin/products/' + id) : '/api/admin/products';
+    var method = id ? 'PUT' : 'POST';
+
+    try {
+      var res = await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+        body: JSON.stringify(body)
+      });
+      var data = await res.json();
+      if (!res.ok) { showToast(data.error || 'Save failed', 'error'); return; }
+
+      if (id) {
+        for (var i = 0; i < allProducts.length; i++) {
+          if (allProducts[i].id === id) { allProducts[i] = data.product; break; }
+        }
+      } else {
+        allProducts.unshift(data.product);
+      }
+      closeModals();
+      renderStats();
+      renderProducts();
+      showToast(id ? 'Product updated!' : 'Product added!', 'success');
+    } catch (e) {
+      showToast('Connection error', 'error');
+    }
+  }
+
+  async function toggleProduct(id, currentlyDisabled) {
+    try {
+      var res = await fetch('/api/admin/products/' + id + '/toggle', {
+        method: 'PATCH',
+        headers: { 'x-admin-key': ADMIN_KEY }
+      });
+      var data = await res.json();
+      if (!res.ok) { showToast(data.error || 'Toggle failed', 'error'); return; }
+      for (var i = 0; i < allProducts.length; i++) {
+        if (allProducts[i].id === id) { allProducts[i] = data.product; break; }
+      }
+      renderStats();
+      renderProducts();
+      showToast(currentlyDisabled ? 'Product enabled!' : 'Product disabled!', 'success');
+    } catch (e) {
+      showToast('Connection error', 'error');
+    }
+  }
+
+  var pendingDeleteId = null;
+  function confirmDelete(id, name) {
+    pendingDeleteId = id;
+    document.getElementById('confirmMsg').textContent = 'Are you sure you want to delete "' + name + '"? This cannot be undone.';
+    document.getElementById('confirmModal').classList.add('open');
+    document.getElementById('confirmDeleteBtn').onclick = doDelete;
+  }
+
+  async function doDelete() {
+    if (!pendingDeleteId) return;
+    try {
+      var res = await fetch('/api/admin/products/' + pendingDeleteId, {
+        method: 'DELETE',
+        headers: { 'x-admin-key': ADMIN_KEY }
+      });
+      var data = await res.json();
+      if (!res.ok) { showToast(data.error || 'Delete failed', 'error'); return; }
+      allProducts = allProducts.filter(function(p) { return p.id !== pendingDeleteId; });
+      closeModals();
+      renderStats();
+      renderProducts();
+      showToast('Product deleted', 'success');
+    } catch (e) {
+      showToast('Connection error', 'error');
+    }
+  }
+
+  function closeModals() {
+    document.getElementById('addEditModal').classList.remove('open');
+    document.getElementById('confirmModal').classList.remove('open');
+    pendingDeleteId = null;
+  }
+
+  document.getElementById('addEditModal').addEventListener('click', function(e) {
+    if (e.target === document.getElementById('addEditModal')) closeModals();
+  });
+  document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target === document.getElementById('confirmModal')) closeModals();
+  });
+</script>
+
+<script>
+(function() {
+  if (localStorage.getItem('ab_sub_admin')) {
+    document.querySelectorAll('a[href="Admin-panel.html"]').forEach(function(a) {
+      a.href = 'sub-admin-panel.html';
+      var t = a.textContent.trim();
+      if (t.includes('Admin Panel') || t === 'Back') a.textContent = '← Back to Dashboard';
+    });
+  }
+})();
+</script>
+<script src="/js/admin-pin.js"></script>
+</body>
+</html>

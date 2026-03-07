@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - AfricaBased Admin</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #0f1623; color: #e0e6ed; min-height: 100vh; }
+
+        /* Header */
+        .header {
+            background: #1a2238;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            padding: 14px 22px;
+            display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+            position: sticky; top: 0; z-index: 50;
+        }
+        .back-btn {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #e0e6ed; padding: 7px 14px; border-radius: 7px;
+            cursor: pointer; font-size: 0.83rem; text-decoration: none;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.12); }
+        .header-title { font-size: 1.05rem; font-weight: 700; color: #fff; flex: 1; }
+        .header-meta { font-size: 0.8rem; color: rgba(255,255,255,0.35); }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex; gap: 10px; align-items: center;
+            padding: 16px 22px; flex-wrap: wrap;
+            max-width: 1300px; margin: 0 auto;
+        }
+        .search-wrap { position: relative; flex: 1; min-width: 200px; }
+        .search-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.3); font-size: 0.85rem; }
+        .search-input {
+            width: 100%;
+            background: #1a2238; border: 1px solid rgba(255,255,255,0.1);
+            color: #fff; padding: 9px 14px 9px 34px; border-radius: 8px; font-size: 0.88rem;
+        }
+        .search-input:focus { outline: none; border-color: rgba(78,205,196,0.4); }
+        .filter-sel {
+            background: #1a2238; border: 1px solid rgba(255,255,255,0.1);
+            color: #e0e6ed; padding: 9px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer;
+        }
+        .filter-sel option { background: #1a2238; }
+        .export-btn {
+            background: rgba(78,205,196,0.1); border: 1px solid rgba(78,205,196,0.25);
+            color: #4ecdc4; padding: 9px 16px; border-radius: 8px; cursor: pointer;
+            font-size: 0.83rem; font-weight: 600; display: flex; align-items: center; gap: 6px;
+        }
+        .export-btn:hover { background: rgba(78,205,196,0.18); }
+        .refresh-btn {
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+            color: #e0e6ed; padding: 9px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem;
+        }
+        .refresh-btn:hover { background: rgba(255,255,255,0.1); }
+
+        /* Stats bar */
+        .stats-bar {
+            display: flex; gap: 12px; padding: 0 22px 16px;
+            max-width: 1300px; margin: 0 auto; flex-wrap: wrap;
+        }
+        .stat-chip {
+            background: #1a2238; border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px; padding: 10px 18px; display: flex; flex-direction: column; gap: 2px;
+        }
+        .stat-chip-label { font-size: 0.72rem; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-chip-val { font-size: 1rem; font-weight: 700; color: #fff; }
+
+        /* Table wrapper */
+        .table-wrap {
+            max-width: 1300px; margin: 0 auto; padding: 0 22px 30px;
+            overflow-x: auto;
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        thead th {
+            background: #1a2238; color: rgba(255,255,255,0.5);
+            font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+            padding: 12px 14px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.07);
+            white-space: nowrap; cursor: pointer; user-select: none;
+        }
+        thead th:hover { color: #4ecdc4; }
+        thead th .sort-arrow { margin-left: 4px; opacity: 0.4; font-size: 0.7rem; }
+        tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s; }
+        tbody tr:hover { background: rgba(255,255,255,0.025); }
+        tbody td { padding: 13px 14px; font-size: 0.85rem; color: #e0e6ed; white-space: nowrap; }
+
+        /* Avatar */
+        .avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: linear-gradient(135deg, #4ecdc4, #ff6b6b);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; font-weight: 700; color: #fff; flex-shrink: 0;
+        }
+        .user-cell { display: flex; align-items: center; gap: 10px; }
+        .user-name { font-weight: 600; color: #fff; font-size: 0.88rem; }
+        .user-email { font-size: 0.75rem; color: rgba(255,255,255,0.35); }
+
+        /* Status badge */
+        .badge {
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.4px;
+        }
+        .badge-active { background: rgba(40,167,69,0.15); color: #28a745; border: 1px solid rgba(40,167,69,0.2); }
+        .badge-locked { background: rgba(255,107,107,0.15); color: #ff6b6b; border: 1px solid rgba(255,107,107,0.2); }
+
+        /* Action dropdown */
+        .action-sel {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: #e0e6ed; padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer;
+            width: 160px;
+        }
+        .action-sel option, .action-sel optgroup { background: #1a2238; }
+
+        /* Empty / loading */
+        .empty-row td { text-align: center; padding: 40px; color: rgba(255,255,255,0.25); font-size: 0.88rem; }
+
+        /* Pagination */
+        .pagination {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 16px 22px; max-width: 1300px; margin: 0 auto;
+        }
+        .page-btn {
+            background: #1a2238; border: 1px solid rgba(255,255,255,0.1);
+            color: #e0e6ed; padding: 7px 16px; border-radius: 7px; cursor: pointer; font-size: 0.83rem;
+        }
+        .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .page-btn:not(:disabled):hover { border-color: rgba(78,205,196,0.3); color: #4ecdc4; }
+        .page-info { font-size: 0.82rem; color: rgba(255,255,255,0.35); }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7); z-index: 999;
+            align-items: center; justify-content: center; padding: 16px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #1a2238; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px; padding: 28px; width: 100%; max-width: 420px;
+        }
+        .modal-title { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 16px; }
+        .modal-body { color: rgba(255,255,255,0.55); font-size: 0.88rem; line-height: 1.6; margin-bottom: 16px; }
+        .modal-input {
+            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+            color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem;
+            font-family: 'Poppins', sans-serif; margin-bottom: 12px;
+        }
+        .modal-input:focus { outline: none; border-color: rgba(78,205,196,0.4); }
+        .modal-actions { display: flex; gap: 10px; }
+        .btn-confirm {
+            flex: 1; padding: 10px; border: none; border-radius: 8px;
+            cursor: pointer; font-weight: 600; font-size: 0.9rem; font-family: 'Poppins', sans-serif;
+        }
+        .btn-confirm.danger { background: #ff6b6b; color: #fff; }
+        .btn-confirm.primary { background: linear-gradient(135deg, #4ecdc4, #25a085); color: #fff; }
+        .btn-confirm.warning { background: #ffc107; color: #232526; }
+        .btn-cancel-modal {
+            background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+            color: #e0e6ed; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+        }
+        .modal-error { color: #ff6b6b; font-size: 0.82rem; margin-bottom: 8px; display: none; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px;
+            background: #1a2238; border: 1px solid rgba(78,205,196,0.3);
+            color: #fff; padding: 12px 20px; border-radius: 10px;
+            font-size: 0.88rem; font-weight: 500;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 9999;
+            transform: translateY(80px); opacity: 0; transition: all 0.3s;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.error { border-color: rgba(255,107,107,0.4); }
+        .toast.success { border-color: rgba(40,167,69,0.4); }
+
+        @media (max-width: 600px) {
+            .header { padding: 12px 14px; }
+            .toolbar, .stats-bar, .table-wrap, .pagination { padding-left: 14px; padding-right: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="Admin-panel.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
+    <div class="header-title">User Management</div>
+    <div class="header-meta" id="headerMeta">Loading users...</div>
+</div>
+
+<div class="toolbar">
+    <div class="search-wrap">
+        <i class="fas fa-search"></i>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search by name, email, phone...">
+    </div>
+    <select class="filter-sel" id="statusFilter">
+        <option value="">All Status</option>
+        <option value="active">Active</option>
+        <option value="locked">Locked</option>
+    </select>
+    <button class="refresh-btn" onclick="loadUsers()" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+    <button class="export-btn" onclick="exportCSV()"><i class="fas fa-file-csv"></i> CSV</button>
+    <button class="export-btn" onclick="exportPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th onclick="sortBy('username')">User <span class="sort-arrow" id="sort-username"></span></th>
+                <th onclick="sortBy('mpesa_phone')">M-Pesa / Phone <span class="sort-arrow" id="sort-mpesa_phone"></span></th>
+                <th onclick="sortBy('account_balance')">Balance <span class="sort-arrow" id="sort-account_balance"></span></th>
+                <th onclick="sortBy('total_deposited')">Deposited <span class="sort-arrow" id="sort-total_deposited"></span></th>
+                <th onclick="sortBy('total_invested')">Invested <span class="sort-arrow" id="sort-total_invested"></span></th>
+                <th onclick="sortBy('referral_count')">Referrals <span class="sort-arrow" id="sort-referral_count"></span></th>
+                <th onclick="sortBy('locked')">Status <span class="sort-arrow" id="sort-locked"></span></th>
+                <th onclick="sortBy('created_at')">Joined <span class="sort-arrow" id="sort-created_at"></span></th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="userTableBody">
+            <tr class="empty-row"><td colspan="9">Loading...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="pagination" id="pagination"></div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <div class="modal-title" id="modalTitle"></div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-error" id="modalError"></div>
+        <div id="modalInputs"></div>
+        <div class="modal-actions" id="modalActions"></div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    const ADMIN_KEY = '1540568e';
+    let allUsers = [];
+    let filteredUsers = [];
+    let currentPage = 1;
+    const PER_PAGE = 15;
+    let sortCol = 'created_at';
+    let sortDir = -1;
+
+    // ── Load ──────────────────────────────────────────────────────────────────
+    async function loadUsers() {
+        document.getElementById('userTableBody').innerHTML = '<tr class="empty-row"><td colspan="9"><i class="fas fa-spinner fa-spin"></i> Loading users...</td></tr>';
+        try {
+            const res = await fetch('/api/admin/users', { headers: { 'x-admin-key': ADMIN_KEY } });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed');
+            allUsers = data.users || [];
+            renderStats();
+            applyFilter();
+        } catch(e) {
+            document.getElementById('userTableBody').innerHTML = `<tr class="empty-row"><td colspan="9" style="color:#ff6b6b;">Error: ${e.message}</td></tr>`;
+        }
+    }
+
+    function renderStats() {
+        const total = allUsers.length;
+        const locked = allUsers.filter(u => u.locked).length;
+        const totalBal = allUsers.reduce((s,u) => s + parseFloat(u.account_balance||0), 0);
+        const totalDep = allUsers.reduce((s,u) => s + parseFloat(u.total_deposited||0), 0);
+        document.getElementById('headerMeta').textContent = `${total} users`;
+        document.getElementById('statsBar').innerHTML = `
+            <div class="stat-chip"><div class="stat-chip-label">Total Users</div><div class="stat-chip-val">${total}</div></div>
+            <div class="stat-chip"><div class="stat-chip-label">Active</div><div class="stat-chip-val" style="color:#28a745;">${total - locked}</div></div>
+            <div class="stat-chip"><div class="stat-chip-label">Locked</div><div class="stat-chip-val" style="color:#ff6b6b;">${locked}</div></div>
+            <div class="stat-chip"><div class="stat-chip-label">Total Balances</div><div class="stat-chip-val">KES ${fmt(totalBal)}</div></div>
+            <div class="stat-chip"><div class="stat-chip-label">Total Deposited</div><div class="stat-chip-val">KES ${fmt(totalDep)}</div></div>
+        `;
+    }
+
+    function applyFilter() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        const st = document.getElementById('statusFilter').value;
+        filteredUsers = allUsers.filter(u => {
+            const matchQ = !q || [u.username, u.email, u.phone, u.mpesa_phone, u.referral_code].some(v => (v||'').toLowerCase().includes(q));
+            const matchSt = !st || (st === 'locked' ? u.locked : !u.locked);
+            return matchQ && matchSt;
+        });
+        sortUsers();
+        currentPage = 1;
+        render();
+    }
+
+    function sortBy(col) {
+        if (sortCol === col) sortDir *= -1;
+        else { sortCol = col; sortDir = 1; }
+        document.querySelectorAll('.sort-arrow').forEach(el => el.textContent = '');
+        const arrow = document.getElementById('sort-' + col);
+        if (arrow) arrow.textContent = sortDir === 1 ? '▲' : '▼';
+        sortUsers();
+        render();
+    }
+
+    function sortUsers() {
+        filteredUsers.sort((a, b) => {
+            let va = a[sortCol], vb = b[sortCol];
+            if (va == null) va = '';
+            if (vb == null) vb = '';
+            if (!isNaN(parseFloat(va)) && !isNaN(parseFloat(vb))) {
+                va = parseFloat(va); vb = parseFloat(vb);
+            } else {
+                va = String(va).toLowerCase(); vb = String(vb).toLowerCase();
+            }
+            if (va < vb) return -1 * sortDir;
+            if (va > vb) return 1 * sortDir;
+            return 0;
+        });
+    }
+
+    function render() {
+        const tbody = document.getElementById('userTableBody');
+        const start = (currentPage - 1) * PER_PAGE;
+        const page = filteredUsers.slice(start, start + PER_PAGE);
+
+        if (!page.length) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="9">No users found.</td></tr>';
+        } else {
+            tbody.innerHTML = page.map((u, localIdx) => {
+                const idx = start + localIdx;
+                const initials = (u.username || 'U').charAt(0).toUpperCase();
+                const joined = new Date(u.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                const statusBadge = u.locked
+                    ? '<span class="badge badge-locked">Locked</span>'
+                    : '<span class="badge badge-active">Active</span>';
+                return `<tr>
+                    <td>
+                        <div class="user-cell">
+                            <div class="avatar">${initials}</div>
+                            <div>
+                                <div class="user-name">${esc(u.username || '—')}</div>
+                                <div class="user-email">${esc(u.email || '—')}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${u.mpesa_phone ? `<span style="color:#4ecdc4;font-weight:600;">${esc(u.mpesa_phone)}</span>` : (u.phone ? esc(u.phone) : '<span style="color:rgba(255,255,255,0.3);">Not set</span>')}</td>
+                    <td>KES ${fmt(u.account_balance)}</td>
+                    <td>KES ${fmt(u.total_deposited)}</td>
+                    <td>KES ${fmt(u.total_invested)}</td>
+                    <td>${u.referral_count || 0}</td>
+                    <td>${statusBadge}</td>
+                    <td>${joined}</td>
+                    <td>
+                        <select class="action-sel" onchange="handleAction(this.value,'${u.id}',${idx}); this.value=''">
+                            <option value="">Action...</option>
+                            <option value="impersonate">Impersonate</option>
+                            <option value="editdetails">Edit Profile Details</option>
+                            <optgroup label="Balance">
+                                <option value="credit">Credit Balance</option>
+                                <option value="debit">Debit Balance</option>
+                            </optgroup>
+                            <optgroup label="Account">
+                                <option value="${u.locked ? 'unlock' : 'lock'}">${u.locked ? 'Unlock' : 'Lock'} Account</option>
+                                <option value="resetpw">Reset Password</option>
+                                <option value="delete">Delete User</option>
+                            </optgroup>
+                        </select>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        const total = filteredUsers.length;
+        const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+        document.getElementById('pagination').innerHTML = `
+            <button class="page-btn" onclick="changePage(-1)" ${currentPage===1?'disabled':''}>← Prev</button>
+            <span class="page-info">Page ${currentPage} of ${totalPages} (${total} users)</span>
+            <button class="page-btn" onclick="changePage(1)" ${currentPage>=totalPages?'disabled':''}>Next →</button>
+        `;
+    }
+
+    function changePage(d) { currentPage += d; render(); }
+
+    // ── Actions ───────────────────────────────────────────────────────────────
+    function handleAction(action, userId, idx) {
+        const user = filteredUsers[idx];
+        if (!user || !action) return;
+
+        const closeBtn = `<button class="btn-cancel-modal" onclick="closeModal()">Cancel</button>`;
+
+        if (action === 'impersonate') {
+            showModal('Impersonate User',
+                `You are about to log in as <strong>${esc(user.username)}</strong>. Their account will open in a new tab — your admin session stays here.<br><br><span style="color:rgba(255,255,255,0.4);font-size:0.82rem;">The session lasts 2 hours. Close the tab when done.</span>`,
+                '',
+                `<button class="btn-cancel-modal" onclick="closeModal()">Cancel</button>
+                 <button class="btn-confirm warning" onclick="doImpersonate('${userId}')">Open as ${esc(user.username)}</button>`
+            );
+        } else if (action === 'credit') {
+            showModal('Credit Account Balance',
+                `Credit KES to <strong>${esc(user.username)}</strong>'s balance.`,
+                `<input type="number" class="modal-input" id="balAmount" placeholder="Amount (KES)" min="1">`,
+                `${closeBtn}<button class="btn-confirm primary" onclick="doBalance('${userId}','credit')">Credit</button>`
+            );
+        } else if (action === 'debit') {
+            showModal('Debit Account Balance',
+                `Deduct KES from <strong>${esc(user.username)}</strong>'s balance (current: KES ${fmt(user.account_balance)}).`,
+                `<input type="number" class="modal-input" id="balAmount" placeholder="Amount (KES)" min="1" max="${user.account_balance}">`,
+                `${closeBtn}<button class="btn-confirm warning" onclick="doBalance('${userId}','debit')">Debit</button>`
+            );
+        } else if (action === 'lock') {
+            showModal('Lock Account',
+                `Are you sure you want to <strong>lock</strong> <strong>${esc(user.username)}</strong>? They will not be able to log in.`,
+                '',
+                `${closeBtn}<button class="btn-confirm danger" onclick="doLock('${userId}', true)">Lock</button>`
+            );
+        } else if (action === 'unlock') {
+            showModal('Unlock Account',
+                `Unlock <strong>${esc(user.username)}</strong>'s account and restore their access?`,
+                '',
+                `${closeBtn}<button class="btn-confirm primary" onclick="doLock('${userId}', false)">Unlock</button>`
+            );
+        } else if (action === 'resetpw') {
+            showModal('Reset Password',
+                `Set a new password for <strong>${esc(user.username)}</strong>.`,
+                `<input type="password" class="modal-input" id="newPw" placeholder="New password (min 6 chars)">`,
+                `${closeBtn}<button class="btn-confirm primary" onclick="doResetPw('${userId}')">Reset</button>`
+            );
+        } else if (action === 'delete') {
+            showModal('Delete User',
+                `<span style="color:#ff6b6b;font-weight:600;">Warning:</span> This permanently deletes <strong>${esc(user.username)}</strong> and all their data. This cannot be undone.`,
+                `<input type="text" class="modal-input" id="deleteConfirm" placeholder="Type DELETE to confirm">`,
+                `${closeBtn}<button class="btn-confirm danger" onclick="doDelete('${userId}','${esc(user.username)}')">Delete Permanently</button>`
+            );
+        } else if (action === 'editdetails') {
+            showModal('Edit Profile Details',
+                `Update locked profile fields for <strong>${esc(user.username)}</strong>. Fields left blank will not be changed.`,
+                `<div style="display:grid;gap:8px;">
+                    <label style="color:rgba(255,255,255,0.5);font-size:0.78rem;margin-bottom:0;">USERNAME</label>
+                    <input type="text" class="modal-input" id="ed_username" placeholder="Username" value="${esc(user.username||'')}" style="margin-bottom:8px;">
+                    <label style="color:rgba(255,255,255,0.5);font-size:0.78rem;margin-bottom:0;">M-PESA NUMBER (e.g. 254712345678)</label>
+                    <input type="text" class="modal-input" id="ed_mpesa" placeholder="M-Pesa number" value="${esc(user.mpesa_phone||'')}">
+                    <label style="color:rgba(255,255,255,0.5);font-size:0.78rem;margin-bottom:0;margin-top:4px;">BANK NAME</label>
+                    <input type="text" class="modal-input" id="ed_bank_name" placeholder="Bank name" value="${esc(user.bank_name||'')}">
+                    <label style="color:rgba(255,255,255,0.5);font-size:0.78rem;margin-bottom:0;">BANK ACCOUNT NUMBER</label>
+                    <input type="text" class="modal-input" id="ed_bank_acc" placeholder="Account number" value="${esc(user.bank_account_number||'')}">
+                    <label style="color:rgba(255,255,255,0.5);font-size:0.78rem;margin-bottom:0;">ACCOUNT HOLDER NAME</label>
+                    <input type="text" class="modal-input" id="ed_bank_name2" placeholder="Account holder name" value="${esc(user.bank_account_name||'')}">
+                </div>`,
+                `${closeBtn}<button class="btn-confirm primary" onclick="doEditDetails('${userId}',${idx})">Save Changes</button>`
+            );
+        }
+    }
+
+    async function doImpersonate(userId) {
+        try {
+            const res = await fetch(`/api/admin/users/${userId}/impersonate`, {
+                method: 'POST',
+                headers: { 'x-admin-key': ADMIN_KEY }
+            });
+            const data = await res.json();
+            if (!res.ok) { setModalError(data.error || 'Failed to start impersonation.'); return; }
+            closeModal();
+            const userEncoded = encodeURIComponent(JSON.stringify(data.user));
+            const url = `impersonate.html?token=${encodeURIComponent(data.token)}&user=${userEncoded}`;
+            window.open(url, '_blank');
+            showToast(`Impersonation session opened for ${data.user.username} in a new tab.`, 'success');
+        } catch(e) {
+            setModalError('Connection error. Please try again.');
+        }
+    }
+
+    async function doBalance(userId, operation) {
+        const amount = parseFloat(document.getElementById('balAmount').value);
+        if (!amount || amount <= 0) { setModalError('Enter a valid positive amount.'); return; }
+        try {
+            const res = await fetch(`/api/admin/users/${userId}/balance`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+                body: JSON.stringify({ amount, operation })
+            });
+            const data = await res.json();
+            if (!res.ok) { setModalError(data.error || 'Failed'); return; }
+            closeModal();
+            showToast(`Balance ${operation}ed by KES ${fmt(amount)}. New balance: KES ${fmt(data.account_balance)}`);
+            // Update local data
+            const u = allUsers.find(u => u.id === userId);
+            if (u) u.account_balance = data.account_balance;
+            renderStats(); applyFilter();
+        } catch(e) { setModalError('Connection error.'); }
+    }
+
+    async function doLock(userId, locked) {
+        try {
+            const res = await fetch(`/api/admin/users/${userId}/lock`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+                body: JSON.stringify({ locked })
+            });
+            const data = await res.json();
+            if (!res.ok) { setModalError(data.error || 'Failed'); return; }
+            closeModal();
+            showToast(`Account ${locked ? 'locked' : 'unlocked'} successfully.`, locked ? 'error' : 'success');
+            const u = allUsers.find(u => u.id === userId);
+            if (u) u.locked = locked;
+            renderStats(); applyFilter();
+        } catch(e) { setModalError('Connection error.'); }
+    }
+
+    async function doResetPw(userId) {
+        const pw = document.getElementById('newPw').value;
+        if (!pw || pw.length < 6) { setModalError('Password must be at least 6 characters.'); return; }
+        try {
+            const res = await fetch(`/api/admin/users/${userId}/password`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+                body: JSON.stringify({ password: pw })
+            });
+            const data = await res.json();
+            if (!res.ok) { setModalError(data.error || 'Failed'); return; }
+            closeModal();
+            showToast('Password reset successfully.');
+        } catch(e) { setModalError('Connection error.'); }
+    }
+
+    async function doDelete(userId, username) {
+        const confirm = document.getElementById('deleteConfirm').value.trim();
+        if (confirm !== 'DELETE') { setModalError('Type DELETE (uppercase) to confirm.'); return; }
+        try {
+            const res = await fetch(`/api/admin/users/${userId}`, {
+                method: 'DELETE',
+                headers: { 'x-admin-key': ADMIN_KEY }
+            });
+            const data = await res.json();
+            if (!res.ok) { setModalError(data.error || 'Failed'); return; }
+            closeModal();
+            showToast(`User ${username} deleted.`);
+            allUsers = allUsers.filter(u => u.id !== userId);
+            renderStats(); applyFilter();
+        } catch(e) { setModalError('Connection error.'); }
+    }
+
+    async function doEditDetails(userId, idx) {
+        const username   = document.getElementById('ed_username').value.trim();
+        const mpesa      = document.getElementById('ed_mpesa').value.trim();
+        const bankName   = document.getElementById('ed_bank_name').value.trim();
+        const bankAcc    = document.getElementById('ed_bank_acc').value.trim();
+        const bankHolder = document.getElementById('ed_bank_name2').value.trim();
+        const body = {};
+        if (username) body.username = username;
+        if (mpesa)    body.mpesa_phone = mpesa;
+        if (bankName) body.bank_name = bankName;
+        if (bankAcc)  body.bank_account_number = bankAcc;
+        if (bankHolder) body.bank_account_name = bankHolder;
+        if (!Object.keys(body).length) { closeModal(); return; }
+        try {
+            const res = await fetch(`/api/admin/users/${userId}/profile-fields`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (!res.ok) { setModalError(data.error || 'Failed to update'); return; }
+            closeModal();
+            const u = allUsers.find(u => u.id === userId);
+            if (u) {
+                if (body.username) u.username = body.username;
+                if (body.mpesa_phone) u.mpesa_phone = body.mpesa_phone;
+                if (body.bank_name) u.bank_name = body.bank_name;
+                if (body.bank_account_number) u.bank_account_number = body.bank_account_number;
+                if (body.bank_account_name) u.bank_account_name = body.bank_account_name;
+            }
+            applyFilter();
+            showToast('Profile details updated successfully.', 'success');
+        } catch(e) { setModalError('Connection error.'); }
+    }
+
+    // ── Modal helpers ─────────────────────────────────────────────────────────
+    function showModal(title, body, inputs, actions) {
+        document.getElementById('modalTitle').innerHTML = title;
+        document.getElementById('modalBody').innerHTML = body;
+        document.getElementById('modalInputs').innerHTML = inputs;
+        document.getElementById('modalActions').innerHTML = actions;
+        document.getElementById('modalError').style.display = 'none';
+        document.getElementById('modalOverlay').classList.add('active');
+    }
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('active');
+    }
+    function setModalError(msg) {
+        const el = document.getElementById('modalError');
+        el.textContent = msg; el.style.display = 'block';
+    }
+
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    // ── Toast ─────────────────────────────────────────────────────────────────
+    function showToast(msg, type) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast show' + (type ? ' ' + type : '');
+        setTimeout(() => { t.className = 'toast'; }, 3500);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function fmt(n) { return parseFloat(n||0).toLocaleString('en-KE', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    // ── Export CSV ────────────────────────────────────────────────────────────
+    function exportCSV() {
+        const headers = ['Username','Email','M-Pesa / Phone','Balance','Deposited','Invested','Referrals','Status','Joined'];
+        const rows = filteredUsers.map(u => [
+            u.username, u.email, u.mpesa_phone || u.phone,
+            u.account_balance, u.total_deposited, u.total_invested,
+            u.referral_count, u.locked ? 'Locked' : 'Active',
+            new Date(u.created_at).toLocaleDateString()
+        ]);
+        const csv = [headers, ...rows].map(r => r.map(c => `"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+        const a = Object.assign(document.createElement('a'), {
+            href: 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv),
+            download: `users_${new Date().toISOString().slice(0,10)}.csv`
+        });
+        a.click();
+    }
+
+    // ── Export PDF ────────────────────────────────────────────────────────────
+    function exportPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'mm', 'a4');
+        doc.text('AfricaBased — User Report', 14, 15);
+        doc.autoTable({
+            startY: 22,
+            head: [['Username','Email','Phone','Balance','Deposited','Referrals','Status']],
+            body: filteredUsers.map(u => [
+                u.username, u.email, u.phone,
+                'KES '+fmt(u.account_balance), 'KES '+fmt(u.total_deposited),
+                u.referral_count, u.locked ? 'Locked' : 'Active'
+            ]),
+            styles: { fontSize: 8 }
+        });
+        doc.save(`users_${new Date().toISOString().slice(0,10)}.pdf`);
+    }
+
+    // ── Events ────────────────────────────────────────────────────────────────
+    document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; applyFilter(); });
+    document.getElementById('statusFilter').addEventListener('change', () => { currentPage = 1; applyFilter(); });
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    loadUsers();
+</script>
+
+<script>
+(function() {
+  if (localStorage.getItem('ab_sub_admin')) {
+    document.querySelectorAll('a[href="Admin-panel.html"]').forEach(function(a) {
+      a.href = 'sub-admin-panel.html';
+      var t = a.textContent.trim();
+      if (t.includes('Admin Panel') || t === 'Back') a.textContent = '← Back to Dashboard';
+    });
+  }
+})();
+</script>
+<script src="/js/admin-pin.js"></script>
+</body>
+</html>

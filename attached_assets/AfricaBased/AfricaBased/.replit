@@ -1,0 +1,44 @@
+modules = ["web", "nodejs-20", "postgresql-16"]
+[agent]
+expertMode = true
+
+[nix]
+channel = "stable-25_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node server.js"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["node", "server.js"]
+
+[userenv]
+
+[userenv.shared]
+SUPABASE_URL = "https://hplgmitfftkclkiguuup.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwbGdtaXRmZnRrY2xraWd1dXVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MjE5MTAsImV4cCI6MjA4ODI5NzkxMH0.aztg8Ymm_Ua6_AoauJcDJDw7_PGrqPwZbHLUjPRCs-M"

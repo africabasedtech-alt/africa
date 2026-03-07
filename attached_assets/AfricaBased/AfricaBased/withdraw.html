@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdraw Funds - AfricaBased</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #0f1623; min-height: 100vh; padding: 20px; color: #e0e6ed; }
+
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.08); border: none; color: #e0e6ed;
+            padding: 10px 18px; border-radius: 8px; cursor: pointer;
+            font-size: 0.9rem; margin-bottom: 24px; text-decoration: none;
+            transition: background 0.2s;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.14); }
+
+        .page-title { font-size: 1.5rem; font-weight: 600; margin-bottom: 6px; color: #fff; }
+        .page-subtitle { color: rgba(255,255,255,0.45); font-size: 0.9rem; margin-bottom: 28px; }
+
+        .balance-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+        .balance-card {
+            border-radius: 14px; padding: 18px 20px;
+            display: flex; align-items: center; gap: 14px;
+        }
+        .balance-card.income {
+            background: linear-gradient(135deg, #1a3a1a, #0f2a0f);
+            border: 1px solid rgba(63,185,80,0.3);
+        }
+        .balance-card.wallet {
+            background: linear-gradient(135deg, #1a2a3a, #0f1a2a);
+            border: 1px solid rgba(88,166,255,0.25);
+        }
+        .balance-icon {
+            width: 44px; height: 44px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;
+        }
+        .balance-card.income .balance-icon { background: rgba(63,185,80,0.15); color: #3fb950; }
+        .balance-card.wallet .balance-icon { background: rgba(88,166,255,0.12); color: #58a6ff; }
+        .balance-label { font-size: 0.72rem; color: rgba(255,255,255,0.45); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.4px; }
+        .balance-value { font-size: 1.25rem; font-weight: 700; }
+        .balance-card.income .balance-value { color: #3fb950; }
+        .balance-card.wallet .balance-value { color: #58a6ff; }
+        .balance-note { font-size: 0.68rem; margin-top: 3px; }
+        .balance-card.income .balance-note { color: rgba(63,185,80,0.6); }
+        .balance-card.wallet .balance-note { color: rgba(88,166,255,0.5); }
+        @media (max-width: 480px) { .balance-strip { grid-template-columns: 1fr; } }
+
+        .method-tabs {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;
+        }
+        .method-tab {
+            background: #1a2238; border: 2px solid rgba(255,255,255,0.08); border-radius: 14px;
+            padding: 18px 16px; cursor: pointer; text-align: center;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .method-tab.active { border-color: #4ecdc4; background: rgba(78,205,196,0.07); }
+        .method-tab:hover:not(.active) { border-color: rgba(255,255,255,0.15); }
+        .method-tab-icon { font-size: 1.6rem; margin-bottom: 8px; }
+        .method-tab.active .method-tab-icon { color: #4ecdc4; }
+        .method-tab-label { font-size: 0.88rem; font-weight: 600; color: #fff; }
+        .method-tab-sub { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 3px; }
+        .method-tab.active .method-tab-label { color: #4ecdc4; }
+
+        .card {
+            background: #1a2238; border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 16px; padding: 28px; margin-bottom: 24px;
+        }
+        .card-title {
+            font-size: 1.05rem; font-weight: 600; color: #fff; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .card-title i { color: #4ecdc4; }
+
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 8px; font-weight: 500; }
+
+        .input-wrap { position: relative; display: flex; align-items: center; }
+        .input-prefix { position: absolute; left: 14px; color: rgba(255,255,255,0.4); font-size: 0.9rem; pointer-events: none; }
+        .form-input {
+            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px; padding: 13px 14px 13px 44px; color: #fff;
+            font-size: 1rem; font-family: 'Poppins', sans-serif; transition: border-color 0.2s; outline: none;
+        }
+        .form-input.no-prefix { padding-left: 14px; }
+        .form-input:focus { border-color: #4ecdc4; }
+        .form-input::placeholder { color: rgba(255,255,255,0.25); }
+
+        select.form-input { appearance: none; -webkit-appearance: none; cursor: pointer; }
+
+        .fee-info {
+            background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.2);
+            border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; font-size: 0.85rem;
+            color: rgba(255,255,255,0.7); display: none;
+        }
+        .fee-info.show { display: block; }
+        .fee-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+        .fee-row:last-child { margin-bottom: 0; font-weight: 600; color: #fff; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; margin-top: 2px; }
+        .fee-row .label { color: rgba(255,255,255,0.6); }
+
+        .notice {
+            background: rgba(78,205,196,0.08); border: 1px solid rgba(78,205,196,0.2);
+            border-radius: 10px; padding: 14px 16px; font-size: 0.82rem;
+            color: rgba(255,255,255,0.6); line-height: 1.6; margin-bottom: 18px;
+        }
+        .notice b { color: #4ecdc4; }
+
+        .notice-bank {
+            background: rgba(255,193,7,0.07); border: 1px solid rgba(255,193,7,0.2);
+        }
+        .notice-bank b { color: #ffc107; }
+
+        .submit-btn {
+            width: 100%; padding: 15px;
+            background: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            border: none; border-radius: 10px; color: #fff; font-size: 1rem;
+            font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.1s;
+            letter-spacing: 0.3px;
+        }
+        .submit-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .history-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .history-item:last-child { border-bottom: none; }
+        .history-left { flex: 1; }
+        .history-amount { font-weight: 600; font-size: 1rem; color: #fff; }
+        .history-meta { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-top: 3px; }
+        .history-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+        .history-badge {
+            padding: 4px 12px; border-radius: 20px; font-size: 0.75rem;
+            font-weight: 600; text-transform: uppercase;
+        }
+        .method-badge {
+            padding: 2px 8px; border-radius: 6px; font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+        }
+        .method-mpesa { background: rgba(0,170,0,0.15); color: #4CAF50; }
+        .method-bank { background: rgba(33,150,243,0.15); color: #2196F3; }
+        .badge-completed { background: rgba(40,167,69,0.15); color: #28a745; }
+        .badge-pending { background: rgba(255,193,7,0.15); color: #ffc107; }
+        .badge-failed { background: rgba(220,53,69,0.15); color: #dc3545; }
+        .empty-state { text-align: center; color: rgba(255,255,255,0.3); font-size: 0.9rem; padding: 24px 0; }
+
+        .overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+            z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+        }
+        .overlay.active { display: flex; }
+        .modal {
+            background: #1a2238; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 18px; padding: 32px 28px; width: 100%; max-width: 400px; text-align: center;
+        }
+        .modal-icon { font-size: 3rem; margin-bottom: 16px; }
+        .modal-title { font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 8px; }
+        .modal-msg { font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-bottom: 24px; line-height: 1.6; }
+        .modal-detail { font-size: 0.85rem; background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; text-align: left; }
+        .modal-detail-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.85rem; }
+        .modal-detail-row:last-child { margin-bottom: 0; }
+        .modal-detail-row .k { color: rgba(255,255,255,0.5); }
+        .modal-detail-row .v { color: #fff; font-weight: 500; }
+        .modal-btn { width: 100%; padding: 13px; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
+        .modal-btn-primary { background: linear-gradient(45deg, #4ecdc4, #ff6b6b); color: #fff; }
+        .spinner { display: inline-block; width: 48px; height: 48px; border: 4px solid rgba(78,205,196,0.2); border-top-color: #4ecdc4; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .form-section { display: none; }
+        .form-section.active { display: block; }
+    </style>
+<script src="/js/token.js"></script>
+</head>
+<body>
+    <a class="back-btn" onclick="window.top.location.href = '/home'">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+
+    <div class="page-title">Withdraw Funds</div>
+    <div class="page-subtitle">Choose how you'd like to receive your money</div>
+
+    <div class="balance-strip">
+        <div class="balance-card income">
+            <div class="balance-icon"><i class="fas fa-coins"></i></div>
+            <div>
+                <div class="balance-label">Earnings Balance</div>
+                <div class="balance-value">KES <span id="balanceDisplay">—</span></div>
+                <div class="balance-note">✓ Withdrawable</div>
+            </div>
+        </div>
+        <div class="balance-card wallet">
+            <div class="balance-icon"><i class="fas fa-lock"></i></div>
+            <div>
+                <div class="balance-label">Deposited Funds</div>
+                <div class="balance-value">KES <span id="walletDisplay">—</span></div>
+                <div class="balance-note">Use to invest in products</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Method Selector -->
+    <div class="method-tabs">
+        <div class="method-tab active" id="tab-mpesa" onclick="switchMethod('mpesa')">
+            <div class="method-tab-icon"><i class="fas fa-mobile-alt"></i></div>
+            <div class="method-tab-label">M-Pesa</div>
+            <div class="method-tab-sub">Instant · Min KES 150</div>
+        </div>
+        <div class="method-tab" id="tab-bank" onclick="switchMethod('bank')">
+            <div class="method-tab-icon"><i class="fas fa-university"></i></div>
+            <div class="method-tab-label">Bank Transfer</div>
+            <div class="method-tab-sub">1–3 days · Min KES 500</div>
+        </div>
+    </div>
+
+    <!-- M-Pesa Form -->
+    <div class="card form-section active" id="section-mpesa">
+        <div class="card-title"><i class="fas fa-mobile-alt"></i> M-Pesa Withdrawal</div>
+
+        <div class="notice">
+            <b>Instant Payout</b> — Money is sent automatically to your M-Pesa. A <b>9.5% processing fee</b> applies. Min: KES 150 &nbsp;|&nbsp; Max: KES 200,000.
+        </div>
+
+        <div id="mpesaNotSetMsg" style="display:none;background:rgba(255,193,7,0.1);border:1px solid rgba(255,193,7,0.4);border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:0.88rem;color:#ffd54f;">
+            <i class="fas fa-exclamation-triangle" style="margin-right:6px;"></i>
+            No M-Pesa number saved. <a href="profile.html" style="color:#00e6d0;font-weight:700;">Go to Profile to set your M-Pesa number</a>.
+        </div>
+
+        <div class="form-group" id="mpesaPhoneRow">
+            <label class="form-label">Sending to</label>
+            <div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 16px;">
+                <i class="fas fa-phone" style="color:#00e6d0;"></i>
+                <span id="mpesaPhoneDisplay" style="font-weight:700;font-size:1rem;color:#fff;flex:1;">—</span>
+                <a href="profile.html" style="font-size:0.78rem;color:#00e6d0;text-decoration:none;white-space:nowrap;"><i class="fas fa-pen" style="font-size:0.7rem;"></i> Change</a>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Amount (KES)</label>
+            <div class="input-wrap">
+                <span class="input-prefix"><i class="fas fa-coins"></i></span>
+                <input type="number" id="mpesaAmount" class="form-input" placeholder="Min. 150" min="150" max="200000" step="1" oninput="updateMpesaFee()">
+            </div>
+        </div>
+
+        <div class="fee-info" id="mpesaFeeInfo">
+            <div class="fee-row"><span class="label">Withdrawal amount</span><span id="mFeeAmt">—</span></div>
+            <div class="fee-row"><span class="label">Processing fee (9.5%)</span><span id="mFeeFee">—</span></div>
+            <div class="fee-row"><span class="label">Total deducted</span><span id="mFeeTotal">—</span></div>
+        </div>
+
+        <button class="submit-btn" id="mpesaBtn" disabled onclick="submitMpesa()">
+            <i class="fas fa-paper-plane"></i> &nbsp;Withdraw via M-Pesa
+        </button>
+    </div>
+
+    <!-- Bank Transfer Form -->
+    <div class="card form-section" id="section-bank">
+        <div class="card-title"><i class="fas fa-university"></i> Bank Transfer</div>
+
+        <div class="notice notice-bank">
+            <b>Manual Processing</b> — Bank transfers are reviewed and processed within <b>1–3 business days</b>. A <b>9.5% processing fee</b> applies. Min: KES 500 &nbsp;|&nbsp; Max: KES 500,000.
+        </div>
+
+        <div id="bankNotSetMsg" style="display:none;background:rgba(255,193,7,0.1);border:1px solid rgba(255,193,7,0.4);border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:0.88rem;color:#ffd54f;">
+            <i class="fas fa-exclamation-triangle" style="margin-right:6px;"></i>
+            No bank account saved. <a href="profile.html" style="color:#00e6d0;font-weight:700;">Go to Profile to set your bank details</a>.
+        </div>
+
+        <div id="bankDetailsRow" style="display:none;margin-bottom:16px;">
+            <div style="display:flex;align-items:flex-start;gap:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:14px 16px;">
+                <i class="fas fa-university" style="color:#58a6ff;margin-top:2px;"></i>
+                <div style="flex:1;">
+                    <div style="font-weight:700;font-size:0.95rem;color:#fff;" id="bankNameDisplay">—</div>
+                    <div style="font-size:0.8rem;color:#ffd54f;font-weight:600;margin-top:2px;" id="bankPaybillDisplay"></div>
+                    <div style="font-size:0.82rem;color:rgba(255,255,255,0.6);margin-top:2px;">Acc: <span id="bankAccNumDisplay">—</span></div>
+                    <div style="font-size:0.82rem;color:rgba(255,255,255,0.5);margin-top:1px;" id="bankAccNameDisplay"></div>
+                </div>
+                <a href="profile.html" style="font-size:0.78rem;color:#00e6d0;text-decoration:none;white-space:nowrap;"><i class="fas fa-pen" style="font-size:0.7rem;"></i> Change</a>
+            </div>
+        </div>
+
+        <input type="hidden" id="bankName">
+        <input type="hidden" id="bankPaybill">
+        <input type="hidden" id="bankAccNum">
+        <input type="hidden" id="bankAccName">
+
+        <div class="form-group">
+            <label class="form-label">Amount (KES)</label>
+            <div class="input-wrap">
+                <span class="input-prefix"><i class="fas fa-coins"></i></span>
+                <input type="number" id="bankAmount" class="form-input" placeholder="Min. 500" min="500" max="500000" step="1" oninput="updateBankFee()">
+            </div>
+        </div>
+
+        <div class="fee-info" id="bankFeeInfo">
+            <div class="fee-row"><span class="label">Withdrawal amount</span><span id="bFeeAmt">—</span></div>
+            <div class="fee-row"><span class="label">Processing fee (9.5%)</span><span id="bFeeFee">—</span></div>
+            <div class="fee-row"><span class="label">Total deducted</span><span id="bFeeTotal">—</span></div>
+        </div>
+
+        <button class="submit-btn" id="bankBtn" disabled onclick="submitBank()">
+            <i class="fas fa-university"></i> &nbsp;Submit Bank Transfer Request
+        </button>
+    </div>
+
+    <!-- History -->
+    <div class="card">
+        <div class="card-title"><i class="fas fa-history"></i> Recent Withdrawals</div>
+        <div id="historyList"><div class="empty-state">Loading...</div></div>
+    </div>
+
+    <!-- Processing Modal -->
+    <div class="overlay" id="processingOverlay">
+        <div class="modal">
+            <div class="spinner"></div>
+            <div class="modal-title" id="processingTitle">Processing Withdrawal</div>
+            <div class="modal-msg" id="processingMsg">Please wait...</div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="overlay" id="successOverlay">
+        <div class="modal">
+            <div class="modal-icon">&#x2705;</div>
+            <div class="modal-title" id="successTitle">Withdrawal Successful!</div>
+            <div class="modal-msg" id="successMsg">Your withdrawal has been processed.</div>
+            <div class="modal-detail" id="successDetail"></div>
+            <button class="modal-btn modal-btn-primary" onclick="closeSuccess()">Done</button>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="overlay" id="errorOverlay">
+        <div class="modal">
+            <div class="modal-icon">&#x274C;</div>
+            <div class="modal-title">Withdrawal Failed</div>
+            <div class="modal-msg" id="errorMsg">Something went wrong. Please try again.</div>
+            <button class="modal-btn modal-btn-primary" onclick="document.getElementById('errorOverlay').classList.remove('active')">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const token = getABToken();
+        if (!token) window.top.location.href = '/login';
+
+        let currentBalance = 0;
+        let currentMethod = 'mpesa';
+
+        function fmt(n) { return parseFloat(n).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+        async function init() {
+            await loadBalance();
+            await loadPaymentProfile();
+            await loadHistory();
+        }
+
+        async function loadBalance() {
+            try {
+                const res = await fetch('/api/balance', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (!res.ok) return;
+                const d = await res.json();
+                currentBalance = parseFloat(d.income_balance || d.balance || 0);
+                document.getElementById('balanceDisplay').textContent = fmt(currentBalance);
+                const walletEl = document.getElementById('walletDisplay');
+                if (walletEl) walletEl.textContent = fmt(parseFloat(d.wallet_balance || 0));
+            } catch (e) {
+                document.getElementById('balanceDisplay').textContent = '0.00';
+                const walletEl = document.getElementById('walletDisplay');
+                if (walletEl) walletEl.textContent = '0.00';
+            }
+        }
+
+        async function loadPaymentProfile() {
+            try {
+                const res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (!res.ok) return;
+                const d = await res.json();
+                const p = d.profile || {};
+
+                const mpesa = p.mpesa_phone || '';
+                window._profileMpesaPhone = mpesa;
+                if (mpesa) {
+                    const display = mpesa.startsWith('254') ? '0' + mpesa.slice(3) : mpesa;
+                    document.getElementById('mpesaPhoneDisplay').textContent = display;
+                    document.getElementById('mpesaPhoneRow').style.display = '';
+                    document.getElementById('mpesaNotSetMsg').style.display = 'none';
+                } else {
+                    document.getElementById('mpesaPhoneRow').style.display = 'none';
+                    document.getElementById('mpesaNotSetMsg').style.display = '';
+                }
+                validateMpesa();
+
+                const bankName = p.bank_name || '';
+                const bankPaybill = p.bank_paybill || '';
+                const bankAccNum = p.bank_account_number || '';
+                const bankAccName = p.bank_account_name || '';
+                document.getElementById('bankName').value = bankName;
+                document.getElementById('bankPaybill').value = bankPaybill;
+                document.getElementById('bankAccNum').value = bankAccNum;
+                document.getElementById('bankAccName').value = bankAccName;
+                if (bankName && bankAccNum) {
+                    document.getElementById('bankNameDisplay').textContent = bankName;
+                    document.getElementById('bankPaybillDisplay').textContent = bankPaybill ? 'Paybill: ' + bankPaybill : '';
+                    document.getElementById('bankAccNumDisplay').textContent = bankAccNum;
+                    document.getElementById('bankAccNameDisplay').textContent = bankAccName;
+                    document.getElementById('bankDetailsRow').style.display = '';
+                    document.getElementById('bankNotSetMsg').style.display = 'none';
+                } else {
+                    document.getElementById('bankDetailsRow').style.display = 'none';
+                    document.getElementById('bankNotSetMsg').style.display = '';
+                }
+                validateBank();
+            } catch (e) { console.warn('loadPaymentProfile error', e); }
+        }
+
+        function switchMethod(method) {
+            currentMethod = method;
+            document.getElementById('tab-mpesa').classList.toggle('active', method === 'mpesa');
+            document.getElementById('tab-bank').classList.toggle('active', method === 'bank');
+            document.getElementById('section-mpesa').classList.toggle('active', method === 'mpesa');
+            document.getElementById('section-bank').classList.toggle('active', method === 'bank');
+        }
+
+        function updateMpesaFee() {
+            var amt = parseFloat(document.getElementById('mpesaAmount').value);
+            var fi = document.getElementById('mpesaFeeInfo');
+            if (isNaN(amt) || amt < 150) { fi.classList.remove('show'); validateMpesa(); return; }
+            var fee = parseFloat((amt * 0.095).toFixed(2));
+            var total = parseFloat((amt + fee).toFixed(2));
+            document.getElementById('mFeeAmt').textContent = 'KES ' + fmt(amt);
+            document.getElementById('mFeeFee').textContent = 'KES ' + fmt(fee);
+            document.getElementById('mFeeTotal').textContent = 'KES ' + fmt(total);
+            fi.classList.add('show');
+            validateMpesa();
+        }
+
+        function validateMpesa() {
+            var amt = parseFloat(document.getElementById('mpesaAmount').value);
+            var phone = (window._profileMpesaPhone || '').trim();
+            var fee = amt * 0.095;
+            var total = amt + fee;
+            var valid = !isNaN(amt) && amt >= 150 && amt <= 200000 && phone.length >= 9 && total <= currentBalance;
+            document.getElementById('mpesaBtn').disabled = !valid;
+        }
+
+        function updateBankFee() {
+            var amt = parseFloat(document.getElementById('bankAmount').value);
+            var fi = document.getElementById('bankFeeInfo');
+            if (isNaN(amt) || amt < 500) { fi.classList.remove('show'); validateBank(); return; }
+            var fee = parseFloat((amt * 0.095).toFixed(2));
+            var total = parseFloat((amt + fee).toFixed(2));
+            document.getElementById('bFeeAmt').textContent = 'KES ' + fmt(amt);
+            document.getElementById('bFeeFee').textContent = 'KES ' + fmt(fee);
+            document.getElementById('bFeeTotal').textContent = 'KES ' + fmt(total);
+            fi.classList.add('show');
+            validateBank();
+        }
+
+        function validateBank() {
+            var amt = parseFloat(document.getElementById('bankAmount').value);
+            var bank = document.getElementById('bankName').value.trim();
+            var accNum = document.getElementById('bankAccNum').value.trim();
+            var fee = amt * 0.095;
+            var total = amt + fee;
+            var valid = !isNaN(amt) && amt >= 500 && amt <= 500000 && bank && accNum.length >= 3 && total <= currentBalance;
+            document.getElementById('bankBtn').disabled = !valid;
+        }
+
+        async function submitMpesa() {
+            var amt = parseFloat(document.getElementById('mpesaAmount').value);
+            var phone = (window._profileMpesaPhone || '').trim();
+            if (isNaN(amt) || !phone) return;
+
+            document.getElementById('processingTitle').textContent = 'Processing M-Pesa Withdrawal';
+            document.getElementById('processingMsg').textContent = 'Sending funds to your M-Pesa. Please wait...';
+            document.getElementById('processingOverlay').classList.add('active');
+
+            try {
+                var res = await fetch('/api/withdraw/mpesa', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: amt, phone: phone })
+                });
+                var d = await res.json();
+                document.getElementById('processingOverlay').classList.remove('active');
+
+                if (!res.ok || d.error) {
+                    document.getElementById('errorMsg').textContent = d.error || 'Withdrawal failed. Please try again.';
+                    document.getElementById('errorOverlay').classList.add('active');
+                    return;
+                }
+
+                document.getElementById('successTitle').textContent = 'M-Pesa Withdrawal Sent!';
+                document.getElementById('successMsg').textContent = 'Funds have been sent to your M-Pesa number.';
+                var html = '<div class="modal-detail-row"><span class="k">Amount sent</span><span class="v">KES ' + fmt(d.amount) + '</span></div>' +
+                    '<div class="modal-detail-row"><span class="k">Fee (9.5%)</span><span class="v">KES ' + fmt(d.fee) + '</span></div>' +
+                    '<div class="modal-detail-row"><span class="k">Total deducted</span><span class="v">KES ' + fmt(d.total_deducted) + '</span></div>' +
+                    '<div class="modal-detail-row"><span class="k">Sent to</span><span class="v">' + phone + '</span></div>';
+                if (d.tracking_id) html += '<div class="modal-detail-row"><span class="k">Ref</span><span class="v">' + d.tracking_id + '</span></div>';
+                document.getElementById('successDetail').innerHTML = html;
+                document.getElementById('successOverlay').classList.add('active');
+
+                document.getElementById('mpesaAmount').value = '';
+                document.getElementById('mpesaFeeInfo').classList.remove('show');
+                document.getElementById('mpesaBtn').disabled = true;
+                await loadBalance();
+                await loadHistory();
+            } catch (e) {
+                document.getElementById('processingOverlay').classList.remove('active');
+                document.getElementById('errorMsg').textContent = 'Network error. Please check your connection and try again.';
+                document.getElementById('errorOverlay').classList.add('active');
+            }
+        }
+
+        async function submitBank() {
+            var amt = parseFloat(document.getElementById('bankAmount').value);
+            var bankName = document.getElementById('bankName').value.trim();
+            var paybill = document.getElementById('bankPaybill').value.trim();
+            var accNum = document.getElementById('bankAccNum').value.trim();
+            var accName = document.getElementById('bankAccName').value.trim();
+            if (isNaN(amt) || !bankName || !accNum || !accName) return;
+
+            document.getElementById('processingTitle').textContent = 'Submitting Bank Transfer';
+            document.getElementById('processingMsg').textContent = 'Recording your bank transfer request...';
+            document.getElementById('processingOverlay').classList.add('active');
+
+            try {
+                var res = await fetch('/api/withdraw/bank', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: amt, bank_name: bankName, paybill: paybill, account_number: accNum, account_name: accName })
+                });
+                var d = await res.json();
+                document.getElementById('processingOverlay').classList.remove('active');
+
+                if (!res.ok || d.error) {
+                    document.getElementById('errorMsg').textContent = d.error || 'Request failed. Please try again.';
+                    document.getElementById('errorOverlay').classList.add('active');
+                    return;
+                }
+
+                document.getElementById('successTitle').textContent = 'Bank Transfer Submitted!';
+                document.getElementById('successMsg').textContent = 'Your request is under review and will be processed within 1–3 business days.';
+                var html = '<div class="modal-detail-row"><span class="k">Amount</span><span class="v">KES ' + fmt(d.amount) + '</span></div>' +
+                    '<div class="modal-detail-row"><span class="k">Fee (9.5%)</span><span class="v">KES ' + fmt(d.fee) + '</span></div>' +
+                    '<div class="modal-detail-row"><span class="k">Total deducted</span><span class="v">KES ' + fmt(d.total_deducted) + '</span></div>' +
+                    '<div class="modal-detail-row"><span class="k">Bank</span><span class="v">' + bankName + '</span></div>' +
+                    '<div class="modal-detail-row"><span class="k">Account</span><span class="v">' + accNum + '</span></div>' +
+                    '<div class="modal-detail-row"><span class="k">Account Name</span><span class="v">' + accName + '</span></div>';
+                document.getElementById('successDetail').innerHTML = html;
+                document.getElementById('successOverlay').classList.add('active');
+
+                document.getElementById('bankAmount').value = '';
+                document.getElementById('bankName').value = '';
+                document.getElementById('bankAccNum').value = '';
+                document.getElementById('bankAccName').value = '';
+                document.getElementById('bankFeeInfo').classList.remove('show');
+                document.getElementById('bankBtn').disabled = true;
+                await loadBalance();
+                await loadHistory();
+            } catch (e) {
+                document.getElementById('processingOverlay').classList.remove('active');
+                document.getElementById('errorMsg').textContent = 'Network error. Please check your connection and try again.';
+                document.getElementById('errorOverlay').classList.add('active');
+            }
+        }
+
+        async function loadHistory() {
+            var list = document.getElementById('historyList');
+            try {
+                var res = await fetch('/api/withdraw/history', { headers: { 'Authorization': 'Bearer ' + token } });
+                var d = await res.json();
+                if (!d.withdrawals || !d.withdrawals.length) {
+                    list.innerHTML = '<div class="empty-state">No withdrawals yet</div>';
+                    return;
+                }
+                list.innerHTML = d.withdrawals.map(function(w) {
+                    var date = new Date(w.requested_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' });
+                    var method = w.method || 'mpesa';
+                    var methodBadge = method === 'bank'
+                        ? '<span class="method-badge method-bank"><i class="fas fa-university"></i> Bank</span>'
+                        : '<span class="method-badge method-mpesa"><i class="fas fa-mobile-alt"></i> M-Pesa</span>';
+                    var meta = method === 'bank'
+                        ? (w.bank_name || 'Bank') + ' · ' + (w.account_number || '') + ' · ' + date
+                        : (w.phone ? w.phone.replace('254', '0') : '—') + ' · ' + date;
+                    var badgeClass = w.status === 'completed' ? 'badge-completed' : w.status === 'failed' ? 'badge-failed' : 'badge-pending';
+                    return '<div class="history-item">' +
+                        '<div class="history-left"><div class="history-amount">KES ' + fmt(w.amount) + '</div>' +
+                        '<div class="history-meta">' + meta + '</div></div>' +
+                        '<div class="history-right">' +
+                        '<span class="history-badge ' + badgeClass + '">' + w.status + '</span>' +
+                        methodBadge +
+                        '</div></div>';
+                }).join('');
+            } catch (e) {
+                list.innerHTML = '<div class="empty-state">Could not load history</div>';
+            }
+        }
+
+        function closeSuccess() {
+            document.getElementById('successOverlay').classList.remove('active');
+        }
+
+        init();
+    </script>
+</body>
+</html>

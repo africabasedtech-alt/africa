@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin — Pending Promotion Applications</title>
+  <style>
+    :root{--bg:#f6f7fb;--card:#fff;--muted:#666;--accent:#0b7c59;--danger:#c0392b}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;background:var(--bg);color:#111}
+    header{background:linear-gradient(90deg,#062d22 0%,#0b7c59 100%);color:#fff;padding:18px}
+    .container{max-width:980px;margin:20px auto;padding:16px}
+    .card{background:var(--card);border-radius:8px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+    textarea{width:100%;height:160px;font-family:monospace;padding:8px}
+    .row{display:flex;gap:12px;align-items:center}
+    .list{margin-top:12px;display:grid;gap:12px}
+    .item{border:1px solid #e7e9ee;padding:12px;border-radius:8px;display:flex;gap:12px;align-items:flex-start}
+    .thumbs{display:flex;gap:8px}
+    img.preview{max-width:160px;border-radius:6px;border:1px solid #ddd}
+    button{background:var(--accent);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
+    button.secondary{background:#eee;color:#111}
+    .meta{flex:1}
+    .small{font-size:13px;color:var(--muted)}
+    .danger{background:var(--danger)}
+    footer{margin-top:18px;font-size:13px;color:var(--muted)}
+    input[type=file]{display:none}
+2
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container" style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;"><a href="/Admin-panel" style="text-decoration:none;color:#fff;font-size:0.9rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(255,255,255,0.1);border-radius:6px;">&larr; Back to Admin Panel</a><h1 style="margin:0;">Pending Promotion Applications — Admin</h1></div>
+  </header>
+  <main class="container">
+    <section class="card">
+      <p class="small">Use this tool to import a user's local <code>pendingPromotionApplications</code> JSON (paste or upload). Preview items, then Upload to Supabase storage + DB. This is intended for admin use only.</p>
+      <label for="jsonArea" class="small">Paste JSON here:</label>
+      <textarea id="jsonArea" placeholder='[ { "id": "...", "fullName": "...", "phone": "...", "documentFront":"data:...,base64...", "documentBack":"..." } ]'></textarea>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+        <button id="loadBtn">Load JSON</button>
+        <label class="secondary" style="padding:8px;border-radius:6px;cursor:pointer">
+          <input id="fileInput" type="file" accept="application/json" /> Upload JSON file
+        </label>
+        <button id="downloadAll" class="secondary">Download All (as JSON)</button>
+      </div>
+    </section>
+
+    <section id="listSection" class="card" style="margin-top:14px;display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2 style="margin:0">Imported Applications</h2>
+        <div style="display:flex;gap:8px">
+          <button id="uploadSelected">Upload Selected</button>
+          <button id="removeSelected" class="danger">Remove Selected</button>
+        </div>
+      </div>
+      <div id="list" class="list" aria-live="polite"></div>
+    </section>
+
+    <section class="card" style="margin-top:14px">
+      <h3>Notes</h3>
+      <ul>
+        <li class="small">This page expects each queued item to include the applicant fields and image data as data URLs or accessible URLs. If images are stored as Blob references on the user's device, the user must export them as data URLs.</li>
+        <li class="small">Assumptions: Supabase storage bucket named <code>promotion-applications</code> and DB table named <code>promotion_applications</code>. Adjust code below if your table/bucket names differ.</li>
+      </ul>
+    </section>
+
+    <footer class="card small">
+      <strong>Security:</strong> This tool is admin-facing and does not authenticate users itself — rely on your admin workstation security and Supabase Row Level Security rules. Uploaded items will be inserted into Supabase as-is; validate before finalizing.
+    </footer>
+  </main>
+
+  <script src="supabaseClient.js"></script>
+  <script>
+    // ensure window.supabase is available similar to other app pages
+    if (!window.supabase && window.supabaseClient) window.supabase = window.supabaseClient;
+
+    // Local state
+    let items = [];
+
+    const jsonArea = document.getElementById('jsonArea');
+    const loadBtn = document.getElementById('loadBtn');
+    const fileInput = document.getElementById('fileInput');
+    const listEl = document.getElementById('list');
+    const listSection = document.getElementById('listSection');
+    const uploadSelectedBtn = document.getElementById('uploadSelected');
+    const removeSelectedBtn = document.getElementById('removeSelected');
+    const downloadAllBtn = document.getElementById('downloadAll');
+
+    function showMessage(msg){alert(msg)}
+
+    loadBtn.addEventListener('click', ()=>{
+      try{
+        const parsed = JSON.parse(jsonArea.value);
+        if(!Array.isArray(parsed)) throw new Error('Top-level JSON must be an array');
+        items = parsed.map((it,i)=>({__localIndex:i, selected:true, _status:'idle', ...it}));
+        renderList();
+      }catch(e){showMessage('Invalid JSON: '+e.message)}
+    });
+
+    fileInput.addEventListener('change', async (e)=>{
+      const f = e.target.files && e.target.files[0];
+      if(!f) return;
+      try{
+        const txt = await f.text();
+        jsonArea.value = txt;
+        loadBtn.click();
+      }catch(err){showMessage('Failed to read file: '+err.message)}
+    });
+
+    downloadAllBtn.addEventListener('click', ()=>{
+      if(!items.length){showMessage('No items to download');return}
+      const blob = new Blob([JSON.stringify(items, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'pendingPromotionApplications.json'; a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    function renderList(){
+      listEl.innerHTML='';
+      if(!items.length){ listSection.style.display='none'; return }
+      listSection.style.display='block';
+      items.forEach((it,idx)=>{
+        const el = document.createElement('div'); el.className='item';
+        const meta = document.createElement('div'); meta.className='meta';
+        meta.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><strong>${escapeHtml(it.fullName||it.full_name||'—')}</strong><label class="small"><input type=checkbox data-idx=${idx} ${it.selected? 'checked':''}/> selected</label></div>
+<div class='small'>Phone: ${escapeHtml(it.phone||'—')} • Referral: ${escapeHtml(it.referralCode||it.referral_code||'—')}</div>
+<div class='small'>Status: <span data-status='${idx}'>${it._status}</span></div>
+`;
+        const thumbs = document.createElement('div'); thumbs.className='thumbs';
+        ['documentFront','documentBack','document_front','document_back','front','back'].forEach(k=>{
+          if(it[k]){
+            const img = document.createElement('img'); img.className='preview'; img.src = it[k]; img.alt = (k+' image'); thumbs.appendChild(img);
+          }
+        });
+        const actions = document.createElement('div'); actions.style.display='flex'; actions.style.flexDirection='column'; actions.style.gap='8px';
+        const up = document.createElement('button'); up.textContent='Upload'; up.addEventListener('click', ()=>uploadItem(idx));
+        const del = document.createElement('button'); del.textContent='Delete'; del.className='secondary'; del.addEventListener('click', ()=>{ if(confirm('Remove this item?')){ items.splice(idx,1); renderList(); }});
+        actions.appendChild(up); actions.appendChild(del);
+        el.appendChild(thumbs);
+        el.appendChild(meta);
+        el.appendChild(actions);
+        listEl.appendChild(el);
+      });
+
+      // wire checkboxes
+      listEl.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+        cb.addEventListener('change', e=>{ const i=+e.target.dataset.idx; items[i].selected = e.target.checked; });
+      });
+    }
+
+    function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]); }
+
+    async function dataUrlToBlob(dataUrl){
+      if(dataUrl.startsWith('data:')){
+        const [meta,b64] = dataUrl.split(',');
+        const mime = meta.split(':')[1].split(';')[0];
+        const bytes = atob(b64);
+        const buf = new Uint8Array(bytes.length);
+        for(let i=0;i<bytes.length;i++) buf[i]=bytes.charCodeAt(i);
+        return new Blob([buf], {type:mime});
+      }
+      // otherwise try fetch
+      const resp = await fetch(dataUrl);
+      return await resp.blob();
+    }
+
+    async function uploadImageToSupabase(blobOrUrl, filenamePrefix){
+      try{
+        let blob;
+        if(typeof blobOrUrl === 'string') blob = await dataUrlToBlob(blobOrUrl);
+        else blob = blobOrUrl; // assume Blob
+        const ext = (blob.type && blob.type.split('/')[1]) || 'jpg';
+        const name = `${filenamePrefix}_${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
+        const path = `applications/${name}`;
+        if(!window.supabase || !window.supabase.storage){ throw new Error('Supabase client not initialized') }
+        const {error: upErr} = await window.supabase.storage.from('promotion-applications').upload(path, blob, {upsert:false});
+        if(upErr) throw upErr;
+        const {data: urlData} = window.supabase.storage.from('promotion-applications').getPublicUrl(path);
+        return urlData && urlData.publicUrl ? urlData.publicUrl : null;
+      }catch(e){ throw e }
+    }
+
+    async function insertApplicationToSupabase(app){
+      if(!window.supabase || !window.supabase.from) throw new Error('Supabase client not initialized');
+      // Map fields; adjust table name if needed
+      const row = {
+        full_name: app.fullName || app.full_name || app.name || null,
+        phone: app.phone || null,
+        referral_code: app.referralCode || app.referral_code || null,
+        bank: app.bank || app.bank_name || null,
+        bank_account: app.bankAccount || app.bank_account || null,
+        front_image_url: app._uploaded_front || null,
+        back_image_url: app._uploaded_back || null,
+        meta: app.answers || app.meta || null,
+        created_at: new Date().toISOString(),
+        status: 'submitted'
+      };
+      const {data, error} = await window.supabase.from('promotion_applications').insert([row]);
+      if(error) throw error;
+      return data;
+    }
+
+    async function uploadItem(idx){
+      const item = items[idx];
+      if(!item) return;
+      item._status = 'uploading'; renderList();
+      try{
+        // upload front/back if present
+        if(item.documentFront || item.document_front || item.front){
+          const src = item.documentFront || item.document_front || item.front;
+          item._uploaded_front = await uploadImageToSupabase(src, 'front_'+(item.fullName||item.full_name||'user').replace(/\s+/g,'_'));
+        }
+        if(item.documentBack || item.document_back || item.back){
+          const src = item.documentBack || item.document_back || item.back;
+          item._uploaded_back = await uploadImageToSupabase(src, 'back_'+(item.fullName||item.full_name||'user').replace(/\s+/g,'_'));
+        }
+        // insert DB row
+        const res = await insertApplicationToSupabase(item);
+        item._status = 'uploaded'; renderList();
+        showMessage('Uploaded: application inserted.');
+      }catch(e){
+        console.error(e);
+        item._status = 'error: '+ (e.message||e.name||String(e)); renderList();
+        showMessage('Upload failed: '+(e.message||e));
+      }
+    }
+
+    uploadSelectedBtn.addEventListener('click', async ()=>{
+      const toUpload = items.map((it,i)=> ({it,i})).filter(x=>x.it.selected);
+      if(!toUpload.length){ showMessage('No selected items'); return }
+      if(!confirm(`Upload ${toUpload.length} item(s) to Supabase?`)) return;
+      for(const entry of toUpload){ await uploadItem(entry.i); }
+      showMessage('Batch upload finished (check statuses).');
+    });
+
+    removeSelectedBtn.addEventListener('click', ()=>{
+      const before = items.length;
+      items = items.filter(it=>!it.selected);
+      renderList();
+      showMessage(`Removed ${before - items.length} items`);
+    });
+
+    // initial render if any
+    renderList();
+  </script>
+<script src="/js/admin-pin.js"></script>
+</body>
+</html>

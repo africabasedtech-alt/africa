@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - AfricaBased</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            background: #0f1623;
+            min-height: 100vh;
+            color: #e0e6ed;
+        }
+
+        /* Header */
+        .header {
+            background: #1a2238;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-left { display: flex; align-items: center; gap: 14px; }
+        .header-logo {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, #4ecdc4, #ff6b6b);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; color: #fff; font-weight: 700;
+        }
+        .header-title { font-size: 1.1rem; font-weight: 600; color: #fff; }
+        .header-subtitle { font-size: 0.78rem; color: rgba(255,255,255,0.4); }
+        .header-right { display: flex; align-items: center; gap: 10px; }
+        .admin-badge {
+            background: rgba(78,205,196,0.12);
+            border: 1px solid rgba(78,205,196,0.3);
+            color: #4ecdc4;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .logout-btn {
+            background: rgba(255,107,107,0.12);
+            border: 1px solid rgba(255,107,107,0.3);
+            color: #ff6b6b;
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .logout-btn:hover { background: rgba(255,107,107,0.22); }
+
+        /* Main content */
+        .main { padding: 28px 24px; max-width: 900px; margin: 0 auto; }
+
+        /* Welcome */
+        .welcome {
+            margin-bottom: 28px;
+        }
+        .welcome-title { font-size: 1.4rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+        .welcome-sub { color: rgba(255,255,255,0.45); font-size: 0.9rem; }
+
+        /* Exchange limit banner */
+        .exchange-banner {
+            background: linear-gradient(135deg, rgba(78,205,196,0.1), rgba(78,205,196,0.04));
+            border: 1px solid rgba(78,205,196,0.2);
+            border-radius: 14px;
+            padding: 18px 22px;
+            margin-bottom: 28px;
+            display: none;
+        }
+        .exchange-banner-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .exchange-banner-label { color: #4ecdc4; font-weight: 600; font-size: 0.9rem; }
+        .exchange-banner-amounts { color: #fff; font-size: 0.88rem; }
+        .ex-bar-bg { height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
+        .ex-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s, background 0.3s; }
+        .ex-bar-meta { display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.78rem; color: rgba(255,255,255,0.4); }
+
+        /* Section */
+        .section-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+        }
+
+        /* Grid */
+        .tiles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 14px;
+            margin-bottom: 32px;
+        }
+
+        .tile {
+            background: #1a2238;
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            padding: 22px 16px;
+            text-align: center;
+            text-decoration: none;
+            color: #e0e6ed;
+            transition: border-color 0.2s, transform 0.15s, background 0.2s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .tile:hover {
+            border-color: rgba(78,205,196,0.4);
+            background: rgba(78,205,196,0.05);
+            transform: translateY(-2px);
+        }
+        .tile-icon {
+            width: 50px; height: 50px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem;
+        }
+        .tile-label { font-size: 0.85rem; font-weight: 600; color: #fff; }
+        .tile-desc { font-size: 0.73rem; color: rgba(255,255,255,0.4); line-height: 1.4; }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255,255,255,0.3);
+        }
+        .empty-state i { font-size: 3rem; margin-bottom: 14px; display: block; }
+        .empty-state p { font-size: 0.95rem; }
+
+        @media (max-width: 480px) {
+            .main { padding: 20px 16px; }
+            .tiles-grid { grid-template-columns: repeat(2, 1fr); }
+            .header { padding: 12px 16px; }
+            .admin-badge { display: none; }
+        }
+    </style>
+<script src="/js/token.js"></script>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-left">
+        <div class="header-logo">A</div>
+        <div>
+            <div class="header-title">AfricaBased Admin</div>
+            <div class="header-subtitle" id="headerSubtitle">Loading...</div>
+        </div>
+    </div>
+    <div class="header-right">
+        <span class="admin-badge" id="adminBadge">Sub-Admin</span>
+        <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+</div>
+
+<div class="main">
+    <div class="welcome">
+        <div class="welcome-title">Welcome back, <span id="adminName">—</span></div>
+        <div class="welcome-sub">Your dashboard shows only the sections you have access to.</div>
+    </div>
+
+    <div class="exchange-banner" id="exchangeBanner">
+        <div class="exchange-banner-top">
+            <span class="exchange-banner-label"><i class="fas fa-coins"></i> Exchange Generation Limit</span>
+            <span class="exchange-banner-amounts" id="exBannerAmounts"></span>
+        </div>
+        <div class="ex-bar-bg">
+            <div class="ex-bar-fill" id="exBarFill" style="width:0%"></div>
+        </div>
+        <div class="ex-bar-meta">
+            <span>Used: KES <span id="exUsed">0</span></span>
+            <span>Remaining: KES <span id="exRemaining">—</span></span>
+        </div>
+    </div>
+
+    <div class="section-label">Your Sections</div>
+    <div class="tiles-grid" id="tilesGrid"></div>
+    <div id="emptyState" class="empty-state" style="display:none;">
+        <i class="fas fa-lock"></i>
+        <p>You have no sections assigned yet.<br>Contact your administrator.</p>
+    </div>
+</div>
+
+<script>
+    // ── Auth guard ────────────────────────────────────────────────────────────
+    const adminRaw = localStorage.getItem('adminData');
+    const isAdminFlag = localStorage.getItem('admin');
+
+    function showAccessError(reason) {
+        document.body.innerHTML = `
+        <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0f1623;font-family:'Poppins',sans-serif;">
+          <div style="background:#1a2238;border:1px solid rgba(255,107,107,0.3);border-radius:16px;padding:40px;max-width:420px;width:90%;text-align:center;">
+            <div style="font-size:3rem;margin-bottom:16px;">🔒</div>
+            <h2 style="color:#ff6b6b;margin-bottom:10px;">Session Not Found</h2>
+            <p style="color:rgba(255,255,255,0.5);font-size:0.9rem;margin-bottom:8px;">${reason}</p>
+            <p style="color:rgba(255,255,255,0.3);font-size:0.8rem;margin-bottom:24px;">Please use your invite link to log in.</p>
+            <button onclick="window.location.reload()" style="background:rgba(78,205,196,0.15);border:1px solid #4ecdc4;color:#4ecdc4;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:600;">Retry</button>
+          </div>
+        </div>`;
+    }
+
+    if (!adminRaw || isAdminFlag !== 'true') {
+        showAccessError('No admin session detected.');
+        throw new Error('No admin session');
+    }
+
+    let adminData;
+    try { adminData = JSON.parse(adminRaw); } catch(e) {
+        showAccessError('Session data is corrupt.');
+        throw new Error('Bad session data');
+    }
+
+    if (!adminData || !adminData.isSubAdmin) {
+        showAccessError('This page is for sub-admins only.');
+        throw new Error('Not a sub-admin');
+    }
+
+    // ── Privilege → tile map ──────────────────────────────────────────────────
+    const PRIVILEGE_TILES = {
+        exchange: {
+            label: 'Exchange',
+            desc: 'Generate & manage codes',
+            icon: 'fas fa-exchange-alt',
+            color: '#4ecdc4',
+            bg: 'rgba(78,205,196,0.12)',
+            href: 'admin-exchange.html'
+        },
+        withdraw: {
+            label: 'Withdrawals',
+            desc: 'Manage user withdrawals',
+            icon: 'fas fa-money-bill-transfer',
+            color: '#ff6b6b',
+            bg: 'rgba(255,107,107,0.12)',
+            href: 'admin-withdraw.html'
+        },
+        deposit: {
+            label: 'Deposits',
+            desc: 'Review deposit requests',
+            icon: 'fas fa-money-bill-wave',
+            color: '#28a745',
+            bg: 'rgba(40,167,69,0.12)',
+            href: 'admin-deposit.html'
+        },
+        manual_deposit: {
+            label: 'Manual Deposits',
+            desc: 'Approve manual deposits',
+            icon: 'fas fa-hand-holding-usd',
+            color: '#28a745',
+            bg: 'rgba(40,167,69,0.12)',
+            href: 'admin-deposit.html'
+        },
+        user: {
+            label: 'Users',
+            desc: 'Manage user accounts',
+            icon: 'fas fa-users',
+            color: '#6c63ff',
+            bg: 'rgba(108,99,255,0.12)',
+            href: 'admin-user.html'
+        },
+        impersonate: {
+            label: 'Impersonate',
+            desc: 'Access user accounts',
+            icon: 'fas fa-user-secret',
+            color: '#6c63ff',
+            bg: 'rgba(108,99,255,0.12)',
+            href: 'admin-user.html'
+        },
+        service: {
+            label: 'Services',
+            desc: 'Manage services',
+            icon: 'fas fa-concierge-bell',
+            color: '#ffc107',
+            bg: 'rgba(255,193,7,0.12)',
+            href: 'admin-service.html'
+        },
+        product: {
+            label: 'Products',
+            desc: 'Manage products',
+            icon: 'fas fa-box',
+            color: '#fd7e14',
+            bg: 'rgba(253,126,20,0.12)',
+            href: 'admin-product.html'
+        },
+        settings: {
+            label: 'Settings',
+            desc: 'Platform settings',
+            icon: 'fas fa-cog',
+            color: '#adb5bd',
+            bg: 'rgba(173,181,189,0.12)',
+            href: 'admin-settings.html'
+        },
+        admin: {
+            label: 'Admin Mgmt',
+            desc: 'Manage sub-admins',
+            icon: 'fas fa-users-cog',
+            color: '#e83e8c',
+            bg: 'rgba(232,62,140,0.12)',
+            href: 'admin-management.html'
+        },
+        pending: {
+            label: 'Applications',
+            desc: 'Pending applications',
+            icon: 'fas fa-clipboard-list',
+            color: '#17a2b8',
+            bg: 'rgba(23,162,184,0.12)',
+            href: 'admin-pending-applications.html'
+        },
+        kyc: {
+            label: 'KYC Review',
+            desc: 'Identity verification',
+            icon: 'fas fa-id-card',
+            color: '#20c997',
+            bg: 'rgba(32,201,151,0.12)',
+            href: '#'
+        },
+        support: {
+            label: 'Support',
+            desc: 'Handle tickets',
+            icon: 'fas fa-headset',
+            color: '#4ecdc4',
+            bg: 'rgba(78,205,196,0.12)',
+            href: '#'
+        },
+        transactions: {
+            label: 'Transactions',
+            desc: 'Transaction history',
+            icon: 'fas fa-list-alt',
+            color: '#6c63ff',
+            bg: 'rgba(108,99,255,0.12)',
+            href: '#'
+        },
+        reports: {
+            label: 'Reports',
+            desc: 'Analytics & reports',
+            icon: 'fas fa-chart-bar',
+            color: '#ffc107',
+            bg: 'rgba(255,193,7,0.12)',
+            href: '#'
+        },
+        finance: {
+            label: 'Finance',
+            desc: 'Accounting overview',
+            icon: 'fas fa-calculator',
+            color: '#28a745',
+            bg: 'rgba(40,167,69,0.12)',
+            href: '#'
+        },
+        referral: {
+            label: 'Referrals',
+            desc: 'Referral & commissions',
+            icon: 'fas fa-share-alt',
+            color: '#fd7e14',
+            bg: 'rgba(253,126,20,0.12)',
+            href: '#'
+        },
+        investments: {
+            label: 'Investments',
+            desc: 'Investment management',
+            icon: 'fas fa-chart-line',
+            color: '#4ecdc4',
+            bg: 'rgba(78,205,196,0.12)',
+            href: '#'
+        },
+        wallet: {
+            label: 'Wallets',
+            desc: 'Wallet management',
+            icon: 'fas fa-wallet',
+            color: '#ff6b6b',
+            bg: 'rgba(255,107,107,0.12)',
+            href: '#'
+        },
+        auto_deposit: {
+            label: 'Auto Deposit',
+            desc: 'Automated deposits',
+            icon: 'fas fa-robot',
+            color: '#28a745',
+            bg: 'rgba(40,167,69,0.12)',
+            href: '#'
+        },
+        security: {
+            label: 'Security',
+            desc: 'Security settings',
+            icon: 'fas fa-shield-alt',
+            color: '#e83e8c',
+            bg: 'rgba(232,62,140,0.12)',
+            href: '#'
+        },
+        system: {
+            label: 'System',
+            desc: 'System configuration',
+            icon: 'fas fa-server',
+            color: '#adb5bd',
+            bg: 'rgba(173,181,189,0.12)',
+            href: '#'
+        },
+        notifications: {
+            label: 'Notifications',
+            desc: 'Send notifications',
+            icon: 'fas fa-bell',
+            color: '#ffc107',
+            bg: 'rgba(255,193,7,0.12)',
+            href: '#'
+        },
+        audit: {
+            label: 'Audit Logs',
+            desc: 'View audit trail',
+            icon: 'fas fa-clipboard-check',
+            color: '#6c63ff',
+            bg: 'rgba(108,99,255,0.12)',
+            href: '#'
+        }
+    };
+
+    // ── Render ────────────────────────────────────────────────────────────────
+    function init() {
+        document.getElementById('adminName').textContent = adminData.name || 'Admin';
+        document.getElementById('headerSubtitle').textContent = adminData.email || '';
+
+        const privileges = adminData.privileges || [];
+        const grid = document.getElementById('tilesGrid');
+
+        // Deduplicate (impersonate maps same as user)
+        const seen = new Set();
+        const tiles = [];
+        privileges.forEach(priv => {
+            const tile = PRIVILEGE_TILES[priv];
+            if (!tile) return;
+            const key = tile.href + tile.label;
+            if (seen.has(key)) return;
+            seen.add(key);
+            tiles.push({ priv, ...tile });
+        });
+
+        if (tiles.length === 0) {
+            grid.style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+            return;
+        }
+
+        grid.innerHTML = tiles.map(t => {
+            const isComingSoon = t.href === '#';
+            const extraAttr = isComingSoon ? 'onclick="return false;" title="Coming soon"' : '';
+            const comingSoonBadge = isComingSoon ? '<div style="font-size:0.68rem;background:rgba(255,255,255,0.06);border-radius:4px;padding:1px 6px;color:rgba(255,255,255,0.3);margin-top:2px;">Coming soon</div>' : '';
+            return `<a class="tile" href="${t.href}" ${extraAttr} style="${isComingSoon ? 'opacity:0.55;cursor:default;' : ''}">
+                <div class="tile-icon" style="background:${t.bg};color:${t.color};">
+                    <i class="${t.icon}"></i>
+                </div>
+                <div>
+                    <div class="tile-label">${t.label}</div>
+                    <div class="tile-desc">${t.desc}</div>
+                    ${comingSoonBadge}
+                </div>
+            </a>`;
+        }).join('');
+
+        // Exchange limit banner
+        if (privileges.includes('exchange')) {
+            const limit = parseFloat(adminData.exchange_limit || 0);
+            const generated = parseFloat(adminData.exchange_generated || 0);
+            if (limit > 0) {
+                const remaining = Math.max(0, limit - generated);
+                const pct = Math.min(100, (generated / limit) * 100);
+                const barColor = pct >= 90 ? '#ff6b6b' : pct >= 70 ? '#ffc107' : '#4ecdc4';
+                document.getElementById('exchangeBanner').style.display = 'block';
+                document.getElementById('exBannerAmounts').textContent = 'KES ' + generated.toLocaleString() + ' of KES ' + limit.toLocaleString();
+                document.getElementById('exBarFill').style.width = pct + '%';
+                document.getElementById('exBarFill').style.background = barColor;
+                document.getElementById('exUsed').textContent = generated.toLocaleString();
+                document.getElementById('exRemaining').textContent = remaining.toLocaleString();
+            }
+        }
+    }
+
+    function logout() {
+        fetch('/api/admin/clear-page-session',{method:'POST'}).catch(()=>{});
+        fetch('/api/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + getABToken() } }).catch(()=>{});
+        localStorage.removeItem('ab_token');
+        localStorage.removeItem('ab_user');
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('admin');
+        localStorage.removeItem('adminData');
+        localStorage.removeItem('adminEmail');
+        localStorage.removeItem('adminPrivileges');
+        sessionStorage.removeItem('admin');
+        sessionStorage.removeItem('adminData');
+        window.location.href = '/login';
+    }
+
+    init();
+</script>
+<script src="/js/admin-pin.js"></script>
+</body>
+</html>

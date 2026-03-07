@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <meta charset="UTF-8">
+    <title>Admin Withdrawals - AfricaBased</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .table-scroll {
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 420px;
+            border-radius: 1rem;
+            background: #232526;
+            margin-top: 1.5rem;
+        }
+        body { background: #232526; color: #ffd54f; font-family: 'Segoe UI', Arial, sans-serif; }
+        .admin-header { background: #2c2c2c; padding: 1.5rem 2rem; margin-bottom: 2rem; border-bottom: 1px solid #ffd54f; }
+        .admin-title { color: #ffd54f; font-size: 1.5rem; font-weight: 600; }
+        .withdraw-panel { margin: 0 auto; max-width: 900px; background: #1e293b; border-radius: 1rem; box-shadow: 0 10px 15px rgba(0,0,0,0.1); padding: 2rem; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; background: #232526; border-radius: 1rem; overflow: hidden; }
+        th, td { padding: 1rem; border-bottom: 1px solid #444; color: #ffd54f; font-size: 1rem; }
+        th { background: #232526; color: #ffd54f; font-weight: 700; }
+        tr:hover { background: #2a2a2a; }
+        .action-btn { background: #ffd54f; color: #232526; border: none; border-radius: 5px; padding: 6px 14px; font-size: 1rem; font-weight: 500; cursor: pointer; margin-right: 8px; }
+        .action-btn.reject { background: #ef4444; color: #fff; }
+        .action-btn.approve { background: #22c55e; color: #fff; }
+        .status-badge { padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; display: inline-block; }
+        .status-pending { background: #fff1db; color: #b45309; }
+        .status-approved { background: #dcfce7; color: #059669; }
+        .status-rejected { background: #fee2e2; color: #dc2626; }
+    </style>
+</head>
+<body>
+    <div class="admin-header">
+    <a href="/Admin-panel" style="text-decoration:none;color:#ffd54f;font-size:0.9rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;margin-bottom:10px;">&larr; Back to Admin Panel</a>
+    <h1 class="admin-title">Withdrawal Management</h1>
+    <button onclick="window.open('/admin-withdraw','_blank')" style="margin-top:12px;background:#ffd54f;color:#232526;padding:8px 18px;border-radius:6px;font-weight:600;cursor:pointer;float:right;">Open Full Admin Panel</button>
+    </div>
+    <div class="withdraw-panel">
+        <h2>Withdrawal Requests</h2>
+    <div class="table-scroll">
+    <table>
+            <thead>
+                <tr>
+                    <th>Request ID</th>
+                    <th>User ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Mpesa/Bank Details</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="withdrawalsTableBody"></tbody>
+        </table>
+        </div>
+    <!-- PDF button removed -->
+    </div>
+    <script>
+    // Merge user withdrawal requests into admin withdrawals and handle approval/rejection with account balance deduction
+    function getAllWithdrawals() {
+        let withdrawals = [];
+        try { withdrawals = JSON.parse(localStorage.getItem('withdrawals') || '[]'); } catch {}
+        let userWithdrawalRequests = [];
+        try { userWithdrawalRequests = JSON.parse(localStorage.getItem('withdrawalRequests') || '[]'); } catch {}
+        // Only add user requests that are not already in withdrawals (by id or requestId)
+        const existingIds = new Set(withdrawals.map(w => w.id || w.requestId));
+        // Always pull user details from userData for each withdrawal
+        let userAccounts = {};
+        try { userAccounts = JSON.parse(localStorage.getItem('userAccounts') || '{}'); } catch {}
+        userWithdrawalRequests.forEach(req => {
+            const key = req.id || req.requestId;
+            if (!existingIds.has(key)) {
+                // Try to get userData for this user
+                let userData = userAccounts[req.userId || req.id] || {};
+                withdrawals.push({
+                    requestId: req.id || req.requestId || ('W' + Date.now()),
+                    id: req.userId || req.id,
+                    name: userData.fullName || userData.username || req.userName || req.name || '-',
+                    amount: req.amount,
+                    method: req.method,
+                    date: req.date || req.submittedAt || new Date().toISOString(),
+                    time: req.time || (req.submittedAt ? new Date(req.submittedAt).toLocaleTimeString() : '-'),
+                    status: req.status || 'Pending',
+                    recipientDetails: userData.mpesa ? `M-Pesa: ${userData.mpesa}` : (userData.bankType && userData.accountNumber ? `${userData.bankType} - ${userData.accountNumber}` : req.recipientDetails || '-'),
+                    userEmail: userData.email || req.userEmail || req.email || '-',
+                });
+            }
+        });
+        return withdrawals;
+    }
+    function saveWithdrawals(withdrawals) {
+        localStorage.setItem('withdrawals', JSON.stringify(withdrawals));
+    }
+    function renderWithdrawals() {
+        const tbody = document.getElementById('withdrawalsTableBody');
+        tbody.innerHTML = '';
+        let withdrawals = getAllWithdrawals();
+        withdrawals.forEach((w, idx) => {
+            const tr = document.createElement('tr');
+            let details = w.recipientDetails || w.details || '-';
+            let email = w.userEmail || w.email || '-';
+            let name = w.name || w.userName || '-';
+            let time = w.time || (w.submittedAt ? new Date(w.submittedAt).toLocaleTimeString() : '-');
+            tr.innerHTML = `
+                <td>${w.requestId||'-'}</td>
+                <td>${w.id||'-'}</td>
+                <td>${name}</td>
+                <td>${email}</td>
+                <td>${details}</td>
+                <td>Ksh ${w.amount||'-'}</td>
+                <td>${w.method||'-'}</td>
+                <td>${w.date ? new Date(w.date).toLocaleDateString() : '-'}</td>
+                <td>${time}</td>
+                <td><span class="status-badge status-${(w.status||'').toLowerCase()}">${w.status||'-'}</span></td>
+                <td>
+                    ${w.status==='Pending'?`
+                        <button class="action-btn approve" onclick="approveWithdrawal(${idx})">Approve</button>
+                        <button class="action-btn reject" onclick="rejectWithdrawal(${idx})">Reject</button>
+                    `:''}
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    // ...existing code...
+// PDF button and export code removed
+    }
+    function approveWithdrawal(idx) {
+        let withdrawals = getAllWithdrawals();
+        if (withdrawals[idx]) {
+            withdrawals[idx].status = 'Approved';
+            // Deduct from user's account balance
+            const userId = withdrawals[idx].id;
+            const amount = parseFloat(withdrawals[idx].amount) || 0;
+            let accounts = {};
+            try { accounts = JSON.parse(localStorage.getItem('accounts') || '{}'); } catch {}
+            if (!accounts[userId]) accounts[userId] = 0;
+            accounts[userId] = Math.max(0, parseFloat(accounts[userId]) - amount);
+            try{ if ((localStorage.getItem('currentUserId') || '') === userId) localStorage.setItem('accountBalance', accounts[userId]); }catch(e){/*ignore*/}
+            localStorage.setItem('accounts', JSON.stringify(accounts));
+            // Update withdrawalRequests in localStorage for user page
+            let withdrawalRequests = [];
+            try { withdrawalRequests = JSON.parse(localStorage.getItem('withdrawalRequests') || '[]'); } catch {}
+            let req = withdrawalRequests.find(r => (r.id === withdrawals[idx].requestId || r.id === withdrawals[idx].id || r.requestId === withdrawals[idx].requestId));
+            if (req) {
+                req.status = 'Approved';
+                req.adminApproved = true;
+            }
+            localStorage.setItem('withdrawalRequests', JSON.stringify(withdrawalRequests));
+            saveWithdrawals(withdrawals);
+            renderWithdrawals();
+        }
+    }
+    function rejectWithdrawal(idx) {
+        let withdrawals = getAllWithdrawals();
+        if (withdrawals[idx]) {
+            withdrawals[idx].status = 'Rejected';
+            // Update withdrawalRequests in localStorage for user page
+            let withdrawalRequests = [];
+            try { withdrawalRequests = JSON.parse(localStorage.getItem('withdrawalRequests') || '[]'); } catch {}
+            let req = withdrawalRequests.find(r => (r.id === withdrawals[idx].requestId || r.id === withdrawals[idx].id || r.requestId === withdrawals[idx].requestId));
+            if (req) {
+                req.status = 'Rejected';
+                req.adminApproved = false;
+            }
+            localStorage.setItem('withdrawalRequests', JSON.stringify(withdrawalRequests));
+            saveWithdrawals(withdrawals);
+            renderWithdrawals();
+        }
+    }
+    // Initial render
+    renderWithdrawals();
+    window.approveWithdrawal = approveWithdrawal;
+    window.rejectWithdrawal = rejectWithdrawal;
+    </script>
+<script src="/js/admin-pin.js"></script>
+</body>
+</html>
