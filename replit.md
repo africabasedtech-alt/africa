@@ -160,7 +160,8 @@ All user-facing pages use a unified premium gold/dark theme:
 ## Recent Feature Additions
 - **Announcement ticker**: Admin-enabled announcements display as a scrolling marquee on home.html (fetched from `/api/homepage`, colour-coded by type: info/warning/success)
 - **Broadcast email**: Admin-panel.html has "Broadcast Email to All Users" section → `POST /api/admin/broadcast-email` (super admin only). Sends styled HTML email to all users with email addresses.
-- **Download App button**: profile.html has a Download App card linking to `/AfricaBased.apk` (9.2MB APK served via express.static)
+- **Install App (PWA)**: profile.html shows "Install App" button (PWA install prompt) instead of APK download; APK removed
+- **Profile Account dropdown**: Services (Deposit, Withdraw, Exchange, Statistics) moved into the Account section on profile.html alongside My Profile
 - **Weekend collection block**: Investments and referral commission cannot be collected on Saturday OR Sunday (previously only Sunday)
 - **24h collection rule**: Investment collection enforces 24 hours since last collection (or since investment start for first collection), instead of calendar-day comparison
 - **Free product active status fix**: Only paid investments (products.price > 0) count toward has_investment / active status / commission eligibility

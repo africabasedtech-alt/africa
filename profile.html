@@ -397,13 +397,6 @@
           <button id="saveProfileBtn" class="modal-btn save-btn" style="flex:1"><i class="fas fa-save"></i> Update Profile</button>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- ═══ SERVICES ═══ -->
-  <div class="menu-section">
-    <div class="menu-label">Services</div>
-    <div class="menu-card">
       <a href="/deposit" class="menu-item">
         <div class="menu-ic green"><i class="fas fa-plus-circle"></i></div>
         <div class="menu-txt"><div class="mt">Deposit</div><div class="ms">Add funds via M-Pesa</div></div>
@@ -424,11 +417,17 @@
         <div class="menu-txt"><div class="mt">Statistics</div><div class="ms">View your earning reports</div></div>
         <i class="fas fa-chevron-right menu-arrow"></i>
       </a>
-      <a href="/AfricaBased.apk" download="AfricaBased.apk" class="menu-item">
+    </div>
+  </div>
+
+  <!-- ═══ INSTALL APP (PWA) ═══ -->
+  <div class="menu-section" id="installAppSection" style="display:none">
+    <div class="menu-card">
+      <div class="menu-item" id="installAppBtn" onclick="triggerPwaInstall()">
         <div class="menu-ic green"><i class="fas fa-download"></i></div>
-        <div class="menu-txt"><div class="mt">Download App</div><div class="ms">Get the Android app</div></div>
+        <div class="menu-txt"><div class="mt">Install App</div><div class="ms">Add to your home screen</div></div>
         <i class="fas fa-chevron-right menu-arrow"></i>
-      </a>
+      </div>
     </div>
   </div>
 
@@ -543,6 +542,26 @@
         panel.classList.add('open');
         if (arrow) arrow.style.transform = 'rotate(180deg)';
       }
+    }
+
+    var _pwaInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      _pwaInstallPrompt = e;
+      var sec = document.getElementById('installAppSection');
+      if (sec) sec.style.display = '';
+    });
+    function triggerPwaInstall() {
+      if (_pwaInstallPrompt) {
+        _pwaInstallPrompt.prompt();
+        _pwaInstallPrompt.userChoice.then(function() { _pwaInstallPrompt = null; });
+      } else {
+        showToast('Open this site in your browser and tap "Add to Home Screen"', 'info');
+      }
+    }
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+      var sec = document.getElementById('installAppSection');
+      if (sec) sec.style.display = 'none';
     }
 
     function handleLogout() {
