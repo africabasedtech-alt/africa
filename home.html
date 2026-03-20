@@ -229,13 +229,13 @@
     .tag-price{background:rgba(212,160,23,0.12);color:var(--gold-bright);border:1px solid rgba(212,160,23,0.25)}
     .tag-daily{background:rgba(74,222,128,0.1);color:#4ade80;border:1px solid rgba(74,222,128,0.2)}
     .tag-dur{background:rgba(129,140,248,0.1);color:#818cf8;border:1px solid rgba(129,140,248,0.2)}
-    .tag-free{background:rgba(78,205,196,0.1);color:#4ecdc4;border:1px solid rgba(78,205,196,0.2)}
+    .tag-free{display:none}
     .pl-cat{font-size:.7rem;color:rgba(255,255,255,0.4)}
     .pl-foot{padding:0 10px 10px}
     .pl-btn{width:100%;padding:9px;border-radius:10px;border:none;font-size:.82rem;font-weight:700;cursor:pointer;color:#fff;transition:opacity .2s}
     .pl-btn:active{opacity:.8}
     .pl-btn.paid{background:var(--green-btn);box-shadow:0 3px 12px rgba(34,160,64,0.3)}
-    .pl-btn.free{background:linear-gradient(135deg,#0891b2,#06b6d4);box-shadow:0 3px 10px rgba(6,182,212,0.25)}
+    .pl-btn.free{display:none}
 
     /* ═══ TESTIMONIALS ═══ */
     .tcard{background:rgba(10,16,28,0.9);border-radius:14px;padding:14px;border:1px solid rgba(212,160,23,0.1);box-shadow:0 3px 14px rgba(0,0,0,0.25)}
@@ -348,16 +348,6 @@
     <a href="/profile" class="bt"><div class="bt-ic"><i class="fas fa-user"></i></div><span class="bt-lb">Profile</span></a>
   </div>
 
-  <div class="modal-ov" id="investModal">
-    <div class="modal-bx">
-      <h3 id="modalTitle">Activate Free Product</h3>
-      <p id="modalBody">Activate this free product to start earning daily income.</p>
-      <div class="macts">
-        <button class="mc" onclick="closeModal()">Cancel</button>
-        <button class="mo" id="modalConfirmBtn">Confirm</button>
-      </div>
-    </div>
-  </div>
 
   <script type="module">
     import { getSession, startIdleGuard } from './js/api-auth.js';
@@ -402,43 +392,36 @@
 
     function buildFeat(p,ap){
       const m=ap.find(x=>x.name===p.name);
-      const dy=m?parseFloat(m.daily_return)||0:0,dr=m?parseInt(m.duration_days)||30:30;
-      const pr=parseFloat(p.price)||0,free=pr===0,tr=dy*dr;
-      const uT=parseInt(p.units_total)||5000,uS=parseInt(p.units_sold)||Math.floor(uT*.35);
-      const uL=Math.max(0,uT-uS),pct=Math.min(100,Math.round(uS/uT*100));
-      const sn=encodeURIComponent(p.name);
+      const pr=parseFloat(p.price)||0;
       const img=p.image?`<img class="feat-img" src="${p.image}" alt="${p.name}" onerror="this.outerHTML='<div class=\\'feat-img-ph\\'>🌿</div>'">`:`<div class="feat-img-ph">🌿</div>`;
+      const desc=p.description||'';
       return`<div class="feat"><div class="feat-top">${img}<div class="feat-info">
         <div class="feat-name">${p.name}</div>
-        ${tr>0?`<div class="feat-stat">Total Return: <b>KSh ${fmt(tr)}</b></div>`:''}
-        ${dy>0?`<div class="feat-stat">Daily Yield: <b>KSh ${fmt(dy)}</b></div>`:''}
-        <div class="feat-stat">Duration: <b>${dr} Days</b></div>
-        ${!free?`<div class="feat-stat">Price: <b>KES ${fmt(pr)}</b></div>`:`<div class="feat-stat"><b style="color:#4ecdc4">FREE</b></div>`}
+        ${desc?`<div class="feat-stat" style="line-height:1.4;color:rgba(255,255,255,0.6)">${desc}</div>`:''}
+        ${pr>0?`<div class="feat-stat">Price: <b>KES ${fmt(pr)}</b></div>`:''}
+        ${p.category?`<div class="feat-stat" style="color:var(--gold)">${p.category.charAt(0).toUpperCase()+p.category.slice(1)}</div>`:''}
       </div></div><div class="feat-foot">
-        <div class="units-line"><span>Units Left</span><span>🔥</span><span>Units Slowly</span><span class="hl">${uL.toLocaleString()} of ${uT.toLocaleString()} units left</span></div>
-        <div class="pbar"><div class="pbar-fill" style="width:${pct}%"></div></div>
-        <button class="invest-btn" data-product-name="${sn}" data-price="${pr}" data-daily="${dy}" data-duration="${dr}" onclick="handleInvestClick(this)">
-          <div class="bl"><div class="lc">A</div><span class="bt">${free?'Activate Free':'Invest Now'}</span></div>
-          <div class="br"><i class="fas fa-robot"></i></div>
+        <button class="invest-btn" onclick="window.location.href='/products'">
+          <div class="bl"><div class="lc">A</div><span class="bt">View Details</span></div>
+          <div class="br"><i class="fas fa-arrow-right"></i></div>
         </button>
       </div></div>`;
     }
 
     function buildCard(p,ap){
-      const m=ap.find(x=>x.name===p.name);
-      const dy=m?parseFloat(m.daily_return)||0:0,dr=m?parseInt(m.duration_days)||30:30;
-      const pr=parseFloat(p.price)||0,free=pr===0,sn=encodeURIComponent(p.name);
+      const pr=parseFloat(p.price)||0;
+      const desc=p.description||'';
       const img=p.image?`<img class="pl-img" src="${p.image}" alt="${p.name}" onerror="this.outerHTML='<div class=\\'pl-img-ph\\'>📈</div>'">`:`<div class="pl-img-ph">📈</div>`;
       return`<div class="plcard" onclick="window.location.href='/products'"><div class="pl-top">${img}<div class="pl-info">
         <div class="pl-name">${p.name}</div>
+        ${desc?`<div class="pl-desc" style="font-size:.75rem;color:rgba(255,255,255,0.5);line-height:1.4;margin:4px 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${desc}</div>`:''}
         <div class="pl-tags">
-          ${free?'<span class="tag tag-free">FREE</span>':`<span class="tag tag-price">KES ${fmt(pr)}</span>`}
-          ${dy>0?`<span class="tag tag-daily">${fmt(dy)}/day</span>`:''}
-          ${dr>0?`<span class="tag tag-dur">${dr} days</span>`:''}
-        </div>${p.category?`<div class="pl-cat">${p.category.charAt(0).toUpperCase()+p.category.slice(1)}</div>`:''}
+          ${pr>0?`<span class="tag tag-price">KES ${fmt(pr)}</span>`:''}
+          ${p.category?`<span class="tag tag-daily">${p.category.charAt(0).toUpperCase()+p.category.slice(1)}</span>`:''}
+        </div>
       </div></div><div class="pl-foot">
-        <button class="pl-btn ${free?'free':'paid'}" data-product-name="${sn}" data-price="${pr}" data-daily="${dy}" data-duration="${dr}" onclick="event.stopPropagation();handleInvestClick(this)">
-          <i class="fas ${free?'fa-gift':'fa-chart-line'}" style="margin-right:4px"></i>${free?'Activate Free':'Invest Now'}
+        <button class="pl-btn paid" onclick="event.stopPropagation();window.location.href='/products'">
+          <i class="fas fa-arrow-right" style="margin-right:4px"></i>View Details
         </button>
       </div></div>`;
     }
@@ -485,28 +468,6 @@
   </script>
 
   <script>
-    let _pi=null;
-    function handleInvestClick(btn){
-      const pr=parseFloat(btn.dataset.price||'0');
-      if(pr>0){window.location.href='/products';return}
-      const nm=decodeURIComponent(btn.dataset.productName||''),dy=parseFloat(btn.dataset.daily||'0'),dr=parseInt(btn.dataset.duration||'30');
-      _pi={nm,dy,dr,btn};
-      document.getElementById('modalTitle').textContent='Activate Free Product';
-      document.getElementById('modalBody').textContent=`Activate "${nm}" to start earning KES ${(dy||0).toLocaleString()}/day for ${dr} days?`;
-      document.getElementById('modalConfirmBtn').onclick=confirmInvest;
-      document.getElementById('investModal').classList.add('open');
-    }
-    function closeModal(){document.getElementById('investModal').classList.remove('open');_pi=null}
-    async function confirmInvest(){
-      if(!_pi)return;const{nm,dy,dr,btn}=_pi;closeModal();
-      if(btn){btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Activating...'}
-      try{const r=await fetch('/api/invest',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+getABToken()},
-        body:JSON.stringify({product_name:nm,amount:0,daily_earnings:dy,hold_period:dr,balance_source:'wallet'})});
-        const d=await r.json();if(!r.ok)alert(d.error||'Could not activate.');else alert('Activated! Go to Holdings to collect your income.')}
-      catch(e){alert('Connection error.')}
-      finally{if(btn){btn.disabled=false;btn.innerHTML='<i class="fas fa-gift" style="margin-right:4px"></i>Activate Free'}}
-    }
-    document.getElementById('investModal').addEventListener('click',function(e){if(e.target===this)closeModal()});
     (function(){var c=0,t=null;document.querySelector('.brand').addEventListener('click',function(){c++;clearTimeout(t);t=setTimeout(function(){c=0},3000);if(c>=5){c=0;window.location.href='/ab-secure'}})})();
   </script>
 
