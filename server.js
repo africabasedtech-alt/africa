@@ -964,21 +964,34 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
     mpesa_phone: !!(pf.mpesa_phone),
     bank: !!(pf.bank_name || pf.bank_account_number || pf.bank_account_name)
   };
-  let activeRefs = 0;
+  let totalActiveDownlines = 0;
+  let hasInvestment = false;
   try {
-    const refRes = await pool.query(
-      `SELECT COUNT(*) AS cnt FROM users r WHERE r.referred_by = $1
-       AND EXISTS (SELECT 1 FROM investments i JOIN products pr ON pr.name = i.product_name WHERE i.user_id = r.id AND i.status = 'active' AND pr.price > 0)`,
+    const selfInv = await pool.query(
+      `SELECT COUNT(*) > 0 AS has FROM investments i JOIN products pr ON pr.name = i.product_name WHERE i.user_id = $1::uuid AND i.status = 'active' AND pr.price > 0`,
+      [safeUser.id]
+    );
+    hasInvestment = selfInv.rows[0]?.has || false;
+    const activeCountQ = await pool.query(
+      `WITH RECURSIVE downline AS (
+         SELECT u.id, u.referral_code FROM users u WHERE u.referred_by = $1
+         UNION ALL
+         SELECT u2.id, u2.referral_code FROM users u2 INNER JOIN downline d ON u2.referred_by = d.referral_code
+       )
+       SELECT COUNT(*) AS cnt FROM downline d
+       WHERE EXISTS (SELECT 1 FROM investments i JOIN products pr ON pr.name = i.product_name WHERE i.user_id = d.id AND i.status = 'active' AND pr.price > 0)`,
       [safeUser.referral_code]
     );
-    activeRefs = parseInt(refRes.rows[0]?.cnt || 0);
+    totalActiveDownlines = parseInt(activeCountQ.rows[0]?.cnt || 0);
   } catch(e) {}
   let membershipLevel = 'Inactive';
-  if (activeRefs >= 300)     membershipLevel = 'Gold';
-  else if (activeRefs >= 60) membershipLevel = 'Premium';
-  else if (activeRefs >= 5)  membershipLevel = 'Basic';
-  else if (activeRefs >= 1)  membershipLevel = 'Active';
-  res.json({ user: safeUser, profile: pf, locked, isImpersonated: !!req.isImpersonated, impersonateLevel: req.impersonateLevel || null, membership_level: membershipLevel, active_referrals: activeRefs });
+  if (hasInvestment) {
+    if (totalActiveDownlines >= 300)     membershipLevel = 'Gold';
+    else if (totalActiveDownlines >= 60) membershipLevel = 'Premium';
+    else if (totalActiveDownlines >= 5)  membershipLevel = 'Basic';
+    else                                 membershipLevel = 'Active';
+  }
+  res.json({ user: safeUser, profile: pf, locked, isImpersonated: !!req.isImpersonated, impersonateLevel: req.impersonateLevel || null, membership_level: membershipLevel, active_referrals: totalActiveDownlines });
 });
 
 // ─── PROFILE: Update ─────────────────────────────────────────────────────────
@@ -2410,13 +2423,15 @@ app.get('/api/referral', requireAuth, async (req, res) => {
     const hasInvestment = selfRows[0]?.has_investment || false;
 
     const activeL1 = l1Users.filter(u => u.has_investment).length;
-    // Membership level based on active direct (L1) downlines
+    const activeL2 = l2Users.filter(u => u.has_investment).length;
+    const activeL3 = l3Users.filter(u => u.has_investment).length;
+    const totalActiveDownlines = activeL1 + activeL2 + activeL3;
     let membershipLevel = 'Inactive';
     if (hasInvestment) {
-      if (activeL1 >= 300)     membershipLevel = 'Gold';
-      else if (activeL1 >= 60) membershipLevel = 'Premium';
-      else if (activeL1 >= 5)  membershipLevel = 'Basic';
-      else                     membershipLevel = 'Active';
+      if (totalActiveDownlines >= 300)     membershipLevel = 'Gold';
+      else if (totalActiveDownlines >= 60) membershipLevel = 'Premium';
+      else if (totalActiveDownlines >= 5)  membershipLevel = 'Basic';
+      else                                 membershipLevel = 'Active';
     }
 
     // Commission only starts at Basic (5+ active direct downlines)
@@ -2448,7 +2463,7 @@ app.get('/api/referral', requireAuth, async (req, res) => {
       l2_users: l2Users,
       l3_users: l3Users,
       has_investment: hasInvestment,
-      active_referrals: activeL1,
+      active_referrals: totalActiveDownlines,
       membership_level: membershipLevel,
       is_eligible: isEligible,
       total_commission_earned: totalCommissionEarned,
@@ -3530,19 +3545,23 @@ app.get('/api/services/whatsapp', async (req, res) => {
     } catch (e) {
       return res.status(401).json({ error: 'Invalid token' });
     }
-    const activeL1Res = await pool.query(
-      `SELECT COUNT(*) FROM users r
-       WHERE r.referred_by = (SELECT referral_code FROM users WHERE id=$1)
-         AND EXISTS (SELECT 1 FROM investments i WHERE i.user_id = r.id AND i.status = 'active')`,
+    const allActiveRes = await pool.query(
+      `WITH RECURSIVE downline AS (
+         SELECT u.id, u.referral_code FROM users u WHERE u.referred_by = (SELECT referral_code FROM users WHERE id=$1)
+         UNION ALL
+         SELECT u2.id, u2.referral_code FROM users u2 INNER JOIN downline d ON u2.referred_by = d.referral_code
+       )
+       SELECT COUNT(*) AS cnt FROM downline d
+       WHERE EXISTS (SELECT 1 FROM investments i JOIN products pr ON pr.name = i.product_name WHERE i.user_id = d.id AND i.status = 'active' AND pr.price > 0)`,
       [userId]
     );
-    const activeL1 = parseInt(activeL1Res.rows[0].count, 10);
+    const totalActive = parseInt(allActiveRes.rows[0]?.cnt || 0);
     let membershipLevel = 'Inactive';
-    if (activeL1 >= 300)     membershipLevel = 'Gold';
-    else if (activeL1 >= 60) membershipLevel = 'Premium';
-    else if (activeL1 >= 5)  membershipLevel = 'Basic';
-    else if (activeL1 >= 1)  membershipLevel = 'Active';
-    res.json({ services: servicesRes.rows, membership_level: membershipLevel, active_referrals: activeL1 });
+    if (totalActive >= 300)     membershipLevel = 'Gold';
+    else if (totalActive >= 60) membershipLevel = 'Premium';
+    else if (totalActive >= 5)  membershipLevel = 'Basic';
+    else if (totalActive >= 1)  membershipLevel = 'Active';
+    res.json({ services: servicesRes.rows, membership_level: membershipLevel, active_referrals: totalActive });
   } catch (e) {
     console.error('Get services error:', e);
     res.status(500).json({ error: 'Failed to fetch services' });
