@@ -1031,7 +1031,7 @@
 
             } catch (error) {
                 console.error('Error loading referrals:', error);
-                alert('Failed to load referrals. Please try again.');
+                showABToast('Failed to load referrals. Please try again.', 'error');
             }
         }
 
@@ -1048,15 +1048,15 @@
                 });
                 const data = await res.json();
                 if (!res.ok) {
-                    alert(data.error || 'Failed to collect commission');
+                    showABToast(data.error || 'Failed to collect commission', 'error');
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-hand-holding-dollar"></i> Collect Commission';
                     return;
                 }
-                alert('Commission credited! KES ' + parseFloat(data.commission_credited).toFixed(2) + ' added to your Account Balance.');
+                showABModal({ type:'success', title:'Commission Collected!', message:'KES ' + parseFloat(data.commission_credited).toFixed(2) + ' added to your Account Balance.', confirmText:'Great' });
                 loadReferrals();
             } catch (e) {
-                alert('Error collecting commission. Please try again.');
+                showABToast('Error collecting commission. Please try again.', 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-hand-holding-dollar"></i> Collect Commission';
             }
@@ -1116,6 +1116,7 @@
     </script>
 <script src="/js/impersonation-guard.js"></script>
 <script src="/js/ai-assistant.js"></script>
+<script src="/js/toast-modal.js"></script>
 <script src="/js/pwa.js"></script>
 <nav class="ab-tabs">
   <a href="/home" class="active"><i class="fas fa-home"></i><span>Home</span></a>

@@ -53,7 +53,7 @@
         }
 
         function showMessage(msg, type = 'info') {
-            alert(msg);
+            showABToast(msg, type === 'danger' ? 'error' : type === 'warning' ? 'error' : type);
         }
 
         function showBalanceSourceModal(pricePerUnit, wallet, income, maxUnits) {
@@ -1116,6 +1116,7 @@
     <!-- Removed duplicate/conflicting scripts. All logic is now handled in the ES module above. -->
 <script src="/js/impersonation-guard.js"></script>
 <script src="/js/ai-assistant.js"></script>
+<script src="/js/toast-modal.js"></script>
 <script src="/js/pwa.js"></script>
 <nav class="ab-tabs">
   <a href="/home"><i class="fas fa-home"></i><span>Home</span></a>

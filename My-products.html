@@ -310,15 +310,15 @@
                 });
                 const data = await res.json();
                 if (!res.ok) {
-                    alert(data.error || 'Collection failed');
+                    showABToast(data.error || 'Collection failed', 'error');
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-hand-holding-usd me-2"></i>Collect';
                     return;
                 }
-                alert('Successfully collected KSH ' + formatCurrency(data.collected) + ' to your earnings balance.');
+                showABModal({ type:'success', title:'Income Collected!', message:'KSH ' + formatCurrency(data.collected) + ' added to your earnings balance.', confirmText:'Great' });
                 loadProducts();
             } catch (e) {
-                alert('Error: ' + e.message);
+                showABToast('Error: ' + e.message, 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-hand-holding-usd me-2"></i>Collect';
             }
@@ -479,6 +479,7 @@
     </script>
 <script src="/js/impersonation-guard.js"></script>
 <script src="/js/ai-assistant.js"></script>
+<script src="/js/toast-modal.js"></script>
 <script src="/js/pwa.js"></script>
 <nav class="ab-tabs">
   <a href="/home"><i class="fas fa-home"></i><span>Home</span></a>
