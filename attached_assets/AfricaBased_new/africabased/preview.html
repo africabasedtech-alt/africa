@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AfricaBased Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #08111e;
+    font-family: 'Inter', system-ui, sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Top toolbar ── */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #0d1b2a;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 0 16px;
+    height: 48px;
+    flex-shrink: 0;
+    gap: 12px;
+  }
+
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .page-label {
+    color: rgba(255,255,255,0.5);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+  }
+
+  .dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.15); flex-shrink:0; }
+
+  /* ── Size buttons ── */
+  .size-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    padding: 3px;
+  }
+
+  .size-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.4);
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .size-btn svg {
+    flex-shrink: 0;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+  }
+
+  .size-btn:hover {
+    color: rgba(255,255,255,0.75);
+    background: rgba(255,255,255,0.06);
+  }
+
+  .size-btn.active {
+    background: rgba(78,205,196,0.12);
+    color: #4ecdc4;
+    border: 1px solid rgba(78,205,196,0.2);
+  }
+
+  .size-btn.active svg { opacity: 1; }
+
+  .dim-label {
+    color: rgba(255,255,255,0.2);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    min-width: 70px;
+    text-align: center;
+  }
+
+  /* ── Stage area ── */
+  .stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    padding: 24px;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(78,205,196,0.04) 0%, transparent 60%),
+      repeating-linear-gradient(rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 48px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 48px);
+  }
+
+  /* ── Frame wrapper ── */
+  .frame-wrapper {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    transition: all 0.3s cubic-bezier(0.22,0.61,0.36,1);
+  }
+
+  .browser-chrome {
+    width: 100%;
+    background: #141f2e;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .chrome-dots {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+
+  .chrome-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+
+  .chrome-dot.red   { background: #ff5f57; }
+  .chrome-dot.amber { background: #febc2e; }
+  .chrome-dot.green { background: #28c840; }
+
+  .chrome-url {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 5px;
+    padding: 4px 10px;
+    color: rgba(255,255,255,0.3);
+    font-size: 11px;
+    font-family: monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* mobile chrome (notch bar) */
+  .mobile-chrome {
+    width: 100%;
+    background: #141f2e;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-bottom: none;
+    border-radius: 24px 24px 0 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 10px;
+    padding-bottom: 6px;
+    gap: 6px;
+  }
+
+  .notch {
+    width: 80px;
+    height: 5px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 3px;
+  }
+
+  .mobile-status {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 16px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+    font-weight: 600;
+  }
+
+  .preview-frame {
+    border: 1px solid rgba(255,255,255,0.08);
+    border-top: none;
+    display: block;
+    background: #050b15;
+  }
+
+  .frame-bottom {
+    width: 100%;
+    height: 14px;
+    background: #141f2e;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+  }
+
+  .frame-bottom-mobile {
+    border-radius: 0 0 24px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+  }
+
+  .home-indicator {
+    width: 100px;
+    height: 4px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.18);
+  }
+
+  /* ── Zoom info ── */
+  .zoom-badge {
+    margin-top: 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 6px;
+    padding: 4px 10px;
+    color: rgba(255,255,255,0.25);
+    font-size: 11px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="toolbar-left">
+    <div class="dot"></div>
+    <span class="page-label" id="pageLabel">Loading…</span>
+  </div>
+
+  <div class="size-group">
+    <button class="size-btn" data-size="mobile" onclick="setSize('mobile')">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><rect x="4" y="0" width="8" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="6" y="12" width="4" height="1.5" rx="0.75" fill="currentColor" opacity="0.5"/></svg>
+      Mobile
+    </button>
+    <button class="size-btn" data-size="tablet" onclick="setSize('tablet')">
+      <svg width="14" height="13" viewBox="0 0 18 14" fill="currentColor"><rect x="0" y="0" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="15.5" cy="7" r="1" fill="currentColor" opacity="0.5"/></svg>
+      Tablet
+    </button>
+    <button class="size-btn" data-size="desktop" onclick="setSize('desktop')">
+      <svg width="16" height="12" viewBox="0 0 20 14" fill="currentColor"><rect x="0" y="0" width="20" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6 13 h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><rect x="8" y="12" width="4" height="1.5" fill="currentColor" opacity="0.4"/></svg>
+      Desktop
+    </button>
+  </div>
+
+  <div class="dim-label" id="dimLabel">430 × 900</div>
+</div>
+
+<div class="stage" id="stage"></div>
+
+<script>
+  const params   = new URLSearchParams(location.search);
+  const pageUrl  = params.get('url') || '/';
+  const pageName = params.get('name') || pageUrl;
+
+  document.getElementById('pageLabel').textContent = pageName;
+
+  const SIZES = {
+    mobile:  { w: 390,  h: 844,  label: '390 × 844' },
+    tablet:  { w: 768,  h: 1024, label: '768 × 1024' },
+    desktop: { w: 1280, h: 800,  label: '1280 × 800' },
+  };
+
+  let current = 'mobile';
+
+  // Save per-page preference
+  const storageKey = 'ab_preview_size_' + pageUrl;
+  const saved = localStorage.getItem(storageKey);
+  if (saved && SIZES[saved]) current = saved;
+
+  function buildFrame(size, url) {
+    const stage = document.getElementById('stage');
+    stage.innerHTML = '';
+    const isMobile = size === 'mobile';
+    const isDesktop = size === 'desktop';
+    const { w, h } = SIZES[size];
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'frame-wrapper';
+    wrapper.style.width = w + 'px';
+
+    if (isMobile) {
+      const chrome = document.createElement('div');
+      chrome.className = 'mobile-chrome';
+      chrome.innerHTML = `<div class="notch"></div><div class="mobile-status"><span>9:41</span><span>&#9679;&#9679;&#9679;</span></div>`;
+      wrapper.appendChild(chrome);
+    } else {
+      const chrome = document.createElement('div');
+      chrome.className = 'browser-chrome';
+      chrome.innerHTML = `
+        <div class="chrome-dots">
+          <div class="chrome-dot red"></div>
+          <div class="chrome-dot amber"></div>
+          <div class="chrome-dot green"></div>
+        </div>
+        <div class="chrome-url">${url}</div>`;
+      wrapper.appendChild(chrome);
+    }
+
+    const iframe = document.createElement('iframe');
+    iframe.className = 'preview-frame';
+    iframe.src = url;
+    iframe.width  = w;
+    iframe.height = h;
+    iframe.style.width  = w + 'px';
+    iframe.style.height = h + 'px';
+    iframe.setAttribute('frameborder', '0');
+    wrapper.appendChild(iframe);
+
+    const bottom = document.createElement('div');
+    bottom.className = 'frame-bottom' + (isMobile ? ' frame-bottom-mobile' : '');
+    if (isMobile) bottom.innerHTML = '<div class="home-indicator"></div>';
+    wrapper.appendChild(bottom);
+
+    const badge = document.createElement('div');
+    badge.className = 'zoom-badge';
+    badge.textContent = 'Scroll inside the frame to explore • ' + SIZES[size].label;
+    wrapper.appendChild(badge);
+
+    stage.appendChild(wrapper);
+  }
+
+  function setSize(size) {
+    if (!SIZES[size]) return;
+    current = size;
+    localStorage.setItem(storageKey, size);
+    document.querySelectorAll('.size-btn').forEach(b => b.classList.toggle('active', b.dataset.size === size));
+    document.getElementById('dimLabel').textContent = SIZES[size].label;
+    buildFrame(size, pageUrl);
+  }
+
+  // Init
+  setSize(current);
+</script>
+</body>
+</html>

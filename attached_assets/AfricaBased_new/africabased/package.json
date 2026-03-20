@@ -1,0 +1,33 @@
+{
+  "name": "africabased",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@simplewebauthn/server": "^13.2.3",
+    "@supabase/supabase-js": "^2.98.0",
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "drizzle-zod": "^0.8.3",
+    "express": "^4.22.1",
+    "express-rate-limit": "^8.3.0",
+    "helmet": "^8.1.0",
+    "intasend-node": "^1.1.2",
+    "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^8.0.1",
+    "openai": "^6.27.0",
+    "p-limit": "^7.3.0",
+    "p-retry": "^7.1.1",
+    "pg": "^8.20.0",
+    "twilio": "^5.12.2",
+    "zod": "^4.3.6",
+    "zod-validation-error": "^5.0.0"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
