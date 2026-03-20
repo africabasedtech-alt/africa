@@ -964,7 +964,21 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
     mpesa_phone: !!(pf.mpesa_phone),
     bank: !!(pf.bank_name || pf.bank_account_number || pf.bank_account_name)
   };
-  res.json({ user: safeUser, profile: pf, locked, isImpersonated: !!req.isImpersonated, impersonateLevel: req.impersonateLevel || null });
+  let activeRefs = 0;
+  try {
+    const refRes = await pool.query(
+      `SELECT COUNT(*) AS cnt FROM users r WHERE r.referred_by = $1
+       AND EXISTS (SELECT 1 FROM investments i JOIN products pr ON pr.name = i.product_name WHERE i.user_id = r.id AND i.status = 'active' AND pr.price > 0)`,
+      [safeUser.referral_code]
+    );
+    activeRefs = parseInt(refRes.rows[0]?.cnt || 0);
+  } catch(e) {}
+  let membershipLevel = 'Inactive';
+  if (activeRefs >= 300)     membershipLevel = 'Gold';
+  else if (activeRefs >= 60) membershipLevel = 'Premium';
+  else if (activeRefs >= 5)  membershipLevel = 'Basic';
+  else if (activeRefs >= 1)  membershipLevel = 'Active';
+  res.json({ user: safeUser, profile: pf, locked, isImpersonated: !!req.isImpersonated, impersonateLevel: req.impersonateLevel || null, membership_level: membershipLevel, active_referrals: activeRefs });
 });
 
 // ─── PROFILE: Update ─────────────────────────────────────────────────────────

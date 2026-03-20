@@ -91,6 +91,12 @@
       box-shadow:0 0 12px rgba(212,160,23,0.15);
     }
     .vip-badge i{font-size:.85rem}
+    .vip-badge.tier-inactive{background:rgba(120,120,120,0.15);border-color:rgba(120,120,120,0.4);color:#999}
+    .vip-badge.tier-active{background:rgba(110,198,255,0.15);border-color:rgba(110,198,255,0.4);color:#6ec6ff}
+    .vip-badge.tier-basic{background:rgba(167,139,250,0.15);border-color:rgba(167,139,250,0.4);color:#a78bfa}
+    .vip-badge.tier-premium{background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.4);color:#f59e0b}
+    .vip-badge.tier-gold{background:linear-gradient(135deg,rgba(212,160,23,0.2),rgba(212,160,23,0.08));border-color:rgba(212,160,23,0.5);color:var(--gold-bright)}
+    .vip-refs{font-size:.7rem;color:var(--text-dim);margin-top:4px;letter-spacing:0}
 
     /* ═══ MENU SECTIONS ═══ */
     .menu-section{margin:0 14px 10px}
@@ -303,7 +309,8 @@
       </div>
       <div class="vip-name" id="headerName">User</div>
       <div class="vip-email" id="headerEmail">loading...</div>
-      <div class="vip-badge"><i class="fas fa-crown"></i> VIP Member</div>
+      <div class="vip-badge" id="membershipBadge"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+      <div class="vip-refs" id="membershipRefs"></div>
     </div>
   </div>
 
@@ -602,6 +609,30 @@
       if (sec) sec.style.display = 'none';
     }
 
+    const TIER_THRESHOLDS = { Inactive: 0, Active: 1, Basic: 5, Premium: 60, Gold: 300 };
+    const TIER_NEXT = { Inactive: 'Active', Active: 'Basic', Basic: 'Premium', Premium: 'Gold', Gold: null };
+    const TIER_ICONS = { Inactive: 'fa-circle', Active: 'fa-bolt', Basic: 'fa-shield-alt', Premium: 'fa-gem', Gold: 'fa-crown' };
+    const TIER_CSS = { Inactive: 'tier-inactive', Active: 'tier-active', Basic: 'tier-basic', Premium: 'tier-premium', Gold: 'tier-gold' };
+
+    function updateMembershipBadge(level, refs) {
+      level = level || 'Inactive';
+      refs = parseInt(refs) || 0;
+      const badge = document.getElementById('membershipBadge');
+      const refsEl = document.getElementById('membershipRefs');
+      const icon = TIER_ICONS[level] || 'fa-circle';
+      const css = TIER_CSS[level] || 'tier-inactive';
+      badge.className = 'vip-badge ' + css;
+      badge.innerHTML = '<i class="fas ' + icon + '"></i> ' + level;
+
+      const next = TIER_NEXT[level];
+      if (next) {
+        const target = TIER_THRESHOLDS[next];
+        refsEl.textContent = refs + ' / ' + target + ' referrals \u2192 ' + next;
+      } else {
+        refsEl.textContent = refs + ' referrals \u2022 Max tier reached';
+      }
+    }
+
     function _normWaPhone(p) {
       p = String(p).replace(/\s+/g,'').replace(/^\+/,'');
       if (p.startsWith('07') || p.startsWith('01')) p = '254' + p.slice(1);
@@ -774,6 +805,7 @@
             document.getElementById('bankAccHolderName').textContent = p.bank_account_name || 'Not Set';
             document.getElementById('headerName').textContent = name || 'User';
             document.getElementById('headerEmail').textContent = email || '';
+            updateMembershipBadge(d.membership_level, d.active_referrals);
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
             if (userData.photoUrl) document.getElementById('profilePhoto').src = userData.photoUrl;
             if (d.locked) applyLockState(d.locked);
