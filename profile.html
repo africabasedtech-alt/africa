@@ -397,26 +397,40 @@
           <button id="saveProfileBtn" class="modal-btn save-btn" style="flex:1"><i class="fas fa-save"></i> Update Profile</button>
         </div>
       </div>
-      <a href="/deposit" class="menu-item">
-        <div class="menu-ic green"><i class="fas fa-plus-circle"></i></div>
-        <div class="menu-txt"><div class="mt">Deposit</div><div class="ms">Add funds via M-Pesa</div></div>
-        <i class="fas fa-chevron-right menu-arrow"></i>
-      </a>
-      <a href="/withdraw" class="menu-item">
-        <div class="menu-ic cyan"><i class="fas fa-arrow-up"></i></div>
-        <div class="menu-txt"><div class="mt">Withdraw</div><div class="ms">Withdraw your earnings</div></div>
-        <i class="fas fa-chevron-right menu-arrow"></i>
-      </a>
-      <a href="/exchange" class="menu-item">
-        <div class="menu-ic purple"><i class="fas fa-exchange-alt"></i></div>
-        <div class="menu-txt"><div class="mt">Exchange</div><div class="ms">Transfer between wallets</div></div>
-        <i class="fas fa-chevron-right menu-arrow"></i>
-      </a>
-      <a href="/statistics" class="menu-item">
-        <div class="menu-ic gold"><i class="fas fa-chart-bar"></i></div>
-        <div class="menu-txt"><div class="mt">Statistics</div><div class="ms">View your earning reports</div></div>
-        <i class="fas fa-chevron-right menu-arrow"></i>
-      </a>
+    </div>
+  </div>
+
+  <!-- ═══ SERVICES (collapsible) ═══ -->
+  <div class="menu-section">
+    <div class="menu-label">Services</div>
+    <div class="menu-card">
+      <div class="menu-item" onclick="togglePanel('servicesPanel',this)">
+        <div class="menu-ic green"><i class="fas fa-concierge-bell"></i></div>
+        <div class="menu-txt"><div class="mt">Services</div><div class="ms">Deposit, withdraw, exchange & more</div></div>
+        <i class="fas fa-chevron-down menu-arrow"></i>
+      </div>
+      <div class="panel" id="servicesPanel">
+        <a href="/deposit" class="menu-item">
+          <div class="menu-ic green"><i class="fas fa-plus-circle"></i></div>
+          <div class="menu-txt"><div class="mt">Deposit</div><div class="ms">Add funds via M-Pesa</div></div>
+          <i class="fas fa-chevron-right menu-arrow"></i>
+        </a>
+        <a href="/withdraw" class="menu-item">
+          <div class="menu-ic cyan"><i class="fas fa-arrow-up"></i></div>
+          <div class="menu-txt"><div class="mt">Withdraw</div><div class="ms">Withdraw your earnings</div></div>
+          <i class="fas fa-chevron-right menu-arrow"></i>
+        </a>
+        <a href="/exchange" class="menu-item">
+          <div class="menu-ic purple"><i class="fas fa-exchange-alt"></i></div>
+          <div class="menu-txt"><div class="mt">Exchange</div><div class="ms">Transfer between wallets</div></div>
+          <i class="fas fa-chevron-right menu-arrow"></i>
+        </a>
+        <a href="/statistics" class="menu-item">
+          <div class="menu-ic gold"><i class="fas fa-chart-bar"></i></div>
+          <div class="menu-txt"><div class="mt">Statistics</div><div class="ms">View your earning reports</div></div>
+          <i class="fas fa-chevron-right menu-arrow"></i>
+        </a>
+      </div>
     </div>
   </div>
 
