@@ -434,6 +434,30 @@
     </div>
   </div>
 
+  <!-- ═══ CONNECT (collapsible) ═══ -->
+  <div class="menu-section">
+    <div class="menu-label">Connect</div>
+    <div class="menu-card">
+      <div class="menu-item" onclick="togglePanel('connectPanel',this)">
+        <div class="menu-ic green"><i class="fab fa-whatsapp"></i></div>
+        <div class="menu-txt"><div class="mt">WhatsApp</div><div class="ms">Groups & manager support</div></div>
+        <i class="fas fa-chevron-down menu-arrow"></i>
+      </div>
+      <div class="panel" id="connectPanel">
+        <div id="connectLoading" style="text-align:center;padding:16px 0;color:var(--text-dim);font-size:.85rem;">Loading...</div>
+        <div id="connectGroups" style="display:none">
+          <div style="font-size:.78rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;padding:10px 14px 6px;opacity:.7;">Join a Group</div>
+          <div id="connectGroupsList"></div>
+        </div>
+        <div id="connectManagers" style="display:none">
+          <div style="font-size:.78rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;padding:10px 14px 6px;opacity:.7;">Chat with a Manager</div>
+          <div id="connectManagersList"></div>
+        </div>
+        <div id="connectEmpty" style="display:none;text-align:center;padding:16px 0;color:var(--text-dim);font-size:.85rem;">No contacts available yet.</div>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ INSTALL APP (PWA) ═══ -->
   <div class="menu-section" id="installAppSection" style="display:none">
     <div class="menu-card">
@@ -577,6 +601,87 @@
       var sec = document.getElementById('installAppSection');
       if (sec) sec.style.display = 'none';
     }
+
+    function _normWaPhone(p) {
+      p = String(p).replace(/\s+/g,'').replace(/^\+/,'');
+      if (p.startsWith('07') || p.startsWith('01')) p = '254' + p.slice(1);
+      if (!p.startsWith('254')) p = '254' + p;
+      return p;
+    }
+    async function loadConnectServices() {
+      const token = getABToken();
+      if (!token) return;
+      try {
+        const res = await fetch('/api/services/whatsapp', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        const services = data.services || [];
+        const tier = (data.membership_level || 'inactive').toLowerCase();
+        const tierOrder = ['inactive','active','basic','premium','gold'];
+        const tierRank = t => !t || t === 'all' ? -1 : tierOrder.indexOf(t.toLowerCase());
+        const canAccess = min => !min || min === 'all' || tierRank(tier) >= tierRank(min);
+
+        const groups = services.filter(s => s.type === 'group');
+        const managers = services.filter(s => s.type === 'manager');
+
+        document.getElementById('connectLoading').style.display = 'none';
+
+        if (!groups.length && !managers.length) {
+          document.getElementById('connectEmpty').style.display = '';
+          return;
+        }
+
+        if (groups.length) {
+          document.getElementById('connectGroups').style.display = '';
+          document.getElementById('connectGroupsList').innerHTML = groups.map(g => {
+            const ok = canAccess(g.min_tier);
+            if (ok) {
+              return `<a href="${g.phone_or_link}" target="_blank" class="menu-item" style="text-decoration:none">
+                <div class="menu-ic green"><i class="fas fa-users"></i></div>
+                <div class="menu-txt"><div class="mt">${g.name}</div><div class="ms">${g.category || 'Group'}</div></div>
+                <i class="fas fa-external-link-alt menu-arrow" style="font-size:.75rem"></i>
+              </a>`;
+            } else {
+              return `<div class="menu-item" style="opacity:.45;cursor:not-allowed">
+                <div class="menu-ic" style="background:rgba(255,255,255,0.05)"><i class="fas fa-lock"></i></div>
+                <div class="menu-txt"><div class="mt">${g.name}</div><div class="ms">${(g.min_tier||'').charAt(0).toUpperCase()+(g.min_tier||'').slice(1)}+ required</div></div>
+              </div>`;
+            }
+          }).join('');
+        }
+
+        if (managers.length) {
+          document.getElementById('connectManagers').style.display = '';
+          document.getElementById('connectManagersList').innerHTML = managers.map(m => {
+            const ok = canAccess(m.min_tier);
+            const link = 'https://wa.me/' + _normWaPhone(m.phone_or_link);
+            if (ok) {
+              return `<a href="${link}" target="_blank" class="menu-item" style="text-decoration:none">
+                <div class="menu-ic cyan"><i class="fas fa-comment-dots"></i></div>
+                <div class="menu-txt"><div class="mt">${m.name}</div><div class="ms">${m.category || 'Manager'}</div></div>
+                <i class="fas fa-external-link-alt menu-arrow" style="font-size:.75rem"></i>
+              </a>`;
+            } else {
+              return `<div class="menu-item" style="opacity:.45;cursor:not-allowed">
+                <div class="menu-ic" style="background:rgba(255,255,255,0.05)"><i class="fas fa-lock"></i></div>
+                <div class="menu-txt"><div class="mt">${m.name}</div><div class="ms">${(m.min_tier||'').charAt(0).toUpperCase()+(m.min_tier||'').slice(1)}+ required</div></div>
+              </div>`;
+            }
+          }).join('');
+        }
+      } catch(e) {
+        document.getElementById('connectLoading').innerHTML = '<span style="color:rgba(248,113,113,0.7)">Failed to load</span>';
+      }
+    }
+    var _connectLoaded = false;
+    var _origToggle = togglePanel;
+    togglePanel = function(id, trigger) {
+      _origToggle(id, trigger);
+      if (id === 'connectPanel' && !_connectLoaded) {
+        _connectLoaded = true;
+        loadConnectServices();
+      }
+    };
 
     function handleLogout() {
       if (confirm('Are you sure you want to log out?')) {
