@@ -1126,10 +1126,26 @@
 
     (async function initBiometric() {
       if (window.PublicKeyCredential) {
-        _bioAvailable = true;
-        document.getElementById('biometricSection').style.display = 'block';
-        const token = getABToken();
-        if (token) await loadBiometricCreds(token);
+        try {
+          const hasPlatform = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+          if (hasPlatform) {
+            _bioAvailable = true;
+            document.getElementById('biometricSection').style.display = 'block';
+            const token = getABToken();
+            if (token) await loadBiometricCreds(token);
+          } else {
+            document.getElementById('biometricSection').style.display = 'block';
+            document.getElementById('biometricUnsupported').style.display = 'block';
+            document.getElementById('biometricUnsupported').textContent = 'Your device does not have a fingerprint sensor, Face ID, or screen lock set up.';
+            document.getElementById('biometricToggle').style.opacity = '0.4';
+            document.getElementById('biometricToggle').style.pointerEvents = 'none';
+          }
+        } catch(e) {
+          document.getElementById('biometricSection').style.display = 'block';
+          document.getElementById('biometricUnsupported').style.display = 'block';
+          document.getElementById('biometricToggle').style.opacity = '0.4';
+          document.getElementById('biometricToggle').style.pointerEvents = 'none';
+        }
       } else {
         document.getElementById('biometricSection').style.display = 'block';
         document.getElementById('biometricUnsupported').style.display = 'block';
@@ -1182,6 +1198,7 @@
           }
           setBiometricToggleState(false);
           document.getElementById('biometricCredsList').innerHTML = '';
+          localStorage.removeItem('ab_bio_identifier');
           if (msgEl) { msgEl.style.color = 'rgba(255,255,255,0.5)'; msgEl.textContent = 'Biometric login disabled.'; msgEl.style.display = 'block'; }
         } catch(e) {
           if (msgEl) { msgEl.style.color = '#f87171'; msgEl.textContent = 'Failed to disable.'; msgEl.style.display = 'block'; }
@@ -1210,6 +1227,11 @@
           const result = await completeRes.json();
           if (!completeRes.ok) throw new Error(result.error || 'Failed to save');
           if (msgEl) { msgEl.style.color = 'var(--gold)'; msgEl.textContent = 'Biometric login enabled!'; msgEl.style.display = 'block'; }
+          try {
+            const u = JSON.parse(localStorage.getItem('ab_user') || '{}');
+            const bioId = u.email || u.phone || u.username || '';
+            if (bioId) localStorage.setItem('ab_bio_identifier', bioId);
+          } catch(e) {}
           await loadBiometricCreds(token);
         } catch(e) {
           if (msgEl) { msgEl.style.color = '#f87171'; msgEl.textContent = e.message || 'Setup failed.'; msgEl.style.display = 'block'; }

@@ -526,6 +526,16 @@
                 <span id="btnText">Sign In</span>
             </button>
 
+            <div id="bioDivider" style="display:none;text-align:center;margin:18px 0 14px;position:relative;">
+              <span style="background:#0a1628;padding:0 12px;font-size:.78rem;color:rgba(255,255,255,0.3);position:relative;z-index:1;">or</span>
+              <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(255,255,255,0.08);z-index:0;"></div>
+            </div>
+
+            <button type="button" id="bioLoginBtn" data-testid="button-biometric-login" style="display:none;width:100%;padding:14px;background:rgba(212,160,23,0.08);border:1.5px solid rgba(212,160,23,0.25);border-radius:12px;color:#f5c842;font-size:.95rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.2s;gap:10px;align-items:center;justify-content:center;">
+              <i class="fas fa-fingerprint" style="font-size:1.15rem;"></i>
+              <span id="bioLoginBtnText">Sign in with Biometrics</span>
+            </button>
+
             <div class="alert alert-error"   id="errorAlert"></div>
             <div class="alert alert-success" id="successAlert"></div>
         </form>
@@ -540,10 +550,19 @@
     import { signIn, getSession, getDeviceFingerprint } from './js/api-auth.js';
     import { isBiometricAvailable } from './js/biometric.js';
 
+    const SIMPLEWEBAUTHN_CDN = 'https://unpkg.com/@simplewebauthn/browser@13/dist/bundle/index.es5.umd.min.js';
     let _deviceHasBiometric = false;
-    let _biometricCheckTimer = null;
-    let _lastCheckedId = '';
     let _biometricLoginInProgress = false;
+
+    async function ensureWebAuthnLib() {
+      if (window.SimpleWebAuthnBrowser) return;
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = SIMPLEWEBAUTHN_CDN;
+        s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
 
     (async () => {
         const { session } = await getSession();
@@ -561,87 +580,120 @@
         }
     })();
 
-    (async () => {
-        _deviceHasBiometric = await isBiometricAvailable();
-    })();
-
-    async function checkAndPromptBiometric(identifier) {
-        if (!_deviceHasBiometric || !identifier || identifier === _lastCheckedId) return;
-
-        try {
-            const beginRes = await fetch('/api/auth/webauthn/auth/begin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ identifier }),
-            });
-            const beginData = await beginRes.json();
-
-            _lastCheckedId = identifier;
-
-            if (!beginData.hasCredentials || !beginData.options) return;
-
-            _biometricLoginInProgress = true;
-            const errorAlert = document.getElementById('errorAlert');
-            const successAlert = document.getElementById('successAlert');
-            errorAlert.style.display = successAlert.style.display = 'none';
-
-            try {
-                const SIMPLEWEBAUTHN_CDN = 'https://unpkg.com/@simplewebauthn/browser@13/dist/bundle/index.es5.umd.min.js';
-                if (!window.SimpleWebAuthnBrowser) {
-                    await new Promise((resolve, reject) => {
-                        const s = document.createElement('script');
-                        s.src = SIMPLEWEBAUTHN_CDN;
-                        s.onload = resolve; s.onerror = reject;
-                        document.head.appendChild(s);
-                    });
-                }
-
-                const assertion = await window.SimpleWebAuthnBrowser.startAuthentication({
-                    optionsJSON: beginData.options,
-                });
-
-                const completeRes = await fetch('/api/auth/webauthn/auth/complete', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ response: assertion, challengeKey: beginData.challengeKey }),
-                });
-                const result = await completeRes.json();
-                if (!completeRes.ok) throw new Error(result.error || 'Verification failed');
-
-                localStorage.setItem('ab_token', result.token);
-                localStorage.setItem('ab_user', JSON.stringify(result.user));
-                successAlert.textContent = 'Signed in with biometrics! Redirecting...';
-                successAlert.style.display = 'block';
-                setTimeout(() => window.location.href = '/home', 900);
-            } catch (e) {
-                _biometricLoginInProgress = false;
-                if (e.name === 'NotAllowedError') {
-                    document.getElementById('password').focus();
-                    return;
-                }
-                errorAlert.textContent = e.message || 'Biometric login failed. Use your password instead.';
-                errorAlert.style.display = 'block';
-                document.getElementById('password').focus();
-            }
-        } catch (e) {
-            _biometricLoginInProgress = false;
-        }
+    function showBioButton() {
+      document.getElementById('bioDivider').style.display = 'block';
+      document.getElementById('bioLoginBtn').style.display = 'flex';
     }
 
-    const identifierInput = document.getElementById('identifier');
-    identifierInput.addEventListener('blur', () => {
-        const val = identifierInput.value.trim();
-        if (val.length >= 3) {
-            clearTimeout(_biometricCheckTimer);
-            checkAndPromptBiometric(val);
+    (async () => {
+        _deviceHasBiometric = await isBiometricAvailable();
+        if (!_deviceHasBiometric) return;
+
+        const savedId = localStorage.getItem('ab_bio_identifier');
+        if (savedId) {
+          showBioButton();
+          document.getElementById('bioLoginBtnText').textContent = 'Sign in with Biometrics';
+          setTimeout(() => triggerBiometricLogin(savedId, true), 600);
         }
+    })();
+
+    async function triggerBiometricLogin(identifier, silent) {
+      if (_biometricLoginInProgress) return;
+
+      const errorAlert = document.getElementById('errorAlert');
+      const successAlert = document.getElementById('successAlert');
+      const bioBtn = document.getElementById('bioLoginBtn');
+      const bioBtnText = document.getElementById('bioLoginBtnText');
+
+      try {
+        const beginRes = await fetch('/api/auth/webauthn/auth/begin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier: identifier || undefined }),
+        });
+        const beginData = await beginRes.json();
+
+        if (!beginData.hasCredentials || !beginData.options) {
+          if (!silent) {
+            errorAlert.textContent = beginData.error || 'No biometric login set up for this account.';
+            errorAlert.style.display = 'block';
+          }
+          return;
+        }
+
+        _biometricLoginInProgress = true;
+        errorAlert.style.display = successAlert.style.display = 'none';
+        bioBtnText.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:6px"></span> Verifying...';
+        bioBtn.style.pointerEvents = 'none';
+        bioBtn.style.opacity = '0.7';
+
+        try {
+          await ensureWebAuthnLib();
+
+          const assertion = await window.SimpleWebAuthnBrowser.startAuthentication({
+            optionsJSON: beginData.options,
+          });
+
+          const completeRes = await fetch('/api/auth/webauthn/auth/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ response: assertion, challengeKey: beginData.challengeKey }),
+          });
+          const result = await completeRes.json();
+          if (!completeRes.ok) throw new Error(result.error || 'Verification failed');
+
+          localStorage.setItem('ab_token', result.token);
+          localStorage.setItem('ab_user', JSON.stringify(result.user));
+          if (identifier) localStorage.setItem('ab_bio_identifier', identifier);
+
+          successAlert.textContent = 'Signed in with biometrics! Redirecting...';
+          successAlert.style.display = 'block';
+          bioBtnText.innerHTML = '<i class="fas fa-check" style="margin-right:6px"></i> Success!';
+          showLoginSuccessModal(result.user?.username || 'there');
+          setTimeout(() => window.location.href = '/home', 1500);
+        } catch (e) {
+          _biometricLoginInProgress = false;
+          bioBtnText.innerHTML = '<i class="fas fa-fingerprint" style="margin-right:6px"></i> Sign in with Biometrics';
+          bioBtn.style.pointerEvents = ''; bioBtn.style.opacity = '';
+          if (e.name === 'NotAllowedError') {
+            if (!silent) {
+              document.getElementById('password').focus();
+            }
+            return;
+          }
+          if (!silent) {
+            errorAlert.textContent = e.message || 'Biometric login failed. Use your password instead.';
+            errorAlert.style.display = 'block';
+          }
+        }
+      } catch (e) {
+        _biometricLoginInProgress = false;
+        bioBtnText.innerHTML = '<i class="fas fa-fingerprint" style="margin-right:6px"></i> Sign in with Biometrics';
+        bioBtn.style.pointerEvents = ''; bioBtn.style.opacity = '';
+      }
+    }
+
+    document.getElementById('bioLoginBtn').addEventListener('click', () => {
+      const identifier = document.getElementById('identifier').value.trim()
+        || localStorage.getItem('ab_bio_identifier')
+        || '';
+      triggerBiometricLogin(identifier, false);
+    });
+
+    const identifierInput = document.getElementById('identifier');
+    let _bioCheckTimer = null;
+    function onIdentifierChange(val) {
+      if (!_deviceHasBiometric || !val || val.length < 3) return;
+      showBioButton();
+    }
+    identifierInput.addEventListener('blur', () => {
+      clearTimeout(_bioCheckTimer);
+      onIdentifierChange(identifierInput.value.trim());
     });
     identifierInput.addEventListener('input', () => {
-        clearTimeout(_biometricCheckTimer);
-        const val = identifierInput.value.trim();
-        if (val.length >= 3) {
-            _biometricCheckTimer = setTimeout(() => checkAndPromptBiometric(val), 1200);
-        }
+      clearTimeout(_bioCheckTimer);
+      const val = identifierInput.value.trim();
+      if (val.length >= 3) _bioCheckTimer = setTimeout(() => onIdentifierChange(val), 600);
     });
 
     document.getElementById('togglePwd').addEventListener('click', () => {

@@ -50,7 +50,7 @@ The user-facing pages feature a premium gold/dark theme with a unified aesthetic
 
 ### Feature Specifications
 - **PWA:** Installable, offline functionality for static pages, network-first with cache fallback for dynamic content.
-- **Auth:** JWT for users, HTTP-only cookies for admins, super admin access via secret path, invite-based sub-admin creation.
+- **Auth:** JWT for users, HTTP-only cookies for admins, super admin access via secret path, invite-based sub-admin creation. WebAuthn/biometric login (fingerprint/Face ID) via `@simplewebauthn/server` + browser. Users enable from Profile toggle; login page shows "Sign in with Biometrics" button and auto-prompts returning users. Identifier stored in `ab_bio_identifier` localStorage key.
 - **Admin Management:** APIs for sub-admin creation, listing, updating, and deletion.
 - **Product Display:** Detailed product cards, admin-side estimated return calculator, tracking of `used_units`.
 - **Collection History:** Per-investment and overall collection history for users.
