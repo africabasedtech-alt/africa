@@ -79,12 +79,22 @@ const emailTransporter = nodemailer.createTransport({
 });
 
 async function sendMail({ to, subject, html }) {
+  if (!to) { console.error('Email send skipped: no recipient'); return false; }
+  if (!process.env.GMAIL_APP_PASSWORD) { console.error('Email send skipped: GMAIL_APP_PASSWORD not set'); return false; }
   try {
-    await emailTransporter.sendMail({ from: `"AfricaBased" <${GMAIL_USER}>`, to, subject, html });
+    const info = await emailTransporter.sendMail({ from: `"AfricaBased" <${GMAIL_USER}>`, to, subject, html });
+    console.log(`Email sent OK → ${to} | Subject: "${subject}" | MessageId: ${info.messageId}`);
+    return true;
   } catch (err) {
-    console.error('Email send error:', err.message);
+    console.error(`Email send FAILED → ${to} | Subject: "${subject}" | Error: ${err.message} | Code: ${err.code || 'none'}`);
+    return false;
   }
 }
+
+emailTransporter.verify((err) => {
+  if (err) console.error('SMTP connection FAILED on startup:', err.message);
+  else console.log('SMTP email connection verified OK');
+});
 
 function welcomeEmailHtml(username) {
   return `
@@ -250,9 +260,10 @@ function generateOtp() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-function otpEmailHtml(username, otp, email) {
+function otpEmailHtml(username, otp, email, reqHost) {
   const encodedEmail = encodeURIComponent(email || '');
-  const verifyLink = `https://africabasedtech.com/?otp=${otp}&email=${encodedEmail}`;
+  const baseUrl = reqHost ? `https://${reqHost}` : 'https://africabasedtech.com';
+  const verifyLink = `${baseUrl}/?otp=${otp}&email=${encodedEmail}`;
   return `
   <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;background:#0d1b2a;color:#e0e0e0;border-radius:10px;overflow:hidden">
     <div style="background:linear-gradient(135deg,#0a9e8c,#0d7a6e);padding:36px 30px;text-align:center">
@@ -453,7 +464,7 @@ app.post('/api/auth/send-otp', otpLimiter, async (req, res) => {
     await sendMail({
       to: email,
       subject: 'Your AfricaBased verification code',
-      html: otpEmailHtml(username, otp, email)
+      html: otpEmailHtml(username, otp, email, req.get('host'))
     });
 
     res.json({ success: true, message: 'Verification code sent to ' + email });
@@ -645,8 +656,8 @@ app.post('/api/auth/forgot-password', forgotLimiter, async (req, res) => {
     const expires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
     await pool.query('UPDATE users SET reset_token=$1, reset_token_expires=$2 WHERE id=$3', [token, expires, user.id]);
 
-    const host = 'africabasedtech.com';
-    const proto = req.headers['x-forwarded-proto'] || 'https';
+    const host = req.get('host') || 'africabasedtech.com';
+    const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
     const resetLink = `${proto}://${host}/reset-password?token=${token}`;
 
     sendMail({
