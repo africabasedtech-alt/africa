@@ -29,24 +29,22 @@
         deferredPrompt = null;
         hideBanner();
       });
-    } else if (isInstalled) {
-      if (typeof showToast === 'function') showToast('App is already installed!', 'info');
-      else alert('App is already installed!');
     } else {
-      var ua = navigator.userAgent || '';
-      if (/iPhone|iPad|iPod/.test(ua)) {
-        if (typeof showToast === 'function') showToast('Tap the Share button, then "Add to Home Screen"', 'info');
-        else alert('Tap the Share button, then "Add to Home Screen"');
-      } else {
-        if (typeof showToast === 'function') showToast('Open this site in your browser and tap "Add to Home Screen"', 'info');
-        else alert('Open this site in your browser and tap "Add to Home Screen"');
-      }
+      var link = document.createElement('a');
+      link.href = '/manifest.json';
+      link.setAttribute('rel', 'manifest');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(function() {
+        if (typeof showToast === 'function') showToast('If install did not start, tap your browser menu and select "Add to Home Screen" or "Install App"', 'info');
+        else alert('If install did not start, tap your browser menu and select "Add to Home Screen" or "Install App"');
+      }, 1500);
     }
   };
 
   function showInstallBanner() {
     if (document.getElementById('ab-install-banner')) return;
-    if (isInstalled) return;
     var banner = document.createElement('div');
     banner.id = 'ab-install-banner';
     banner.style.cssText = [
