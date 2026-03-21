@@ -150,92 +150,70 @@
 
     /* ═══ FEATURED CARD ═══ */
     .feat{
-      margin:0 14px 14px;border-radius:18px;
-      background:linear-gradient(160deg,#0a1e12 0%,#0c1828 50%,#1a1408 100%);
-      border:1px solid rgba(212,160,23,0.25);
+      margin:0 14px 14px;border-radius:16px;
+      background:var(--card-bg);
+      border:1px solid rgba(212,160,23,0.12);
       overflow:hidden;
-      box-shadow:0 6px 30px rgba(0,0,0,0.45),0 0 20px rgba(212,160,23,0.04);
+      box-shadow:0 4px 20px rgba(0,0,0,0.3);
     }
-    .feat-top{display:flex}
+    .feat-img-wrap{
+      position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;
+    }
     .feat-img{
-      width:125px;min-width:125px;height:125px;
-      object-fit:cover;border-radius:14px;
-      margin:14px 0 14px 14px;
-      border:1px solid rgba(212,160,23,0.15);
+      width:100%;height:100%;object-fit:cover;
+      display:block;
     }
     .feat-img-ph{
-      width:125px;min-width:125px;height:125px;
-      border-radius:14px;margin:14px 0 14px 14px;
+      width:100%;height:100%;
       background:linear-gradient(135deg,#1a3a22,#2d6a4f);
       display:flex;align-items:center;justify-content:center;
       font-size:2.6rem;
-      border:1px solid rgba(212,160,23,0.15);
     }
-    .feat-info{flex:1;padding:16px 14px 12px 12px;display:flex;flex-direction:column;justify-content:center}
-    .feat-name{
-      font-size:.95rem;font-weight:900;color:#fff;
-      text-transform:uppercase;letter-spacing:.5px;
-      line-height:1.2;margin-bottom:8px;
+    .feat-img-overlay{
+      position:absolute;bottom:0;left:0;right:0;
+      height:60%;
+      background:linear-gradient(0deg, rgba(13,21,32,0.95) 0%, rgba(13,21,32,0.5) 50%, transparent 100%);
+      pointer-events:none;
     }
-    .feat-stat{font-size:.78rem;color:rgba(255,255,255,0.55);margin-bottom:3px}
-    .feat-stat b{color:var(--gold-bright);font-weight:700}
-    .feat-foot{padding:12px 14px 16px;border-top:1px solid rgba(212,160,23,0.1)}
-    .units-line{display:flex;align-items:center;gap:5px;font-size:.76rem;color:rgba(255,255,255,0.5);margin-bottom:8px;flex-wrap:wrap}
-    .units-line .hl{color:rgba(255,255,255,0.85);font-weight:600}
-    .pbar{background:rgba(255,255,255,0.06);border-radius:5px;height:6px;margin-bottom:14px;overflow:hidden}
-    .pbar-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,#22c55e,var(--gold-bright));transition:width .6s;box-shadow:0 0 8px rgba(212,160,23,0.3)}
-    .invest-btn{
-      display:flex;align-items:center;justify-content:space-between;
-      width:100%;padding:13px 16px;border-radius:14px;
-      background:linear-gradient(135deg,#1a6b2a 0%,#22a040 50%,#1a6b2a 100%);
-      border:1.5px solid rgba(212,160,23,0.3);
-      cursor:pointer;
-      box-shadow:0 4px 20px rgba(34,160,64,0.35),0 0 15px rgba(212,160,23,0.08);
-      transition:transform .15s;
-    }
-    .invest-btn:active{transform:scale(0.97)}
-    .invest-btn .bl{display:flex;align-items:center;gap:10px}
-    .invest-btn .lc{
-      width:34px;height:34px;border-radius:50%;
-      background:linear-gradient(135deg,rgba(212,160,23,0.3),rgba(212,160,23,0.1));
-      display:flex;align-items:center;justify-content:center;
-      font-size:1rem;font-weight:900;color:var(--gold-bright);
-      border:2px solid rgba(212,160,23,0.5);
-      box-shadow:0 0 10px rgba(212,160,23,0.2);
-    }
-    .invest-btn .bt{font-size:1rem;font-weight:800;color:#fff;letter-spacing:.3px}
-    .invest-btn .br{
-      width:32px;height:32px;border-radius:8px;
+    .feat-badge{
+      position:absolute;top:10px;left:10px;
+      padding:4px 10px;border-radius:8px;
       background:rgba(212,160,23,0.15);border:1px solid rgba(212,160,23,0.3);
-      display:flex;align-items:center;justify-content:center;
-      color:var(--gold-bright);font-size:.85rem;
+      backdrop-filter:blur(8px);
+      font-size:.68rem;font-weight:700;color:var(--gold-bright);
+      text-transform:uppercase;letter-spacing:.3px;
     }
+    .feat-info{padding:14px 16px 16px;display:flex;flex-direction:column;gap:4px;}
+    .feat-name{
+      font-size:.95rem;font-weight:800;color:#fff;
+      letter-spacing:.3px;line-height:1.3;
+    }
+    .feat-stat{font-size:.78rem;color:rgba(255,255,255,0.5);margin:0;line-height:1.5}
+    .feat-stat b{color:var(--gold-bright);font-weight:700}
 
     /* ═══ PRODUCT LIST ═══ */
-    .plist{padding:0 14px;display:flex;flex-direction:column;gap:10px}
+    .plist{padding:0 14px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .plcard{
       border-radius:14px;background:rgba(10,16,28,0.95);
-      border:1px solid rgba(212,160,23,0.12);overflow:hidden;cursor:pointer;
-      box-shadow:0 3px 16px rgba(0,0,0,0.3);transition:transform .2s,border-color .2s;
+      border:1px solid rgba(212,160,23,0.08);overflow:hidden;
+      box-shadow:0 3px 16px rgba(0,0,0,0.25);
     }
-    .plcard:active{transform:translateY(-1px);border-color:rgba(212,160,23,0.3)}
-    .pl-top{display:flex}
-    .pl-img{width:90px;min-width:90px;height:90px;object-fit:cover;border-radius:10px;margin:10px 0 10px 10px}
-    .pl-img-ph{width:90px;min-width:90px;height:90px;border-radius:10px;margin:10px 0 10px 10px;background:linear-gradient(135deg,#1a2e3a,#0f172a);display:flex;align-items:center;justify-content:center;font-size:1.8rem}
-    .pl-info{flex:1;padding:10px 12px 8px 8px}
-    .pl-name{font-size:.82rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:4px}
-    .pl-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:3px}
-    .tag{font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:12px}
-    .tag-price{background:rgba(212,160,23,0.12);color:var(--gold-bright);border:1px solid rgba(212,160,23,0.25)}
-    .tag-daily{background:rgba(74,222,128,0.1);color:#4ade80;border:1px solid rgba(74,222,128,0.2)}
-    .tag-dur{background:rgba(129,140,248,0.1);color:#818cf8;border:1px solid rgba(129,140,248,0.2)}
-    .tag-free{display:none}
-    .pl-cat{font-size:.7rem;color:rgba(255,255,255,0.4)}
-    .pl-foot{padding:0 10px 10px}
-    .pl-btn{width:100%;padding:9px;border-radius:10px;border:none;font-size:.82rem;font-weight:700;cursor:pointer;color:#fff;transition:opacity .2s}
-    .pl-btn:active{opacity:.8}
-    .pl-btn.paid{background:var(--green-btn);box-shadow:0 3px 12px rgba(34,160,64,0.3)}
-    .pl-btn.free{display:none}
+    .pl-img-wrap{
+      position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;
+    }
+    .pl-img{width:100%;height:100%;object-fit:cover;display:block}
+    .pl-img-ph{width:100%;height:100%;background:linear-gradient(135deg,#1a2e3a,#0f172a);display:flex;align-items:center;justify-content:center;font-size:1.8rem}
+    .pl-img-grad{
+      position:absolute;bottom:0;left:0;right:0;height:50%;
+      background:linear-gradient(0deg, rgba(10,16,28,0.9) 0%, transparent 100%);
+      pointer-events:none;
+    }
+    .pl-info{padding:10px 12px 12px}
+    .pl-name{font-size:.78rem;font-weight:700;color:#fff;line-height:1.3;margin-bottom:6px}
+    .pl-tags{display:flex;flex-wrap:wrap;gap:4px}
+    .tag{font-size:.65rem;font-weight:600;padding:2px 7px;border-radius:10px}
+    .tag-price{background:rgba(212,160,23,0.12);color:var(--gold-bright);border:1px solid rgba(212,160,23,0.2)}
+    .tag-daily{background:rgba(74,222,128,0.1);color:#4ade80;border:1px solid rgba(74,222,128,0.15)}
 
     /* ═══ TESTIMONIALS ═══ */
     .tcard{background:rgba(10,16,28,0.9);border-radius:14px;padding:14px;border:1px solid rgba(212,160,23,0.1);box-shadow:0 3px 14px rgba(0,0,0,0.25)}
@@ -294,7 +272,7 @@
     .mc{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6)}
     .mo{background:var(--green-btn);color:#fff;box-shadow:0 4px 14px rgba(34,160,64,0.35)}
 
-    @media(min-width:700px){.plist{display:grid;grid-template-columns:1fr 1fr}}
+    @media(min-width:700px){.plist{grid-template-columns:1fr 1fr 1fr}}
     @media(min-width:1024px){body{max-width:480px;margin:0 auto;box-shadow:0 0 80px rgba(0,0,0,.5)}}
   </style>
 </head>
@@ -396,26 +374,29 @@
       const pr=parseFloat(p.price)||0;
       const img=p.image?`<img class="feat-img" src="${p.image}" alt="${p.name}" onerror="this.outerHTML='<div class=\\'feat-img-ph\\'>🌿</div>'">`:`<div class="feat-img-ph">🌿</div>`;
       const desc=p.description||'';
-      return`<div class="feat" onclick="window.location.href='/products'" style="cursor:pointer"><div class="feat-top">${img}<div class="feat-info">
+      return`<div class="feat"><div class="feat-img-wrap">
+        ${img}<div class="feat-img-overlay"></div>
+        ${p.category?`<div class="feat-badge">${p.category.charAt(0).toUpperCase()+p.category.slice(1)}</div>`:''}
+      </div><div class="feat-info">
         <div class="feat-name">${p.name}</div>
-        ${desc?`<div class="feat-stat" style="line-height:1.4;color:rgba(255,255,255,0.6)">${desc}</div>`:''}
+        ${desc?`<div class="feat-stat">${desc}</div>`:''}
         ${pr>0?`<div class="feat-stat">Price: <b>KES ${fmt(pr)}</b></div>`:''}
-        ${p.category?`<div class="feat-stat" style="color:var(--gold)">${p.category.charAt(0).toUpperCase()+p.category.slice(1)}</div>`:''}
-      </div></div></div>`;
+      </div></div>`;
     }
 
     function buildCard(p,ap){
       const pr=parseFloat(p.price)||0;
       const desc=p.description||'';
       const img=p.image?`<img class="pl-img" src="${p.image}" alt="${p.name}" onerror="this.outerHTML='<div class=\\'pl-img-ph\\'>📈</div>'">`:`<div class="pl-img-ph">📈</div>`;
-      return`<div class="plcard" onclick="window.location.href='/products'" style="cursor:pointer"><div class="pl-top">${img}<div class="pl-info">
+      return`<div class="plcard"><div class="pl-img-wrap">
+        ${img}<div class="pl-img-grad"></div>
+      </div><div class="pl-info">
         <div class="pl-name">${p.name}</div>
-        ${desc?`<div class="pl-desc" style="font-size:.75rem;color:rgba(255,255,255,0.5);line-height:1.4;margin:4px 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${desc}</div>`:''}
         <div class="pl-tags">
           ${pr>0?`<span class="tag tag-price">KES ${fmt(pr)}</span>`:''}
           ${p.category?`<span class="tag tag-daily">${p.category.charAt(0).toUpperCase()+p.category.slice(1)}</span>`:''}
         </div>
-      </div></div></div>`;
+      </div></div>`;
     }
 
     let _a=[],_ap=[],_c='all';
