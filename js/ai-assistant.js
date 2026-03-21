@@ -3,119 +3,138 @@
 
   var currentPage = window.location.pathname.replace(/\.html$/, '').replace(/^\//, '') || 'index';
   var isLoggedIn = !!(window.getABToken && window.getABToken());
+  var userName = '';
+  var conversationHistory = [];
+  var aiAvailable = true;
+
+  if (isLoggedIn) {
+    try {
+      var token = window.getABToken();
+      fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r) { return r.json(); })
+        .then(function(d) { if (d && d.username) userName = d.username; })
+        .catch(function() {});
+    } catch(e) {}
+  }
 
   var KB = [
     {
       keys: ['hello','hi','hey','help','assist','support','start'],
-      answer: "Hello! I'm your AfricaBased assistant. I can help you with:\n\n• Registration & Login\n• Investing in products\n• Deposits & Withdrawals\n• Referrals & Commissions\n• Exchange codes\n• Account settings\n\nWhat would you like to know?"
+      answer: function() { return "Hello" + (userName ? ", " + userName : "") + "! I'm AB Assistant, your personal guide on AfricaBased. I can help you with:\n\n• Investing in products & earning daily returns\n• Deposits & Withdrawals via M-Pesa\n• Building your referral network & earning commissions\n• Exchange codes & account management\n\nWhat would you like to know?"; }
     },
     {
       keys: ['register','sign up','create account','join','signup','new account','registration'],
-      answer: "To create an account:\n\n1. Enter your username, email, and password on the <a href='/'>registration page</a>\n2. If you have a referral code, enter it to connect with your referrer\n3. Click Register — you'll receive an OTP code via email\n4. Enter the OTP to verify your account\n5. Add your phone number (or skip for later)\n\nYou'll then be taken to your dashboard!"
+      answer: function() { return "To create an account:\n\n1. Enter your username, email, and password on the <a href='/'>registration page</a>\n2. If you have a referral code, enter it to connect with your referrer\n3. Click Register — you'll receive an OTP code via email\n4. Enter the OTP to verify your account\n\nOnce you're in, I recommend depositing funds and investing right away — the sooner you start, the sooner you earn daily returns!"; }
     },
     {
       keys: ['login','log in','sign in','cant login','password wrong','access','signin'],
-      answer: "To log in, go to the <a href='/login'>Login page</a> and enter your email and password.\n\nForgot your password? Use the <a href='/forgot-password'>Forgot Password</a> link to reset it via email.\n\nIf you're still having trouble, make sure you verified your email during registration."
+      answer: function() { return "To log in, go to the <a href='/login'>Login page</a> and enter your email and password.\n\nForgot your password? Use the <a href='/forgot-password'>Forgot Password</a> link to reset it via email.\n\nIf you're still having trouble, make sure you verified your email during registration."; }
     },
     {
-      keys: ['invest','product','buy','purchase','how to invest','investing','plans','packages'],
-      answer: "To invest in a product:\n\n1. Go to the <a href='/products'>Products page</a>\n2. Browse available investments by sector\n3. Click <b>Invest</b> on your chosen product\n4. Select your balance source (Deposit or Earnings)\n5. Choose the number of units\n6. Confirm your investment\n\nFree/promo products can be activated at no cost — just click <b>Get Free</b>!\n\nAfter investing, collect your daily returns from <a href='/My-products'>My Products</a>."
-    },
-    {
-      keys: ['free product','promo','free','get free','promotional','bonus product'],
-      answer: "Promo products are free investment opportunities! Look for products marked <b>FREE</b> or with a <b>Get Free</b> button.\n\nSimply click <b>Get Free</b> to activate — no deposit needed. You'll earn daily returns that you can collect from <a href='/My-products'>My Products</a>.\n\nKeep an eye out for new promos!"
+      keys: ['invest','product','buy','purchase','how to invest','investing','plans','packages','opportunity','opportunities'],
+      answer: function() { return (userName ? userName + ", g" : "G") + "reat question! Investing on AfricaBased is simple:\n\n1. Go to the <a href='/products'>Products page</a>\n2. Browse investments across Agriculture, Technology, Real Estate, Energy & more\n3. Click <b>Invest</b> on your chosen product\n4. Select your balance source & number of units\n5. Confirm and start earning!\n\nYou'll earn daily returns that you can collect from <a href='/My-products'>My Products</a>. I recommend diversifying across sectors for the best results. The earlier you invest, the sooner your money works for you!"; }
     },
     {
       keys: ['collect','daily return','earnings','income','daily income','my products','my investments','returns'],
-      answer: "To collect your daily returns:\n\n1. Go to <a href='/My-products'>My Products</a>\n2. Find your active investments\n3. Click the <b>Collect</b> button when it's available\n\nYou can collect once every 24 hours per investment. Collected earnings go to your <b>Earnings Balance</b> which you can withdraw or reinvest.\n\n<b>Note:</b> Sunday is maintenance day — collections are paused."
+      answer: function() { return "To collect your daily returns:\n\n1. Go to <a href='/My-products'>My Products</a>\n2. Find your active investments\n3. Click the <b>Collect</b> button when available\n\nYou can collect once every 24 hours per investment. Earnings go to your <b>Earnings Balance</b> which you can withdraw or reinvest.\n\n<b>Note:</b> Sundays are maintenance days — collections resume on Monday.\n\n💡 <b>Pro tip:</b> Reinvesting your earnings into more products compounds your growth! And don't forget to invite friends — their investments earn you commissions too!"; }
     },
     {
       keys: ['deposit','add money','fund','top up','mpesa','m-pesa','paybill','recharge','add funds'],
-      answer: "To deposit funds:\n\n1. Go to <a href='/deposit'>Deposit page</a>\n2. Choose <b>Auto Deposit</b> (M-Pesa STK push) or <b>Manual Deposit</b>\n3. Enter the amount you wish to deposit\n4. Follow the payment instructions\n\n<b>Auto Deposit:</b> You'll receive an M-Pesa prompt on your phone — just enter your PIN.\n<b>Manual Deposit:</b> Send to the provided Paybill/Till number, then submit your confirmation code for admin approval.\n\nDeposits go to your <b>Deposit Balance</b> for investing."
+      answer: function() { return "To deposit funds:\n\n1. Go to <a href='/deposit'>Deposit page</a>\n2. Choose <b>Auto Deposit</b> (M-Pesa STK push) or <b>Manual Deposit</b>\n3. Enter the amount\n4. Follow the payment instructions\n\n<b>Auto Deposit:</b> You'll receive an M-Pesa prompt — just enter your PIN.\n<b>Manual Deposit:</b> Send to the provided Paybill/Till, then submit your confirmation code.\n\nDeposits go to your <b>Deposit Balance</b> — head to <a href='/products'>Products</a> to invest and start earning!"; }
     },
     {
       keys: ['withdraw','cash out','take money','withdrawal','withdraw money','payout','withdraw funds'],
-      answer: "To withdraw your earnings:\n\n1. Go to <a href='/withdraw'>Withdraw page</a>\n2. Enter the amount (from your <b>Earnings Balance</b>)\n3. Confirm your M-Pesa phone number\n4. Submit the request\n\nWithdrawals are processed by admin and sent to your registered M-Pesa number. Only your <b>Earnings Balance</b> (not deposit balance) is withdrawable.\n\nMinimum withdrawal amounts may apply."
+      answer: function() { return "To withdraw your earnings:\n\n1. Go to <a href='/withdraw'>Withdraw page</a>\n2. Enter the amount from your <b>Earnings Balance</b>\n3. Confirm your M-Pesa number\n4. Submit the request\n\nWithdrawals are processed by admin and sent to your M-Pesa. Only <b>Earnings Balance</b> (not deposit balance) is withdrawable.\n\n💡 Consider reinvesting some earnings into more products to grow your portfolio!"; }
     },
     {
-      keys: ['referral','refer','invite','friend','commission','referral code','share','earn from friends','downline'],
-      answer: "The AfricaBased referral program lets you earn commissions!\n\n1. Go to <a href='/referrals'>Referrals page</a> to get your unique referral link\n2. Share it with friends\n3. Earn commissions when your referrals invest:\n   • <b>Level 1</b> (direct): 10%\n   • <b>Level 2</b>: 6%\n   • <b>Level 3</b>: 1%\n\n<b>Requirements:</b> You need an active investment + at least 5 active direct referrals (Basic level) to start earning commissions.\n\nCollect your commissions from the Referrals page."
+      keys: ['referral','refer','invite','friend','commission','referral code','share','earn from friends','downline','network','team'],
+      answer: function() { return (userName ? userName + ", b" : "B") + "uilding your referral network is one of the smartest moves on AfricaBased! Here's why:\n\n<b>Commission Rates:</b>\n• <b>Level 1</b> (direct referrals): <b>10%</b> commission\n• <b>Level 2</b> (their referrals): <b>6%</b> commission\n• <b>Level 3</b>: <b>1%</b> commission\n\n<b>Requirements:</b> Active investment + 5 active direct referrals (Basic level) to start earning.\n\n<b>Membership Levels:</b>\n• Active — Have an investment\n• Basic (5+) — Commissions unlocked!\n• Premium (60+) — Growing leader\n• Gold (300+) — Top earner\n\nEvery person you invite who invests becomes a source of <b>daily passive income</b> for you! Share your referral link from the <a href='/referrals'>Referrals page</a> with friends, family, and on social media. The more downlines you build, the more you earn — even while you sleep! 🚀"; }
     },
     {
       keys: ['exchange','code','redeem','exchange code','voucher','gift code','coupon'],
-      answer: "Exchange codes are special vouchers that add funds to your account!\n\nTo redeem:\n1. Go to <a href='/exchange'>Exchange page</a>\n2. Enter your code (e.g., RC-XXXXX)\n3. Click <b>Redeem</b>\n\nThe amount will be added to your balance. Codes may have limits on how many users can redeem them, so use them quickly!\n\nYour redemption history is shown on the Exchange page."
+      answer: function() { return "Exchange codes are special vouchers that add funds to your account!\n\n1. Go to <a href='/exchange'>Exchange page</a>\n2. Enter your code (e.g., RC-XXXXX)\n3. Click <b>Redeem</b>\n\nThe amount is added to your balance instantly. Codes have limited uses, so redeem quickly!\n\nOnce redeemed, head to <a href='/products'>Products</a> to invest those funds and start earning!"; }
     },
     {
       keys: ['profile','account','settings','phone','password change','update','avatar','edit profile'],
-      answer: "Manage your account on the <a href='/profile'>Profile page</a>:\n\n• Update your username and avatar\n• Change your M-Pesa phone number\n• Update your password\n• View your account details\n\nYour M-Pesa phone number is used for deposits and withdrawals, so keep it up to date!"
+      answer: function() { return "Manage your account on the <a href='/profile'>Profile page</a>:\n\n• Update your username and avatar\n• Change your M-Pesa phone number\n• Update your password\n• Access WhatsApp support groups\n• View your membership level\n\nKeep your M-Pesa phone number up to date — it's used for deposits and withdrawals!"; }
     },
     {
       keys: ['statistics','stats','balance','how much','total','overview','dashboard'],
-      answer: "View all your financial details on the <a href='/statistics'>Statistics page</a>:\n\n• <b>Deposit Balance</b> — available funds for investing\n• <b>Earnings Balance</b> — withdrawable earnings\n• <b>Total Assets</b> — value of active investments\n• <b>Total Earnings</b> — with commission & redemption breakdown\n• <b>Today's Income</b> — collections today\n• <b>Total Deposits & Withdrawals</b>\n\nPlus a full transaction history at the bottom!"
+      answer: function() { return "View all your financial details on the <a href='/statistics'>Statistics page</a>:\n\n• <b>Deposit Balance</b> — funds for investing\n• <b>Earnings Balance</b> — withdrawable earnings\n• <b>Total Assets</b> — active investment value\n• <b>Today's Income</b> — collected today\n• <b>Transaction History</b> — full log\n\n" + (userName ? userName + ", i" : "I") + "f you have idle balance sitting there, consider investing it in a product to make it work for you!"; }
     },
     {
       keys: ['safe','secure','security','trust','legitimate','legit','scam','fraud'],
-      answer: "AfricaBased takes security seriously:\n\n• All passwords are encrypted\n• Email verification (OTP) on registration\n• JWT-based authentication tokens\n• Admin-approved deposits and withdrawals\n\nFor your safety:\n• Never share your password\n• Use a strong, unique password\n• Keep your M-Pesa PIN private\n• Only use official AfricaBased links"
+      answer: function() { return "AfricaBased takes security seriously:\n\n• All passwords are encrypted\n• Email verification (OTP) on registration\n• Secure JWT authentication\n• Admin-approved deposits and withdrawals\n• Biometric login option available\n\nFor your safety: never share your password, use a strong unique password, and keep your M-Pesa PIN private."; }
     },
     {
       keys: ['maintenance','sunday','not working','error','problem','issue','bug','down'],
-      answer: "A few things to check:\n\n• <b>Sundays</b> are maintenance days — daily income collection is paused\n• Make sure you have a stable internet connection\n• Try refreshing the page\n• Clear your browser cache if issues persist\n\nIf the problem continues, reach out via the <a href='/Services'>Support page</a> for WhatsApp assistance."
+      answer: function() { return "A few things to check:\n\n• <b>Sundays</b> are maintenance days — income collection is paused\n• Make sure you have stable internet\n• Try refreshing the page\n• Clear your browser cache if issues persist\n\nIf the problem continues, reach out via the WhatsApp support on your <a href='/profile'>Profile page</a>."; }
     },
     {
       keys: ['contact','whatsapp','support team','talk to someone','human','agent','customer service'],
-      answer: "Need to talk to our team?\n\nVisit the <a href='/Services'>Services page</a> to find:\n• WhatsApp support groups\n• Direct manager contacts\n\nOur support team is available to help with account issues, deposit confirmations, and more."
+      answer: function() { return "Need to talk to our team?\n\nVisit your <a href='/profile'>Profile page</a> and scroll to the <b>Connect</b> section to find:\n• WhatsApp support groups\n• Direct manager contacts\n\nOur support team is ready to help!"; }
     },
     {
       keys: ['membership','level','basic','premium','gold','tier','rank'],
-      answer: "AfricaBased has membership levels based on your active direct referrals:\n\n• <b>Active</b> — You have an investment (default)\n• <b>Basic</b> — 5+ active referrals (commissions start!)\n• <b>Premium</b> — 60+ active referrals\n• <b>Gold</b> — 300+ active referrals\n\nHigher levels unlock commission earnings from your referral network. Check your level on the <a href='/referrals'>Referrals page</a>."
+      answer: function() { return "AfricaBased membership levels are based on your total active downlines:\n\n• <b>Active</b> — You have an investment\n• <b>Basic</b> (5+) — Commissions unlocked! 🎉\n• <b>Premium</b> (60+) — Growing network leader\n• <b>Gold</b> (300+) — Top earner status\n\n" + (userName ? userName + ", t" : "T") + "he key to climbing levels is building your referral network. Each active referral counts toward your tier. Invite friends, help them invest, and watch your passive income grow!"; }
     },
     {
       keys: ['forgot password','reset password','cant remember','lost password'],
-      answer: "To reset your password:\n\n1. Go to the <a href='/forgot-password'>Forgot Password page</a>\n2. Enter your registered email\n3. Check your inbox for the reset link\n4. Click the link and set a new password\n\nIf you don't receive the email, check your spam folder."
+      answer: function() { return "To reset your password:\n\n1. Go to the <a href='/forgot-password'>Forgot Password page</a>\n2. Enter your registered email\n3. Check your inbox for the reset link\n4. Click the link and set a new password\n\nCheck spam folder if you don't see the email."; }
+    },
+    {
+      keys: ['money','make money','earn','how to earn','income','passive','passive income','strategy'],
+      answer: function() { return (userName ? userName + ", h" : "H") + "ere's how to maximize your earnings on AfricaBased:\n\n<b>1. Invest in Products</b>\nBrowse <a href='/products'>Products</a> across multiple sectors. Each product earns you daily returns!\n\n<b>2. Collect Daily</b>\nVisit <a href='/My-products'>My Products</a> every day to collect your income.\n\n<b>3. Build Your Team</b>\nThis is the game-changer! Share your referral link and earn:\n• 10% from Level 1 referrals\n• 6% from Level 2\n• 1% from Level 3\n\n<b>4. Reinvest Earnings</b>\nCompound your growth by reinvesting collected earnings into more products.\n\nThe most successful users combine active investing with a strong referral network. Start building yours today from the <a href='/referrals'>Referrals page</a>! 🚀"; }
     },
     {
       keys: ['terms','conditions','rules','policy','tos'],
-      answer: "You can read our full terms and conditions on the <a href='/terms'>Terms page</a>.\n\nKey points:\n• Investments have specific hold periods\n• Daily collections are available every 24 hours\n• Sundays are maintenance days\n• Withdrawals require admin approval"
+      answer: function() { return "You can read our full terms on the <a href='/terms'>Terms page</a>.\n\nKey points:\n• Investments have specific hold periods\n• Daily collections available every 24 hours\n• Sundays are maintenance days\n• Withdrawals require admin approval"; }
+    },
+    {
+      keys: ['who are you','what are you','your name','about you','tell me about yourself'],
+      answer: function() { return "I'm <b>AB Assistant</b>" + (userName ? ", and it's great to chat with you, " + userName : "") + "! I'm your personal AI guide on the AfricaBased investment platform.\n\nI'm here 24/7 to help you:\n• Navigate the platform\n• Understand investment opportunities\n• Learn about the referral program\n• Troubleshoot any issues\n\nThink of me as your investment companion — I'm always here to help you make the most of AfricaBased! What would you like to know?"; }
     }
   ];
 
   var pageSuggestions = {
-    'index': ['How do I register?', 'Is it safe?', 'What can I invest in?', 'Referral program'],
+    'index': ['How do I register?', 'How can I earn?', 'What can I invest in?', 'Tell me about referrals'],
     'login': ['Forgot password', 'How to register', 'Help me log in'],
-    'home': ['How to invest', 'My Products', 'Deposit funds', 'Check statistics'],
-    'products': ['How to invest', 'Free products', 'Collect returns', 'My investments'],
-    'My-products': ['How to collect', 'Invest more', 'View statistics'],
-    'deposit': ['How to deposit', 'M-Pesa help', 'Deposit not showing?'],
+    'home': ['How to invest', 'How to earn more', 'Referral program', 'Check statistics'],
+    'products': ['How to invest', 'Best strategy', 'Collect returns', 'Build my team'],
+    'My-products': ['How to collect', 'Invest more', 'Why build downlines?'],
+    'deposit': ['How to deposit', 'M-Pesa help', 'What to do after deposit?'],
     'auto-deposit': ['How does auto deposit work?', 'M-Pesa help'],
     'manual-deposit': ['How does manual deposit work?', 'Contact support'],
-    'withdraw': ['How to withdraw', 'Minimum withdrawal?', 'Withdrawal pending?'],
-    'referrals': ['How referrals work', 'Commission rates', 'Membership levels'],
+    'withdraw': ['How to withdraw', 'Reinvest earnings?', 'Build passive income'],
+    'referrals': ['How referrals work', 'Commission rates', 'How to get more referrals'],
     'exchange': ['How to redeem', 'Exchange code help'],
-    'profile': ['Update phone', 'Change password', 'Edit profile'],
-    'statistics': ['What is each balance?', 'Total earnings explained'],
+    'profile': ['Update phone', 'Change password', 'My membership level'],
+    'statistics': ['What is each balance?', 'How to earn more', 'Investment strategy'],
     'forgot-password': ['Reset password help', 'Contact support'],
     'Services': ['Contact support', 'WhatsApp help']
   };
 
-  var welcomeMessages = {
-    'index': "Welcome to AfricaBased! I can help you get started with registration, explain our investment platform, or answer any questions.",
-    'login': "Welcome back! Need help logging in, or want to reset your password? I'm here to help.",
-    'home': "Hi there! Want to explore investment products, check your earnings, or learn about our referral program?",
-    'products': "Browsing investments? I can explain how investing works, tell you about free products, or help you choose.",
-    'My-products': "This is where you manage your investments. Need help collecting daily returns or understanding your progress?",
-    'deposit': "Ready to add funds? I can walk you through the deposit process step by step.",
-    'withdraw': "Need to cash out? I can explain how withdrawals work and what to expect.",
-    'referrals': "Want to grow your network? I can explain commission rates, membership levels, and how to maximize earnings.",
-    'exchange': "Have an exchange code? I can help you redeem it. Just ask!",
-    'statistics': "Looking at your finances? I can explain each balance, commission totals, and your transaction history.",
-    'profile': "Managing your account? I can help with updating your phone number, password, or profile details.",
-    'auto-deposit': "Using auto deposit? I'll walk you through the M-Pesa STK push process. Just ask!",
-    'manual-deposit': "Submitting a manual deposit? I can help you understand the process and what to expect after submitting.",
-    'forgot-password': "Need to reset your password? I can guide you through the recovery process step by step.",
-    'Services': "Looking for support? I can help you find the right contact or answer common questions right here."
-  };
+  function getWelcome() {
+    var name = userName || '';
+    var greet = name ? ('Hi ' + name + '! ') : 'Hi there! ';
+    var intro = "I'm <b>AB Assistant</b>, your personal guide on AfricaBased. ";
+    var pages = {
+      'index': "Ready to start your investment journey? I can help you register and get going!",
+      'login': "Welcome back! Need help logging in, or want to reset your password?",
+      'home': "What would you like to do today? Invest in products, check earnings, or grow your referral network?",
+      'products': "Great choice exploring investments! Want help choosing a product or understanding how returns work?",
+      'My-products': "Here's where your money works for you! Need help collecting returns or managing investments?",
+      'deposit': "Ready to fund your account? I'll walk you through the deposit process!",
+      'withdraw': "Looking to cash out? I can explain withdrawals — or suggest reinvesting some for bigger returns!",
+      'referrals': "Your referral network is key to earning passive income! Want to learn how to maximize your commissions?",
+      'exchange': "Have an exchange code? I'll help you redeem it in seconds!",
+      'statistics': "Let's look at your numbers! I can explain any balance or help you plan your next move.",
+      'profile': "Managing your account? I can help with settings, or tell you about your membership level!",
+    };
+    return greet + intro + (pages[currentPage] || "How can I help you today?");
+  }
 
-  function findAnswer(query) {
+  function findKBAnswer(query) {
     var q = query.toLowerCase().replace(/[^a-z0-9\s]/g, '');
     var words = q.split(/\s+/);
     var bestMatch = null;
@@ -145,10 +164,54 @@
     }
 
     if (bestScore >= 2 && bestMatch) {
-      return bestMatch.answer;
+      return bestMatch.answer();
     }
+    return null;
+  }
 
-    return "I'm not sure about that, but I can help with:\n\n• <b>Registration & Login</b>\n• <b>Investing</b> in products\n• <b>Deposits</b> & <b>Withdrawals</b>\n• <b>Referrals</b> & commissions\n• <b>Exchange codes</b>\n• <b>Account settings</b>\n\nTry asking about any of these topics, or visit our <a href='/Services'>Support page</a> for direct help.";
+  async function getAIResponse(query) {
+    if (!aiAvailable) return null;
+    try {
+      var headers = { 'Content-Type': 'application/json' };
+      var token = window.getABToken && window.getABToken();
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+
+      var res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({
+          message: query,
+          userName: userName,
+          currentPage: currentPage,
+          conversationHistory: conversationHistory.slice(-6)
+        })
+      });
+
+      if (res.status === 429 || res.status === 503) {
+        aiAvailable = false;
+        return null;
+      }
+
+      if (!res.ok) return null;
+      var data = await res.json();
+      return data.reply || null;
+    } catch(e) {
+      return null;
+    }
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function formatAIResponse(text) {
+    var safe = escapeHtml(text);
+    safe = safe.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    safe = safe.replace(/\n/g, '<br>');
+    safe = safe.replace(/\[([^\]]+)\]\(\/([\w\-\/]+)\)/g, '<a href="/$2">$1</a>');
+    return safe;
   }
 
   function createWidget() {
@@ -170,13 +233,13 @@
     panel.innerHTML =
       '<div class="ab-ai-header">' +
         '<div class="ab-ai-avatar"><i class="fas fa-robot"></i></div>' +
-        '<div class="ab-ai-header-info"><h4>AB Assistant</h4><span>Always online</span></div>' +
+        '<div class="ab-ai-header-info"><h4>AB Assistant</h4><span>AI-Powered • Always online</span></div>' +
         '<button class="ab-ai-close" data-testid="button-close-assistant"><i class="fas fa-times"></i></button>' +
       '</div>' +
       '<div class="ab-ai-messages" id="abAiMessages"></div>' +
       '<div class="ab-ai-suggestions" id="abAiSuggestions"></div>' +
       '<div class="ab-ai-input-area">' +
-        '<input type="text" id="abAiInput" placeholder="Type your question..." data-testid="input-ai-question" autocomplete="off">' +
+        '<input type="text" id="abAiInput" placeholder="Ask me anything..." data-testid="input-ai-question" autocomplete="off" maxlength="500">' +
         '<button id="abAiSend" data-testid="button-send-question"><i class="fas fa-paper-plane"></i></button>' +
       '</div>';
     document.body.appendChild(panel);
@@ -187,6 +250,7 @@
     var sendBtn = document.getElementById('abAiSend');
     var closeBtn = panel.querySelector('.ab-ai-close');
     var isOpen = false;
+    var isSending = false;
 
     function addMessage(text, type) {
       var div = document.createElement('div');
@@ -225,23 +289,51 @@
       });
     }
 
-    function handleSend(text) {
+    async function handleSend(text) {
+      if (isSending) return;
       var q = text || input.value.trim();
       if (!q) return;
       input.value = '';
+      isSending = true;
+      sendBtn.disabled = true;
       addMessage(q, 'user');
       suggestionsEl.innerHTML = '';
       showTyping();
 
-      var delay = 400 + Math.random() * 600;
-      setTimeout(function() {
+      conversationHistory.push({ role: 'user', content: q });
+
+      try {
+        var answer = null;
+        try {
+          answer = await getAIResponse(q);
+        } catch(e) {}
+
+        if (answer) {
+          answer = formatAIResponse(answer);
+        } else {
+          answer = findKBAnswer(q);
+        }
+
+        if (!answer) {
+          answer = (userName ? userName + ", I" : "I") + "'m not sure about that specific question, but I can help you with investing, deposits, withdrawals, referrals, and more! Try asking about any of these, or visit your <a href='/profile'>Profile page</a> to contact support directly.\n\n<b>Quick tip:</b> Have you checked out the latest <a href='/products'>investment products</a>? There might be a great opportunity waiting for you!";
+        }
+
         hideTyping();
-        var answer = findAnswer(q);
         addMessage(answer, 'bot');
-        var followUp = ['How to invest', 'Deposit funds', 'Referral program', 'Exchange codes', 'Contact support'];
-        var filtered = followUp.filter(function(s) { return q.toLowerCase().indexOf(s.toLowerCase().split(' ')[0]) === -1; });
+        conversationHistory.push({ role: 'assistant', content: answer.replace(/<[^>]+>/g, '') });
+
+        if (conversationHistory.length > 20) {
+          conversationHistory = conversationHistory.slice(-12);
+        }
+
+        var followUp = ['How to invest', 'Build my referral team', 'Deposit funds', 'Earning strategy', 'Contact support'];
+        var qLower = q.toLowerCase();
+        var filtered = followUp.filter(function(s) { return qLower.indexOf(s.toLowerCase().split(' ')[0]) === -1; });
         showSuggestions(filtered.slice(0, 3));
-      }, delay);
+      } finally {
+        isSending = false;
+        sendBtn.disabled = false;
+      }
     }
 
     function togglePanel() {
@@ -251,7 +343,7 @@
         bubble.classList.add('open');
         bubble.querySelector('.ab-badge').style.display = 'none';
         if (!messages.children.length) {
-          var welcome = welcomeMessages[currentPage] || welcomeMessages['home'] || "Hi! How can I help you today?";
+          var welcome = getWelcome();
           addMessage(welcome, 'bot');
           var pageSuggs = pageSuggestions[currentPage] || pageSuggestions['home'] || ['How to invest', 'Deposit', 'Referrals'];
           showSuggestions(pageSuggs);
