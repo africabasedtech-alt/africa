@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>About AfricaBased Technologies</title>
+  <meta name="description" content="AfricaBased Technologies - Empowering Africa's financial future through accessible investment opportunities, financial literacy, and community-driven wealth creation.">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#06090f">
+  <link rel="apple-touch-icon" href="/public/logo.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="/js/token.js"></script>
+  <style>
+    :root {
+      --gold:#d4a017;--gold-bright:#f5c842;--bg:#06090f;--card-bg:#0d1520;
+      --card-bg2:#111d2e;--text:#fff;--text-dim:rgba(255,255,255,0.5);
+      --border:rgba(212,160,23,0.12);
+    }
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    body{
+      background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;
+      min-height:100vh;padding-bottom:90px;
+    }
+
+    .top-bar {
+      position:sticky;top:0;z-index:100;
+      background:rgba(6,9,15,0.92);backdrop-filter:blur(12px);
+      padding:14px 20px;display:flex;align-items:center;gap:12px;
+      border-bottom:1px solid var(--border);
+    }
+    .back-btn {
+      width:36px;height:36px;border-radius:10px;border:none;cursor:pointer;
+      background:rgba(212,160,23,0.1);color:var(--gold);
+      display:flex;align-items:center;justify-content:center;font-size:0.9rem;
+      text-decoration:none;transition:background 0.2s;
+    }
+    .back-btn:hover { background:rgba(212,160,23,0.2); }
+    .top-title { font-size:1.05rem;font-weight:700;color:var(--text); }
+
+    .hero {
+      text-align:center;padding:40px 24px 32px;
+      background:linear-gradient(180deg, rgba(212,160,23,0.06) 0%, transparent 100%);
+    }
+    .hero-logo {
+      width:80px;height:80px;border-radius:20px;
+      background:linear-gradient(135deg, var(--gold), #b8890f);
+      display:flex;align-items:center;justify-content:center;
+      margin:0 auto 16px;
+      box-shadow:0 8px 32px rgba(212,160,23,0.25);
+      font-size:2rem;color:#fff;
+    }
+    .hero h1 {
+      font-size:1.6rem;font-weight:800;color:var(--text);margin-bottom:6px;
+      line-height:1.3;
+    }
+    .hero h1 span { color:var(--gold); }
+    .hero-sub {
+      font-size:0.88rem;color:var(--text-dim);line-height:1.6;
+      max-width:420px;margin:0 auto;
+    }
+
+    .content { padding:0 20px; max-width:700px; margin:0 auto; }
+
+    .section {
+      margin-bottom:28px;
+    }
+    .section-title {
+      font-size:0.75rem;font-weight:700;color:var(--gold);
+      text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px;
+      display:flex;align-items:center;gap:8px;
+    }
+    .section-title i { font-size:0.8rem; }
+
+    .info-card {
+      background:var(--card-bg);border:1px solid var(--border);
+      border-radius:16px;padding:20px;margin-bottom:14px;
+    }
+    .info-card h3 {
+      font-size:1rem;font-weight:700;color:var(--text);margin-bottom:10px;
+      display:flex;align-items:center;gap:8px;
+    }
+    .info-card h3 i { color:var(--gold);font-size:0.9rem; }
+    .info-card p {
+      font-size:0.85rem;color:rgba(255,255,255,0.65);line-height:1.7;
+    }
+
+    .values-grid {
+      display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;
+    }
+    .value-item {
+      background:var(--card-bg);border:1px solid var(--border);
+      border-radius:14px;padding:18px 16px;text-align:center;
+    }
+    .value-icon {
+      width:44px;height:44px;border-radius:12px;margin:0 auto 10px;
+      display:flex;align-items:center;justify-content:center;font-size:1.1rem;
+    }
+    .value-icon.gold { background:rgba(212,160,23,0.12);color:var(--gold); }
+    .value-icon.green { background:rgba(76,175,80,0.12);color:#4CAF50; }
+    .value-icon.blue { background:rgba(59,130,246,0.12);color:#3b82f6; }
+    .value-icon.purple { background:rgba(139,92,246,0.12);color:#8b5cf6; }
+    .value-title {
+      font-size:0.82rem;font-weight:700;color:var(--text);margin-bottom:4px;
+    }
+    .value-desc {
+      font-size:0.72rem;color:var(--text-dim);line-height:1.5;
+    }
+
+    .feature-list {
+      list-style:none;padding:0;
+    }
+    .feature-list li {
+      display:flex;align-items:flex-start;gap:12px;
+      padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.04);
+      font-size:0.85rem;color:rgba(255,255,255,0.7);line-height:1.6;
+    }
+    .feature-list li:last-child { border-bottom:none; }
+    .feature-list li i {
+      color:var(--gold);font-size:0.8rem;margin-top:4px;flex-shrink:0;
+    }
+
+    .stat-row {
+      display:flex;gap:10px;margin-bottom:14px;
+    }
+    .stat-box {
+      flex:1;background:var(--card-bg);border:1px solid var(--border);
+      border-radius:14px;padding:16px;text-align:center;
+    }
+    .stat-num {
+      font-size:1.3rem;font-weight:800;color:var(--gold);
+    }
+    .stat-label {
+      font-size:0.7rem;color:var(--text-dim);margin-top:4px;
+      text-transform:uppercase;letter-spacing:0.04em;
+    }
+
+    .cta-card {
+      background:linear-gradient(135deg, rgba(212,160,23,0.12), rgba(212,160,23,0.04));
+      border:1px solid rgba(212,160,23,0.2);border-radius:16px;
+      padding:24px;text-align:center;margin-bottom:28px;
+    }
+    .cta-card h3 {
+      font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:8px;
+    }
+    .cta-card p {
+      font-size:0.82rem;color:var(--text-dim);line-height:1.6;margin-bottom:16px;
+    }
+    .cta-btn {
+      display:inline-flex;align-items:center;gap:8px;
+      background:linear-gradient(135deg,var(--gold),#b8890f);
+      color:#fff;border:none;padding:12px 28px;border-radius:12px;
+      font-weight:700;font-size:0.88rem;cursor:pointer;
+      text-decoration:none;transition:all 0.2s;
+      box-shadow:0 4px 16px rgba(212,160,23,0.25);
+    }
+    .cta-btn:hover { transform:translateY(-2px);box-shadow:0 6px 24px rgba(212,160,23,0.35); }
+
+    .footer-note {
+      text-align:center;padding:20px;font-size:0.72rem;
+      color:rgba(255,255,255,0.25);
+    }
+
+    .ab-tabs{position:fixed;bottom:0;left:0;right:0;height:72px;background:linear-gradient(180deg,#0d1520 0%,#06090f 100%);border-top:1px solid rgba(212,160,23,0.15);display:flex;justify-content:space-around;align-items:center;z-index:9999;padding-bottom:env(safe-area-inset-bottom,0);}
+    .ab-tabs a{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:rgba(255,255,255,0.45);font-size:0.65rem;font-family:Poppins,sans-serif;transition:color 0.2s;}
+    .ab-tabs a i{font-size:1.15rem;}
+    .ab-tabs a.active{color:#d4a017;}
+    .ab-tabs a.active i{filter:drop-shadow(0 0 6px rgba(212,160,23,0.5));}
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <a href="/profile" class="back-btn" data-testid="link-back-profile"><i class="fas fa-arrow-left"></i></a>
+    <div class="top-title">About AfricaBased</div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-logo"><i class="fas fa-globe-africa"></i></div>
+    <h1>Africa<span>Based</span> Technologies</h1>
+    <p class="hero-sub">Empowering Africa's financial future through accessible investment opportunities, financial literacy, and community-driven wealth creation.</p>
+  </div>
+
+  <div class="content">
+
+    <div class="section">
+      <div class="section-title"><i class="fas fa-bullseye"></i> Our Mission</div>
+      <div class="info-card">
+        <h3><i class="fas fa-rocket"></i> Why We Exist</h3>
+        <p>AfricaBased Technologies was founded with a bold vision: to democratize investing for everyday Africans. We believe that wealth creation should not be reserved for the privileged few. Our platform bridges the gap between opportunity and accessibility, enabling anyone with a mobile phone to participate in real investment opportunities across agriculture, technology, real estate, energy, and more.</p>
+      </div>
+      <div class="info-card">
+        <h3><i class="fas fa-eye"></i> Our Vision</h3>
+        <p>To become Africa's most trusted and inclusive investment platform, where every individual — regardless of their financial background — can build lasting wealth, gain financial independence, and contribute to the continent's economic growth. We envision a future where millions of Africans are active participants in building the economy, not just spectators.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><i class="fas fa-heart"></i> Core Values</div>
+      <div class="values-grid">
+        <div class="value-item">
+          <div class="value-icon gold"><i class="fas fa-shield-alt"></i></div>
+          <div class="value-title">Trust & Security</div>
+          <div class="value-desc">Your investments and data are protected with industry-grade security</div>
+        </div>
+        <div class="value-item">
+          <div class="value-icon green"><i class="fas fa-hands-helping"></i></div>
+          <div class="value-title">Accessibility</div>
+          <div class="value-desc">Investment made simple for everyone, regardless of experience</div>
+        </div>
+        <div class="value-item">
+          <div class="value-icon blue"><i class="fas fa-lightbulb"></i></div>
+          <div class="value-title">Innovation</div>
+          <div class="value-desc">Leveraging technology to create smarter financial solutions</div>
+        </div>
+        <div class="value-item">
+          <div class="value-icon purple"><i class="fas fa-users"></i></div>
+          <div class="value-title">Community</div>
+          <div class="value-desc">Growing together through referrals and shared success</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><i class="fas fa-star"></i> Why AfricaBased?</div>
+      <div class="info-card">
+        <ul class="feature-list">
+          <li><i class="fas fa-check-circle"></i><div><strong>Low Entry Barrier</strong> — Start investing with as little as you have. We offer products at various price points, including free starter products, so everyone can begin their investment journey regardless of their financial situation.</div></li>
+          <li><i class="fas fa-check-circle"></i><div><strong>Daily Returns</strong> — Unlike traditional investments that lock your money for years, our products generate daily returns that you can collect and either reinvest or withdraw. Watch your wealth grow every single day.</div></li>
+          <li><i class="fas fa-check-circle"></i><div><strong>Diverse Investment Sectors</strong> — Spread your risk across Agriculture, Technology, Real Estate, Energy, and more. Our carefully curated products represent real economic opportunities across the African continent.</div></li>
+          <li><i class="fas fa-check-circle"></i><div><strong>Referral Commissions</strong> — Earn passive income by building your team. Get 10% commission from direct referrals (Level 1), 6% from Level 2, and 1% from Level 3. Your network becomes your greatest asset.</div></li>
+          <li><i class="fas fa-check-circle"></i><div><strong>M-Pesa Integration</strong> — Deposit and withdraw seamlessly through M-Pesa — the payment method Africa trusts. No complicated bank procedures or international transfers needed.</div></li>
+          <li><i class="fas fa-check-circle"></i><div><strong>AI-Powered Support</strong> — Our intelligent AB Assistant is available 24/7 to guide you, answer questions, and help you make informed investment decisions.</div></li>
+          <li><i class="fas fa-check-circle"></i><div><strong>Membership Tiers</strong> — Progress from Active to Basic, Premium, and Gold status as you grow your referral network. Higher tiers unlock greater earning potential and exclusive benefits.</div></li>
+          <li><i class="fas fa-check-circle"></i><div><strong>Full Transparency</strong> — Track every shilling. View detailed statistics, collection history, investment progress, and transaction records at any time from your dashboard.</div></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><i class="fas fa-chart-pie"></i> Platform Highlights</div>
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="stat-num">24/7</div>
+          <div class="stat-label">Platform Access</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">5+</div>
+          <div class="stat-label">Investment Sectors</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">3-Level</div>
+          <div class="stat-label">Referral System</div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="stat-num">Daily</div>
+          <div class="stat-label">Returns Collection</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">M-Pesa</div>
+          <div class="stat-label">Payments</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">AI</div>
+          <div class="stat-label">Smart Assistant</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><i class="fas fa-road"></i> How It Works</div>
+      <div class="info-card">
+        <h3><i class="fas fa-user-plus"></i> Step 1: Join</h3>
+        <p>Create your free account in under a minute. If someone referred you, use their referral code to join their team — you both benefit.</p>
+      </div>
+      <div class="info-card">
+        <h3><i class="fas fa-wallet"></i> Step 2: Fund</h3>
+        <p>Deposit funds via M-Pesa (auto or manual). Your deposit balance is ready to invest immediately. Start with any amount you're comfortable with.</p>
+      </div>
+      <div class="info-card">
+        <h3><i class="fas fa-chart-line"></i> Step 3: Invest</h3>
+        <p>Browse investment products across multiple sectors. Each product shows its price, daily return, duration, and ROI. Choose what suits your goals and budget.</p>
+      </div>
+      <div class="info-card">
+        <h3><i class="fas fa-coins"></i> Step 4: Earn</h3>
+        <p>Collect your daily returns from the Holdings page. Reinvest your earnings for compound growth, or withdraw to your M-Pesa. It's your money, your choice.</p>
+      </div>
+      <div class="info-card">
+        <h3><i class="fas fa-users"></i> Step 5: Grow</h3>
+        <p>Share your referral link and build your team. As your network invests, you earn commissions automatically. The bigger your team, the more you earn — even while you sleep.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><i class="fas fa-graduation-cap"></i> Financial Empowerment</div>
+      <div class="info-card">
+        <p>At AfricaBased, we believe that financial literacy is the foundation of wealth creation. Our platform is designed not just to help you invest, but to educate you along the way. Through our AI assistant, detailed product information, and transparent tracking tools, we ensure that every user understands where their money is going and how it's growing.</p>
+        <p style="margin-top:12px;">Africa is the world's youngest and fastest-growing continent. We are committed to ensuring that its people have the tools and opportunities to participate in — and benefit from — this growth. When Africans invest in Africa, everyone wins.</p>
+      </div>
+    </div>
+
+    <div class="cta-card">
+      <h3>Ready to Start Building Wealth?</h3>
+      <p>Join thousands of Africans who are already growing their financial future with AfricaBased Technologies.</p>
+      <a href="/products" class="cta-btn" data-testid="link-start-investing"><i class="fas fa-bolt"></i> Start Investing</a>
+    </div>
+
+    <div class="footer-note">
+      AfricaBased Technologies &copy; 2024. All rights reserved.<br>
+      Built with pride for Africa, by Africa.
+    </div>
+
+  </div>
+
+  <nav class="ab-tabs">
+    <a href="/home"><i class="fas fa-home"></i><span>Home</span></a>
+    <a href="/products"><i class="fas fa-chart-line"></i><span>Invest</span></a>
+    <a href="/My-products"><i class="fas fa-wallet"></i><span>Holdings</span></a>
+    <a href="/deposit"><i class="fas fa-money-bill-wave"></i><span>Wallet</span></a>
+    <a href="/profile"><i class="fas fa-user"></i><span>Profile</span></a>
+  </nav>
+
+  <script src="/js/impersonation-guard.js"></script>
+  <script src="/js/ai-assistant.js"></script>
+  <script src="/js/toast-modal.js"></script>
+  <script src="/js/pwa.js"></script>
+</body>
+</html>
