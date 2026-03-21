@@ -2,14 +2,16 @@
   "name": "AfricaBased - Investment Platform",
   "short_name": "AfricaBased",
   "description": "Africa's investment platform — earn daily returns, deposit via M-Pesa, grow your wealth.",
-  "start_url": "/",
+  "start_url": "/home",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0f172a",
-  "theme_color": "#4ecdc4",
+  "background_color": "#06090f",
+  "theme_color": "#d4a017",
   "lang": "en",
   "scope": "/",
+  "id": "/",
   "categories": ["finance", "investment"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/public/logo.png",
@@ -21,28 +23,42 @@
       "src": "/public/logo.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/public/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/public/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "screenshots": [],
   "shortcuts": [
     {
       "name": "Dashboard",
       "short_name": "Home",
       "url": "/home",
-      "description": "Go to your investment dashboard"
+      "description": "Go to your investment dashboard",
+      "icons": [{"src": "/public/logo.png", "sizes": "96x96"}]
     },
     {
-      "name": "Deposit",
+      "name": "Deposit Funds",
       "short_name": "Deposit",
       "url": "/deposit",
-      "description": "Deposit funds via M-Pesa"
+      "description": "Deposit funds via M-Pesa",
+      "icons": [{"src": "/public/logo.png", "sizes": "96x96"}]
     },
     {
-      "name": "Products",
+      "name": "Invest",
       "short_name": "Invest",
       "url": "/products",
-      "description": "Browse investment products"
+      "description": "Browse investment products",
+      "icons": [{"src": "/public/logo.png", "sizes": "96x96"}]
     }
   ]
 }
