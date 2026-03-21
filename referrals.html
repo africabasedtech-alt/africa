@@ -96,7 +96,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Referrals - AfricaBased</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/referrals.css">
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script type="module" src="supabaseClient.js"></script>
@@ -624,7 +624,7 @@
                 <p>Membership Level</p>
             </div>
             <div class="stat-card">
-                <i class="fas fa-users"></i>
+                <i class="fas fa-user-group"></i>
                 <h3 id="nextLevelProgress">0/5</h3>
                 <p>Progress to Next Level</p>
             </div>
@@ -971,7 +971,7 @@
                 // ── L1 referral list ───────────────────────────────────────────
                 const referralsList = document.getElementById('referralsList');
                 if (l1Users.length === 0) {
-                    referralsList.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><p>No referrals yet. Share your referral link to get started!</p></div>';
+                    referralsList.innerHTML = '<div class="empty-state"><i class="fas fa-user-group"></i><p>No referrals yet. Share your referral link to get started!</p></div>';
                 } else {
                     referralsList.innerHTML = '<h3 style="font-size:0.85rem;color:rgba(255,255,255,0.5);margin:0 0 10px;text-transform:uppercase;letter-spacing:.05em">B — Your Direct Referrals (10%)</h3>' +
                         l1Users.map(u => {
@@ -1119,11 +1119,11 @@
 <script src="/js/toast-modal.js"></script>
 <script src="/js/pwa.js"></script>
 <nav class="ab-tabs">
-  <a href="/home" class="active"><i class="fas fa-home"></i><span>Home</span></a>
-  <a href="/products"><i class="fas fa-chart-line"></i><span>Invest</span></a>
-  <a href="/My-products"><i class="fas fa-wallet"></i><span>Holdings</span></a>
-  <a href="/deposit"><i class="fas fa-money-bill-wave"></i><span>Wallet</span></a>
-  <a href="/profile"><i class="fas fa-user"></i><span>My</span></a>
+  <a href="/home" class="active"><i class="fas fa-house-chimney"></i><span>Home</span></a>
+  <a href="/products"><i class="fas fa-arrow-trend-up"></i><span>Invest</span></a>
+  <a href="/My-products"><i class="fas fa-cubes-stacked"></i><span>Holdings</span></a>
+  <a href="/deposit"><i class="fas fa-vault"></i><span>Wallet</span></a>
+  <a href="/profile"><i class="fas fa-circle-user"></i><span>My</span></a>
 </nav>
 </body>
 </html>

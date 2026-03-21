@@ -1,4 +1,4 @@
-const CACHE_NAME = 'africabased-v7';
+const CACHE_NAME = 'africabased-v8';
 const OFFLINE_URL = '/offline';
 
 const STATIC_ASSETS = [
@@ -28,7 +28,7 @@ const STATIC_ASSETS = [
   '/js/pwa.js',
   '/js/toast-modal.js',
   '/css/ai-assistant.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
   'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap',
 ];
 

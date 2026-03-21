@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="AfricaBased">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="/js/token.js"></script>
   <script type="module" src="supabaseClient.js"></script>
@@ -318,7 +318,7 @@
   <div class="menu-section">
     <div class="menu-card">
       <a href="/referrals" class="menu-item">
-        <div class="menu-ic gold"><i class="fas fa-users"></i></div>
+        <div class="menu-ic gold"><i class="fas fa-user-group"></i></div>
         <div class="menu-txt"><div class="mt">My Team</div><div class="ms">View your referral network</div></div>
         <i class="fas fa-chevron-right menu-arrow"></i>
       </a>
@@ -330,7 +330,7 @@
     <div class="menu-label">Account</div>
     <div class="menu-card">
       <div class="menu-item" id="profileToggle" onclick="togglePanel('profilePanel',this)">
-        <div class="menu-ic blue"><i class="fas fa-user-circle"></i></div>
+        <div class="menu-ic blue"><i class="fas fa-id-card"></i></div>
         <div class="menu-txt"><div class="mt">My Profile</div><div class="ms">Personal information & settings</div></div>
         <i class="fas fa-chevron-down menu-arrow" id="profileArrow"></i>
       </div>
@@ -412,38 +412,38 @@
     <div class="menu-label">Services</div>
     <div class="menu-card">
       <div class="menu-item" onclick="togglePanel('servicesPanel',this)">
-        <div class="menu-ic green"><i class="fas fa-concierge-bell"></i></div>
+        <div class="menu-ic green"><i class="fas fa-grip"></i></div>
         <div class="menu-txt"><div class="mt">Services</div><div class="ms">Deposit, withdraw, exchange & more</div></div>
         <i class="fas fa-chevron-down menu-arrow"></i>
       </div>
       <div class="panel" id="servicesPanel">
         <a href="/deposit" class="menu-item">
-          <div class="menu-ic green"><i class="fas fa-plus-circle"></i></div>
+          <div class="menu-ic green"><i class="fas fa-circle-plus"></i></div>
           <div class="menu-txt"><div class="mt">Deposit</div><div class="ms">Add funds via M-Pesa</div></div>
           <i class="fas fa-chevron-right menu-arrow"></i>
         </a>
         <a href="/withdraw" class="menu-item">
-          <div class="menu-ic cyan"><i class="fas fa-arrow-up"></i></div>
+          <div class="menu-ic cyan"><i class="fas fa-money-bill-transfer"></i></div>
           <div class="menu-txt"><div class="mt">Withdraw</div><div class="ms">Withdraw your earnings</div></div>
           <i class="fas fa-chevron-right menu-arrow"></i>
         </a>
         <a href="/exchange" class="menu-item">
-          <div class="menu-ic purple"><i class="fas fa-exchange-alt"></i></div>
+          <div class="menu-ic purple"><i class="fas fa-right-left"></i></div>
           <div class="menu-txt"><div class="mt">Exchange</div><div class="ms">Transfer between wallets</div></div>
           <i class="fas fa-chevron-right menu-arrow"></i>
         </a>
         <a href="/statistics" class="menu-item">
-          <div class="menu-ic gold"><i class="fas fa-chart-bar"></i></div>
+          <div class="menu-ic gold"><i class="fas fa-chart-column"></i></div>
           <div class="menu-txt"><div class="mt">Statistics</div><div class="ms">View your earning reports</div></div>
           <i class="fas fa-chevron-right menu-arrow"></i>
         </a>
         <a href="/Services" class="menu-item" data-testid="link-services">
-          <div class="menu-ic blue"><i class="fas fa-th-large"></i></div>
+          <div class="menu-ic blue"><i class="fas fa-table-cells"></i></div>
           <div class="menu-txt"><div class="mt">All Services</div><div class="ms">Browse all available services</div></div>
           <i class="fas fa-chevron-right menu-arrow"></i>
         </a>
         <a href="/progress" class="menu-item" data-testid="link-view-progress">
-          <div class="menu-ic purple"><i class="fas fa-tasks"></i></div>
+          <div class="menu-ic purple"><i class="fas fa-list-check"></i></div>
           <div class="menu-txt"><div class="mt">View Progress</div><div class="ms">Track your investment journey</div></div>
           <i class="fas fa-chevron-right menu-arrow"></i>
         </a>
@@ -479,7 +479,7 @@
   <div class="menu-section ab-install-trigger" id="installAppSection">
     <div class="menu-card">
       <div class="menu-item" id="installAppBtn" onclick="triggerPwaInstall()" data-testid="button-install-app-profile">
-        <div class="menu-ic green"><i class="fas fa-download"></i></div>
+        <div class="menu-ic green"><i class="fas fa-mobile-screen-button"></i></div>
         <div class="menu-txt"><div class="mt">Install App</div><div class="ms">Add to your home screen</div></div>
         <i class="fas fa-chevron-right menu-arrow"></i>
       </div>
@@ -525,11 +525,11 @@
 
   <!-- ═══ BOTTOM TABS ═══ -->
   <div class="btabs">
-    <a href="/home" class="bt"><div class="bt-ic"><i class="fas fa-home"></i></div><span class="bt-lb">Home</span></a>
-    <a href="/products" class="bt"><div class="bt-ic"><i class="fas fa-chart-line"></i></div><span class="bt-lb">Invest</span></a>
-    <a href="/My-products" class="bt"><div class="bt-ic"><i class="fas fa-briefcase"></i></div><span class="bt-lb">Holdings</span></a>
-    <a href="/deposit" class="bt"><div class="bt-ic"><i class="fas fa-wallet"></i></div><span class="bt-lb">Wallet</span></a>
-    <a href="/profile" class="bt active"><div class="bt-ic"><i class="fas fa-user"></i></div><span class="bt-lb">My</span></a>
+    <a href="/home" class="bt"><div class="bt-ic"><i class="fas fa-house-chimney"></i></div><span class="bt-lb">Home</span></a>
+    <a href="/products" class="bt"><div class="bt-ic"><i class="fas fa-arrow-trend-up"></i></div><span class="bt-lb">Invest</span></a>
+    <a href="/My-products" class="bt"><div class="bt-ic"><i class="fas fa-cubes-stacked"></i></div><span class="bt-lb">Holdings</span></a>
+    <a href="/deposit" class="bt"><div class="bt-ic"><i class="fas fa-vault"></i></div><span class="bt-lb">Wallet</span></a>
+    <a href="/profile" class="bt active"><div class="bt-ic"><i class="fas fa-circle-user"></i></div><span class="bt-lb">My</span></a>
   </div>
 
   <!-- ═══ BANK MODAL ═══ -->
@@ -675,7 +675,7 @@
             const ok = canAccess(g.min_tier);
             if (ok) {
               return `<a href="${g.phone_or_link}" target="_blank" class="menu-item" style="text-decoration:none">
-                <div class="menu-ic green"><i class="fas fa-users"></i></div>
+                <div class="menu-ic green"><i class="fas fa-user-group"></i></div>
                 <div class="menu-txt"><div class="mt">${g.name}</div><div class="ms">${g.category || 'Group'}</div></div>
                 <i class="fas fa-external-link-alt menu-arrow" style="font-size:.75rem"></i>
               </a>`;
