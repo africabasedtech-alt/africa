@@ -697,21 +697,6 @@
     </script>
 
 <script>
-(function(){
-  var clicks=0,timer=null;
-  function addLogoClick(el){
-    el.style.cursor='pointer';
-    el.addEventListener('click',function(){
-      clicks++;
-      clearTimeout(timer);
-      timer=setTimeout(function(){clicks=0;},3000);
-      if(clicks>=5){clicks=0;window.location.href='/ab-secure';}
-    });
-  }
-  document.addEventListener('DOMContentLoaded',function(){
-    document.querySelectorAll('.panel-logo,.mobile-brand').forEach(addLogoClick);
-  });
-})();
 </script>
 <!-- Sign-in success modal -->
 <div id="loginSuccessModal" style="display:none;position:fixed;inset:0;background:rgba(5,11,21,0.85);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(6px);">
