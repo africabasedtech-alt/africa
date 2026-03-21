@@ -14,21 +14,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: #06090f; color: #fff; min-height: 100vh; padding-top: 20px; padding-bottom: 90px !important; }
+        body { background: linear-gradient(165deg, #031208 0%, #041a0c 30%, #06120a 60%, #06090f 100%); color: #fff; min-height: 100vh; padding-top: 20px; padding-bottom: 90px !important; }
 
         .container { max-width: 700px; margin: 0 auto; padding: 32px 20px 60px; }
 
         .back-link {
             display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
-            color: #4CAF50; font-size: 0.9rem; font-weight: 600;
-            padding: 8px 16px; background: rgba(76,175,80,0.1); border-radius: 8px; margin-bottom: 1.2rem;
+            color: #66bb6a; font-size: 0.9rem; font-weight: 600;
+            padding: 8px 16px; background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.15);
+            border-radius: 10px; margin-bottom: 1.2rem; transition: background 0.2s;
         }
+        .back-link:hover { background: rgba(76,175,80,0.18); }
 
         .page-title {
             font-size: 1.4rem; font-weight: 700; color: #fff;
             display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
         }
-        .page-title i { color: #4CAF50; }
+        .page-title i { color: #4CAF50; text-shadow: 0 0 20px rgba(76,175,80,0.4); }
 
         .search-state {
             text-align: center; padding: 48px 20px;
@@ -37,6 +39,7 @@
             width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 20px;
             border: 3px solid rgba(76,175,80,0.15); border-top-color: #4CAF50;
             animation: spinRing 1s linear infinite;
+            box-shadow: 0 0 30px rgba(76,175,80,0.15);
         }
         @keyframes spinRing { to { transform: rotate(360deg); } }
         .search-text { font-size: 0.95rem; color: rgba(255,255,255,0.5); }
@@ -52,9 +55,10 @@
 
         .channel-found {
             background: linear-gradient(165deg, #0a2e12 0%, #0d3d1a 40%, #071f0e 100%);
-            border: 1px solid rgba(76,175,80,0.2); border-radius: 18px;
+            border: 1px solid rgba(76,175,80,0.25); border-radius: 18px;
             overflow: hidden; margin-bottom: 20px;
             animation: fadeUp 0.5s ease;
+            box-shadow: 0 8px 32px rgba(76,175,80,0.1);
         }
         @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
 
@@ -112,8 +116,8 @@
         .instr-steps p { margin: 0 0 6px; }
 
         .deposit-card {
-            background: rgba(13,21,32,0.98); border-radius: 16px;
-            box-shadow: 0 6px 28px rgba(0,0,0,0.4); overflow: hidden;
+            background: linear-gradient(165deg, rgba(10,30,14,0.95), rgba(13,21,32,0.98)); border-radius: 16px;
+            box-shadow: 0 6px 28px rgba(0,0,0,0.4); border: 1px solid rgba(76,175,80,0.08); overflow: hidden;
         }
 
         #depositFrame { width: 100%; min-height: 540px; border: none; background: transparent; display: block; }

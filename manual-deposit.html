@@ -7,25 +7,25 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Segoe UI', sans-serif; }
-        body { background: #06090f; color: #fff; min-height: 100vh; padding: 24px 16px 48px; }
+        body { background: linear-gradient(165deg, #041a0a 0%, #06120a 40%, #06090f 100%); color: #fff; min-height: 100vh; padding: 24px 16px 48px; }
 
         .back-btn {
             display: inline-flex; align-items: center; gap: 8px;
-            background: rgba(212,160,23,0.1); border: 1px solid rgba(212,160,23,0.25);
-            color: #d4a017; padding: 9px 18px; border-radius: 10px;
+            background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.25);
+            color: #4CAF50; padding: 9px 18px; border-radius: 10px;
             font-weight: 600; font-size: 0.85rem; cursor: pointer; margin-bottom: 22px;
             text-decoration: none; transition: background 0.2s;
         }
-        .back-btn:hover { background: rgba(212,160,23,0.18); }
+        .back-btn:hover { background: rgba(76,175,80,0.18); }
 
         /* Instructions box — shown standalone only */
         .instr-box {
-            background: rgba(255,213,79,0.07); border: 1px solid rgba(255,213,79,0.28);
+            background: rgba(76,175,80,0.07); border: 1px solid rgba(76,175,80,0.28);
             border-radius: 12px; padding: 18px 20px; margin-bottom: 22px;
         }
         .instr-heading {
             display: flex; align-items: center; gap: 8px;
-            font-size: 0.88rem; font-weight: 700; color: #ffd54f; margin-bottom: 12px;
+            font-size: 0.88rem; font-weight: 700; color: #81c784; margin-bottom: 12px;
         }
         .instr-steps ol {
             margin: 0; padding-left: 20px; list-style: decimal;
@@ -45,7 +45,7 @@
             font-size: 1.05rem; font-weight: 700; color: #fff;
             display: flex; align-items: center; gap: 10px; margin-bottom: 22px;
         }
-        .card-title i { color: #d4a017; }
+        .card-title i { color: #4CAF50; }
 
         .form-group { margin-bottom: 16px; }
         .form-label { display: block; font-size: 0.82rem; font-weight: 600; color: rgba(255,255,255,0.65); margin-bottom: 7px; }
@@ -59,18 +59,19 @@
             outline: none; transition: border-color 0.2s;
         }
         input[type=text]:focus, input[type=number]:focus, textarea:focus {
-            border-color: #d4a017;
+            border-color: #4CAF50;
         }
         textarea { resize: vertical; line-height: 1.55; }
         input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); }
 
         .submit-btn {
             width: 100%; padding: 14px;
-            background: linear-gradient(90deg, #d4a017, #3ab8b0);
+            background: linear-gradient(135deg, #4CAF50, #2e7d32);
             border: none; border-radius: 12px;
-            color: #06090f; font-weight: 800; font-size: 0.95rem;
+            color: #fff; font-weight: 800; font-size: 0.95rem;
             cursor: pointer; margin-top: 8px; transition: opacity 0.2s, transform 0.15s;
             display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 0 4px 16px rgba(76,175,80,0.3);
         }
         .submit-btn:hover { opacity: 0.9; transform: translateY(-1px); }
         .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
@@ -255,7 +256,7 @@
                     maxlength="600" required></textarea>
                 <div id="txnPreview" style="margin-top:8px;display:none;">
                     <span style="color:rgba(255,255,255,0.5);font-size:0.82rem;">Transaction ID: </span>
-                    <span id="txnIdValue" style="color:#d4a017;font-weight:700;font-size:0.92rem;letter-spacing:0.5px;"></span>
+                    <span id="txnIdValue" style="color:#4CAF50;font-weight:700;font-size:0.92rem;letter-spacing:0.5px;"></span>
                 </div>
             </div>
 

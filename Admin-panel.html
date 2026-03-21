@@ -537,6 +537,10 @@
                 <div class="ap-nav-icon green"><i class="fas fa-network-wired"></i></div>
                 <span class="ap-nav-label">Referrals</span>
             </a>
+            <button class="ap-nav-btn" id="adminInstallBtn" data-testid="button-install-app" style="display:none;border:none;cursor:pointer;text-align:center;" onclick="adminInstallApp()">
+                <div class="ap-nav-icon blue"><i class="fas fa-download"></i></div>
+                <span class="ap-nav-label">Install App</span>
+            </button>
         </div>
 
         <!-- Panel containers (legacy — kept for JS compatibility) -->
@@ -927,6 +931,31 @@
         }
         window.sendBroadcastEmail = sendBroadcastEmail;
     </script>
+<script>
+    var _adminDeferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      _adminDeferredPrompt = e;
+      var btn = document.getElementById('adminInstallBtn');
+      if (btn) btn.style.display = '';
+    });
+    function adminInstallApp() {
+      if (_adminDeferredPrompt) {
+        _adminDeferredPrompt.prompt();
+        _adminDeferredPrompt.userChoice.then(function(r) {
+          if (r.outcome === 'accepted') {
+            var btn = document.getElementById('adminInstallBtn');
+            if (btn) btn.style.display = 'none';
+          }
+          _adminDeferredPrompt = null;
+        });
+      }
+    }
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+      var btn = document.getElementById('adminInstallBtn');
+      if (btn) btn.style.display = 'none';
+    }
+</script>
 <script src="/js/admin-pin.js"></script>
 <script src="/js/admin-ai-nav.js"></script>
 </body>

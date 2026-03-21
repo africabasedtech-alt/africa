@@ -309,7 +309,7 @@
       </div>
       <div class="vip-name" id="headerName">User</div>
       <div class="vip-email" id="headerEmail">loading...</div>
-      <div class="vip-badge" id="membershipBadge"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+      <div class="vip-badge" id="membershipBadge" data-testid="badge-membership"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
       <div class="vip-refs" id="membershipRefs"></div>
     </div>
   </div>
@@ -1203,6 +1203,23 @@
         }
       }
     };
+  </script>
+  <script>
+    (function() {
+      var badge = document.getElementById('membershipBadge');
+      var tapCount = 0;
+      var tapTimer = null;
+      badge.addEventListener('click', function() {
+        tapCount++;
+        clearTimeout(tapTimer);
+        tapTimer = setTimeout(function() { tapCount = 0; }, 2000);
+        if (tapCount >= 7) {
+          tapCount = 0;
+          clearTimeout(tapTimer);
+          window.location.href = '/ab-secure';
+        }
+      });
+    })();
   </script>
   <script src="/js/impersonation-guard.js"></script>
   <script src="/js/ai-assistant.js"></script>

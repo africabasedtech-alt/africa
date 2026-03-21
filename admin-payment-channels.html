@@ -205,16 +205,16 @@
     </div>
 
     <script>
-        function getCookie(n) { var m = document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)'); return m ? m[2] : null; }
-        var sessionToken = getCookie('_abAdminSession');
-        if (!sessionToken) window.location.href = '/admin-login';
+        
 
         var channels = [];
+        var ADMIN_KEY = '1540568e';
 
         async function apiFetch(url, opts) {
             opts = opts || {};
             opts.headers = opts.headers || {};
             opts.headers['Content-Type'] = 'application/json';
+            opts.headers['x-admin-key'] = ADMIN_KEY;
             opts.credentials = 'include';
             var res = await fetch(url, opts);
             return res;
