@@ -1,4 +1,4 @@
-const CACHE_NAME = 'africabased-v8';
+const CACHE_NAME = 'africabased-v9';
 const OFFLINE_URL = '/offline';
 
 const STATIC_ASSETS = [
@@ -17,6 +17,15 @@ const STATIC_ASSETS = [
   '/offline',
   '/manifest.json',
   '/public/logo.png',
+  '/public/icons/icon-48x48.png',
+  '/public/icons/icon-72x72.png',
+  '/public/icons/icon-96x96.png',
+  '/public/icons/icon-144x144.png',
+  '/public/icons/icon-152x152.png',
+  '/public/icons/icon-180x180.png',
+  '/public/icons/icon-192x192.png',
+  '/public/icons/icon-384x384.png',
+  '/public/icons/icon-512x512.png',
   '/js/token.js',
   '/js/auth.js',
   '/js/api-auth.js',
