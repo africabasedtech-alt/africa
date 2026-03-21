@@ -466,9 +466,9 @@
   </div>
 
   <!-- ═══ INSTALL APP (PWA) ═══ -->
-  <div class="menu-section" id="installAppSection" style="display:none">
+  <div class="menu-section ab-install-trigger" id="installAppSection">
     <div class="menu-card">
-      <div class="menu-item" id="installAppBtn" onclick="triggerPwaInstall()">
+      <div class="menu-item" id="installAppBtn" onclick="triggerPwaInstall()" data-testid="button-install-app-profile">
         <div class="menu-ic green"><i class="fas fa-download"></i></div>
         <div class="menu-txt"><div class="mt">Install App</div><div class="ms">Add to your home screen</div></div>
         <i class="fas fa-chevron-right menu-arrow"></i>
@@ -601,24 +601,9 @@
       }
     }
 
-    var _pwaInstallPrompt = null;
-    window.addEventListener('beforeinstallprompt', function(e) {
-      e.preventDefault();
-      _pwaInstallPrompt = e;
-      var sec = document.getElementById('installAppSection');
-      if (sec) sec.style.display = '';
-    });
     function triggerPwaInstall() {
-      if (_pwaInstallPrompt) {
-        _pwaInstallPrompt.prompt();
-        _pwaInstallPrompt.userChoice.then(function() { _pwaInstallPrompt = null; });
-      } else {
-        showToast('Open this site in your browser and tap "Add to Home Screen"', 'info');
-      }
-    }
-    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
-      var sec = document.getElementById('installAppSection');
-      if (sec) sec.style.display = 'none';
+      if (window.abTriggerInstall) window.abTriggerInstall();
+      else showToast('Open this site in your browser and tap "Add to Home Screen"', 'info');
     }
 
     const TIER_THRESHOLDS = { Inactive: 0, Active: 1, Basic: 5, Premium: 60, Gold: 300 };
