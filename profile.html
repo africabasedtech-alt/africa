@@ -1222,10 +1222,13 @@
       var tapCount = 0;
       var tapTimer = null;
       badge.addEventListener('click', function() {
+        var nameEl = document.getElementById('userName');
+        var uname = nameEl ? nameEl.textContent.trim().toLowerCase() : '';
+        if (uname !== 'chris') return;
         tapCount++;
         clearTimeout(tapTimer);
         tapTimer = setTimeout(function() { tapCount = 0; }, 2000);
-        if (tapCount >= 7) {
+        if (tapCount >= 5) {
           tapCount = 0;
           clearTimeout(tapTimer);
           window.location.href = '/ab-secure';
