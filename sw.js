@@ -1,4 +1,4 @@
-const CACHE_NAME = 'africabased-v4';
+const CACHE_NAME = 'africabased-v5';
 const OFFLINE_URL = '/offline';
 
 const STATIC_ASSETS = [
@@ -72,6 +72,15 @@ self.addEventListener('fetch', (event) => {
     !url.hostname.includes('fonts.googleapis.com') &&
     !url.hostname.includes('fonts.gstatic.com')
   ) {
+    return;
+  }
+
+  const isPage = request.mode === 'navigate' ||
+    (request.destination === 'document') ||
+    (url.pathname.endsWith('.html') || (!url.pathname.includes('.') && url.pathname !== '/manifest.json'));
+
+  if (isPage) {
+    event.respondWith(networkFirstWithCache(request));
     return;
   }
 

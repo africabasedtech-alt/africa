@@ -4069,6 +4069,7 @@ app.use((req, res, next) => {
   if (req.path === '/' || extname(req.path) !== '') return next();
   const htmlPath = join(__dirname, req.path + '.html');
   if (fs.existsSync(htmlPath)) {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     return res.sendFile(htmlPath);
   }
   next();
