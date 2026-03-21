@@ -220,19 +220,71 @@
     link.href = '/css/ai-assistant.css';
     document.head.appendChild(link);
 
+    var aiIconSVG = '<svg class="ab-ai-icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="rgba(255,255,255,0.15)"/><path d="M12 3c1.5 0 2.7 1.2 2.7 2.7S13.5 8.4 12 8.4 9.3 7.2 9.3 5.7 10.5 3 12 3z" fill="#fff"/><path d="M7 10.5c0-.83.67-1.5 1.5-1.5h7c.83 0 1.5.67 1.5 1.5v4c0 2.49-2.01 4.5-4.5 4.5h-1c-2.49 0-4.5-2.01-4.5-4.5v-4z" fill="#fff"/><circle cx="9.5" cy="12" r="1" fill="#667eea"/><circle cx="14.5" cy="12" r="1" fill="#667eea"/><path d="M10 15.5c0 0 .8 1 2 1s2-1 2-1" stroke="#667eea" stroke-width="0.8" stroke-linecap="round"/><path d="M5 8l-2-1M19 8l2-1M5 16l-2 1M19 16l2 1" stroke="#fff" stroke-width="0.7" stroke-linecap="round" opacity="0.6"/></svg>';
+
     var bubble = document.createElement('button');
     bubble.id = 'abAiBubble';
     bubble.className = 'ab-ai-bubble';
     bubble.setAttribute('data-testid', 'button-ai-assistant');
-    bubble.innerHTML = '<i class="fas fa-robot"></i><span class="ab-badge"></span>';
+    bubble.innerHTML = aiIconSVG + '<span class="ab-badge"></span>';
     document.body.appendChild(bubble);
+
+    var _dragState = { dragging: false, startX: 0, startY: 0, origX: 0, origY: 0, moved: false };
+    function onDragStart(e) {
+      var t = e.touches ? e.touches[0] : e;
+      var rect = bubble.getBoundingClientRect();
+      _dragState.dragging = true;
+      _dragState.moved = false;
+      _dragState.startX = t.clientX;
+      _dragState.startY = t.clientY;
+      _dragState.origX = rect.left;
+      _dragState.origY = rect.top;
+      bubble.style.transition = 'none';
+    }
+    function onDragMove(e) {
+      if (!_dragState.dragging) return;
+      var t = e.touches ? e.touches[0] : e;
+      var dx = t.clientX - _dragState.startX;
+      var dy = t.clientY - _dragState.startY;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) _dragState.moved = true;
+      if (!_dragState.moved) return;
+      e.preventDefault();
+      var nx = _dragState.origX + dx;
+      var ny = _dragState.origY + dy;
+      nx = Math.max(0, Math.min(window.innerWidth - 60, nx));
+      ny = Math.max(0, Math.min(window.innerHeight - 60, ny));
+      bubble.style.left = nx + 'px';
+      bubble.style.top = ny + 'px';
+      bubble.style.right = 'auto';
+      bubble.style.bottom = 'auto';
+    }
+    function onDragEnd() {
+      if (!_dragState.dragging) return;
+      _dragState.dragging = false;
+      bubble.style.transition = '';
+      var rect = bubble.getBoundingClientRect();
+      var midX = rect.left + rect.width / 2;
+      if (midX < window.innerWidth / 2) {
+        bubble.style.left = '16px';
+        bubble.style.right = 'auto';
+      } else {
+        bubble.style.left = 'auto';
+        bubble.style.right = '16px';
+      }
+    }
+    bubble.addEventListener('mousedown', onDragStart);
+    document.addEventListener('mousemove', onDragMove);
+    document.addEventListener('mouseup', onDragEnd);
+    bubble.addEventListener('touchstart', onDragStart, { passive: true });
+    document.addEventListener('touchmove', onDragMove, { passive: false });
+    document.addEventListener('touchend', onDragEnd);
 
     var panel = document.createElement('div');
     panel.id = 'abAiPanel';
     panel.className = 'ab-ai-panel';
     panel.innerHTML =
       '<div class="ab-ai-header">' +
-        '<div class="ab-ai-avatar"><i class="fas fa-robot"></i></div>' +
+        '<div class="ab-ai-avatar">' + aiIconSVG + '</div>' +
         '<div class="ab-ai-header-info"><h4>AB Assistant</h4><span>AI-Powered • Always online</span></div>' +
         '<button class="ab-ai-close" data-testid="button-close-assistant"><i class="fas fa-times"></i></button>' +
       '</div>' +
@@ -355,7 +407,10 @@
       }
     }
 
-    bubble.addEventListener('click', togglePanel);
+    bubble.addEventListener('click', function(e) {
+      if (_dragState.moved) { _dragState.moved = false; return; }
+      togglePanel();
+    });
     closeBtn.addEventListener('click', function() {
       isOpen = true;
       togglePanel();

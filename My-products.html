@@ -217,22 +217,27 @@
             <h1>My Investments</h1>
         </div>
 
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+            <button id="toggleValues" data-testid="button-toggle-values" onclick="toggleHoldingsValues()" style="background:rgba(212,160,23,0.1);border:1px solid rgba(212,160,23,0.2);color:#d4a017;padding:8px 16px;border-radius:10px;cursor:pointer;font-size:0.82rem;font-weight:600;display:flex;align-items:center;gap:6px;transition:all 0.2s;">
+                <i class="fas fa-eye" id="toggleIcon"></i> <span id="toggleText">Hide Values</span>
+            </button>
+        </div>
         <div class="dashboard-summary">
             <div class="summary-card">
                 <div class="info-label">Total Invested</div>
-                <div class="info-value" id="total-invested">KSH 0.00</div>
+                <div class="info-value holdings-val" id="total-invested" data-testid="text-total-invested">KSH 0.00</div>
             </div>
             <div class="summary-card">
                 <div class="info-label">Daily Returns</div>
-                <div class="info-value" id="total-daily-returns">KSH 0.00</div>
+                <div class="info-value holdings-val" id="total-daily-returns" data-testid="text-daily-returns">KSH 0.00</div>
             </div>
             <div class="summary-card">
                 <div class="info-label">Active Investments</div>
-                <div class="info-value" id="active-investments">0</div>
+                <div class="info-value" id="active-investments" data-testid="text-active-investments">0</div>
             </div>
             <div class="summary-card">
                 <div class="info-label">Total Collected</div>
-                <div class="info-value" style="color:#2ecc71;" id="total-collected">KSH 0.00</div>
+                <div class="info-value holdings-val" style="color:#2ecc71;" id="total-collected" data-testid="text-total-collected">KSH 0.00</div>
             </div>
         </div>
 
@@ -252,6 +257,30 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/token.js"></script>
     <script>
+        var _holdingsHidden = localStorage.getItem('holdingsHidden') === 'true';
+        function toggleHoldingsValues() {
+            _holdingsHidden = !_holdingsHidden;
+            localStorage.setItem('holdingsHidden', _holdingsHidden);
+            applyHoldingsVisibility();
+        }
+        function applyHoldingsVisibility() {
+            var icon = document.getElementById('toggleIcon');
+            var text = document.getElementById('toggleText');
+            var els = document.querySelectorAll('.holdings-val');
+            var cardVals = document.querySelectorAll('.inv-card-val');
+            if (_holdingsHidden) {
+                icon.className = 'fas fa-eye-slash';
+                text.textContent = 'Show Values';
+                els.forEach(function(el) { el.setAttribute('data-real', el.textContent); el.textContent = '******'; });
+                cardVals.forEach(function(el) { el.setAttribute('data-real', el.textContent); el.textContent = '***'; });
+            } else {
+                icon.className = 'fas fa-eye';
+                text.textContent = 'Hide Values';
+                els.forEach(function(el) { if (el.getAttribute('data-real')) el.textContent = el.getAttribute('data-real'); });
+                cardVals.forEach(function(el) { if (el.getAttribute('data-real')) el.textContent = el.getAttribute('data-real'); });
+            }
+        }
+
         function formatCurrency(amount) {
             return new Intl.NumberFormat('en-KE', {
                 minimumFractionDigits: 2,
@@ -352,6 +381,7 @@
                     document.getElementById('total-daily-returns').textContent = 'KSH 0.00';
                     document.getElementById('active-investments').textContent = '0';
                     document.getElementById('total-collected').textContent = 'KSH 0.00';
+                    applyHoldingsVisibility();
                     return;
                 }
 
@@ -398,11 +428,11 @@
                                     <div class="info-grid">
                                         <div class="info-box">
                                             <div class="info-label">Invested</div>
-                                            <div class="info-value">KSH ${formatCurrency(amount)}</div>
+                                            <div class="info-value inv-card-val">KSH ${formatCurrency(amount)}</div>
                                         </div>
                                         <div class="info-box">
                                             <div class="info-label">Daily Returns</div>
-                                            <div class="info-value">KSH ${formatCurrency(daily)}</div>
+                                            <div class="info-value inv-card-val">KSH ${formatCurrency(daily)}</div>
                                         </div>
                                         <div class="info-box">
                                             <div class="info-label">Progress</div>
@@ -469,6 +499,7 @@
                 document.getElementById('active-investments').textContent = investments.length.toString();
                 document.getElementById('total-collected').textContent = 'KSH ' + formatCurrency(grandTotalCollected);
 
+                applyHoldingsVisibility();
             } catch (e) {
                 container.innerHTML = '<div class="col-12 text-center py-4 text-danger">Failed to load investments. Please refresh.</div>';
                 console.error('Load investments error:', e);
