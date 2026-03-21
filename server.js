@@ -4077,6 +4077,58 @@ app.use((req, res, next) => {
 
 app.use(express.static(__dirname));
 
+// ─── App Download Endpoint ─────────────────────────────────────────────
+app.get('/api/download/app', (req, res) => {
+  const appUrl = `${req.protocol}://${req.get('host')}`;
+  const htmlContent = `<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Install AfricaBased</title>
+<link rel="manifest" href="${appUrl}/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AfricaBased">
+<link rel="apple-touch-icon" href="${appUrl}/public/icons/icon-180x180.png">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:sans-serif;background:#06090f;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:20px}
+.c{max-width:340px}
+img{width:96px;height:96px;border-radius:20px;margin-bottom:20px;box-shadow:0 8px 32px rgba(0,0,0,0.5)}
+h1{font-size:1.3rem;margin-bottom:8px}
+p{color:rgba(255,255,255,0.5);font-size:0.88rem;margin-bottom:24px;line-height:1.5}
+.btn{display:inline-block;padding:14px 36px;background:linear-gradient(135deg,#d4a017,#b8890f);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;text-decoration:none;cursor:pointer;box-shadow:0 4px 20px rgba(212,160,23,0.3)}
+.s{margin-top:20px;font-size:0.75rem;color:rgba(255,255,255,0.3);line-height:1.5}
+</style>
+</head><body>
+<div class="c">
+<img src="${appUrl}/public/icons/icon-192x192.png" alt="AfricaBased">
+<h1>AfricaBased Technologies</h1>
+<p>Tap the button below to open the app and install it to your device.</p>
+<a class="btn" href="${appUrl}/home" id="openBtn">Open AfricaBased</a>
+<div class="s">After opening, tap your browser menu and select<br>"Install App" or "Add to Home Screen"</div>
+</div>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('${appUrl}/sw.js').catch(function(){});
+}
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();
+  document.getElementById('openBtn').textContent='Install Now';
+  document.getElementById('openBtn').href='#';
+  document.getElementById('openBtn').addEventListener('click',function(ev){
+    ev.preventDefault();e.prompt();
+    e.userChoice.then(function(){window.location.href='${appUrl}/home';});
+  });
+});
+</script>
+</body></html>`;
+
+  res.setHeader('Content-Type', 'text/html');
+  res.setHeader('Content-Disposition', 'attachment; filename="AfricaBased.html"');
+  res.send(htmlContent);
+});
+
 // Suppress favicon 404 noise
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 

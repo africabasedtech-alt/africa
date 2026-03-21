@@ -25,90 +25,84 @@
   window.abTriggerInstall = function() {
     if (deferredPrompt) {
       deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(function () {
+      deferredPrompt.userChoice.then(function (choice) {
         deferredPrompt = null;
         hideBanner();
+        if (choice.outcome === 'accepted') {
+          if (typeof showToast === 'function') showToast('AfricaBased is being installed!', 'success');
+        }
       });
       return;
     }
 
-    var ua = navigator.userAgent || '';
-    var isIOS = /iPhone|iPad|iPod/.test(ua);
-    var isSafari = /Safari/.test(ua) && !/Chrome|CriOS|FxiOS|EdgiOS/.test(ua);
-    var isSamsung = /SamsungBrowser/.test(ua);
-    var isFirefox = /Firefox|FxiOS/.test(ua);
     var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-
     if (isStandalone) {
-      showInstallGuide('You are already using the app! If you want to reinstall, open this site in your browser.');
+      if (typeof showToast === 'function') showToast('You are already using the installed app!', 'info');
       return;
     }
 
-    if (isIOS) {
-      showInstallGuide(
-        '<div style="text-align:left;line-height:1.7">' +
-        '<b>To install on iPhone/iPad:</b><br>' +
-        '1. Tap the <b>Share</b> button <i class="fas fa-share-square" style="color:#007AFF"></i> at the bottom of Safari<br>' +
-        '2. Scroll down and tap <b>"Add to Home Screen"</b> <i class="fas fa-plus-square" style="color:#007AFF"></i><br>' +
-        '3. Tap <b>"Add"</b> in the top right corner' +
-        '</div>'
-      );
-    } else if (isSamsung) {
-      showInstallGuide(
-        '<div style="text-align:left;line-height:1.7">' +
-        '<b>To install:</b><br>' +
-        '1. Tap the <b>menu</b> icon <i class="fas fa-ellipsis-v"></i> (bottom right or top right)<br>' +
-        '2. Tap <b>"Add page to"</b> → <b>"Home screen"</b><br>' +
-        '3. Tap <b>"Add"</b>' +
-        '</div>'
-      );
-    } else if (isFirefox) {
-      showInstallGuide(
-        '<div style="text-align:left;line-height:1.7">' +
-        '<b>To install:</b><br>' +
-        '1. Tap the <b>menu</b> icon <i class="fas fa-ellipsis-v"></i><br>' +
-        '2. Tap <b>"Install"</b> or <b>"Add to Home screen"</b><br>' +
-        '3. Confirm by tapping <b>"Add"</b>' +
-        '</div>'
-      );
-    } else {
-      showInstallGuide(
-        '<div style="text-align:left;line-height:1.7">' +
-        '<b>To install:</b><br>' +
-        '1. Tap the <b>menu</b> icon <i class="fas fa-ellipsis-v"></i> (top right)<br>' +
-        '2. Tap <b>"Install app"</b> or <b>"Add to Home screen"</b><br>' +
-        '3. Tap <b>"Install"</b> to confirm' +
-        '</div>'
-      );
-    }
+    showInstallModal();
   };
 
-  function showInstallGuide(htmlContent) {
+  function showInstallModal() {
     var existing = document.getElementById('ab-install-guide');
     if (existing) existing.remove();
 
+    var ua = navigator.userAgent || '';
+    var isIOS = /iPhone|iPad|iPod/.test(ua);
+    var isAndroid = /Android/.test(ua);
+    var appUrl = window.location.origin;
+
     var overlay = document.createElement('div');
     overlay.id = 'ab-install-guide';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(5,11,21,0.85);z-index:999999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:20px;';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(5,11,21,0.9);z-index:999999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);padding:20px;';
 
-    overlay.innerHTML =
-      '<div style="background:linear-gradient(135deg,#0d1b2a,#0a1628);border:1px solid rgba(212,160,23,0.25);border-radius:20px;padding:32px 28px;max-width:360px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,0.5);color:#fff;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:0.9rem;position:relative;">' +
-        '<button id="ab-guide-close" style="position:absolute;top:12px;right:14px;background:none;border:none;color:rgba(255,255,255,0.4);font-size:1.3rem;cursor:pointer;padding:4px;">✕</button>' +
-        '<div style="text-align:center;margin-bottom:18px;">' +
-          '<div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#d4a017,#8a6d0a);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:1.5rem;"><i class="fas fa-download"></i></div>' +
-          '<div style="font-size:1.05rem;font-weight:700;">Install AfricaBased</div>' +
-        '</div>' +
-        '<div style="color:rgba(255,255,255,0.8);">' + htmlContent + '</div>' +
-      '</div>';
+    var content = '<div style="background:linear-gradient(135deg,#0d1b2a,#0a1628);border:1px solid rgba(212,160,23,0.25);border-radius:20px;padding:32px 24px;max-width:380px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,0.6);color:#fff;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:0.9rem;position:relative;">';
+    content += '<button id="ab-guide-close" style="position:absolute;top:12px;right:14px;background:none;border:none;color:rgba(255,255,255,0.4);font-size:1.3rem;cursor:pointer;padding:4px;">✕</button>';
+    content += '<div style="text-align:center;margin-bottom:20px;">';
+    content += '<img src="/public/icons/icon-96x96.png" style="width:72px;height:72px;border-radius:16px;margin:0 auto 14px;display:block;box-shadow:0 8px 24px rgba(0,0,0,0.4);">';
+    content += '<div style="font-size:1.15rem;font-weight:800;margin-bottom:4px;">Install AfricaBased</div>';
+    content += '<div style="font-size:0.8rem;color:rgba(255,255,255,0.45);">Get the full app experience</div>';
+    content += '</div>';
 
+    if (isAndroid) {
+      content += '<a href="/api/download/app" id="ab-download-apk" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;background:linear-gradient(135deg,#d4a017,#b8890f);color:#fff;border:none;border-radius:12px;font-size:0.95rem;font-weight:700;cursor:pointer;text-decoration:none;margin-bottom:14px;box-shadow:0 4px 16px rgba(212,160,23,0.3);"><i class="fas fa-download"></i> Download App</a>';
+      content += '<div style="text-align:center;color:rgba(255,255,255,0.35);font-size:0.78rem;margin-bottom:14px;">— or install directly —</div>';
+      content += '<button id="ab-pwa-install" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.8);border-radius:12px;font-size:0.88rem;font-weight:600;cursor:pointer;"><i class="fas fa-globe"></i> Add to Home Screen</button>';
+      content += '<div style="margin-top:12px;padding:12px;background:rgba(255,255,255,0.04);border-radius:10px;font-size:0.78rem;color:rgba(255,255,255,0.4);line-height:1.6;">';
+      content += '<i class="fas fa-info-circle" style="color:var(--gold,#d4a017);margin-right:4px;"></i> After downloading, open the file from your notifications or Files app to install.';
+      content += '</div>';
+    } else if (isIOS) {
+      content += '<div style="text-align:left;line-height:1.9;padding:4px 0;">';
+      content += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:10px;margin-bottom:8px;"><span style="width:28px;height:28px;border-radius:8px;background:rgba(0,122,255,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#007AFF;font-size:0.85rem;">1</span><span>Tap <b>Share</b> <i class="fas fa-arrow-up-from-bracket" style="color:#007AFF"></i> at the bottom</span></div>';
+      content += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:10px;margin-bottom:8px;"><span style="width:28px;height:28px;border-radius:8px;background:rgba(0,122,255,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#007AFF;font-size:0.85rem;">2</span><span>Tap <b>"Add to Home Screen"</b> <i class="fas fa-plus-square" style="color:#007AFF"></i></span></div>';
+      content += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:10px;"><span style="width:28px;height:28px;border-radius:8px;background:rgba(0,122,255,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#007AFF;font-size:0.85rem;">3</span><span>Tap <b>"Add"</b> to install</span></div>';
+      content += '</div>';
+    } else {
+      content += '<button id="ab-pwa-install" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;background:linear-gradient(135deg,#d4a017,#b8890f);color:#fff;border:none;border-radius:12px;font-size:0.95rem;font-weight:700;cursor:pointer;margin-bottom:14px;box-shadow:0 4px 16px rgba(212,160,23,0.3);"><i class="fas fa-download"></i> Install App</button>';
+      content += '<div style="margin-top:4px;padding:12px;background:rgba(255,255,255,0.04);border-radius:10px;font-size:0.78rem;color:rgba(255,255,255,0.4);line-height:1.6;">';
+      content += '<i class="fas fa-info-circle" style="color:var(--gold,#d4a017);margin-right:4px;"></i> If the install prompt doesn\'t appear, look for "Install" in your browser menu (⋮).';
+      content += '</div>';
+    }
+
+    content += '</div>';
+    overlay.innerHTML = content;
     document.body.appendChild(overlay);
 
-    document.getElementById('ab-guide-close').addEventListener('click', function () {
-      overlay.remove();
-    });
-    overlay.addEventListener('click', function (e) {
-      if (e.target === overlay) overlay.remove();
-    });
+    document.getElementById('ab-guide-close').addEventListener('click', function () { overlay.remove(); });
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.remove(); });
+
+    var pwaBtn = document.getElementById('ab-pwa-install');
+    if (pwaBtn) {
+      pwaBtn.addEventListener('click', function () {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function () { deferredPrompt = null; overlay.remove(); });
+        } else {
+          if (typeof showToast === 'function') showToast('Tap your browser menu (⋮) and select "Install app" or "Add to Home Screen"', 'info');
+        }
+      });
+    }
   }
 
   function showInstallBanner() {
