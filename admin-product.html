@@ -124,7 +124,7 @@
 <body>
 <div class="topbar">
   <h1><i class="fas fa-boxes" style="margin-right:0.5rem;"></i>Product Manager</h1>
-  <a href="Admin-panel.html"><i class="fas fa-arrow-left" style="margin-right:0.4rem;"></i>Back to Admin Panel</a>
+  <a href="/Admin-panel"><i class="fas fa-arrow-left" style="margin-right:0.4rem;"></i>Back to Admin Panel</a>
 </div>
 
 <div class="container">
@@ -636,8 +636,8 @@
 (function() {
   fetch('/api/admin/me').then(function(r){return r.json();}).then(function(d){
     if(d.admin&&d.admin.isSubAdmin){
-      document.querySelectorAll('a[href="Admin-panel.html"]').forEach(function(a){
-        a.href='sub-admin-panel.html';
+      document.querySelectorAll('a[href="/Admin-panel"]').forEach(function(a){
+        a.href='/sub-admin-panel';
         var t=a.textContent.trim();
         if(t.includes('Admin Panel')||t==='Back')a.textContent='← Back to Dashboard';
       });

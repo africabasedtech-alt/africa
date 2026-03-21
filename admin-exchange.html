@@ -329,7 +329,7 @@
 <div class="ex-page-bg"></div>
 <div class="ex-container">
         <div class="ex-topbar">
-                <a href="Admin-panel.html" class="ex-back-btn" data-testid="link-back-admin">
+                <a href="/Admin-panel" class="ex-back-btn" data-testid="link-back-admin">
                         <i class="fas fa-arrow-left"></i> Back to Admin Panel
                 </a>
                 <div class="ex-system-btns">
@@ -961,8 +961,8 @@ async function syncChanges() {
 (function() {
   fetch('/api/admin/me').then(function(r){return r.json();}).then(function(d){
     if(d.admin&&d.admin.isSubAdmin){
-      document.querySelectorAll('a[href="Admin-panel.html"]').forEach(function(a){
-        a.href='sub-admin-panel.html';
+      document.querySelectorAll('a[href="/Admin-panel"]').forEach(function(a){
+        a.href='/sub-admin-panel';
         var t=a.textContent.trim();
         if(t.includes('Admin Panel')||t==='Back')a.textContent='← Back to Dashboard';
       });

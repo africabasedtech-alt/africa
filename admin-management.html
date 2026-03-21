@@ -315,7 +315,7 @@
 </head>
 <body>
     <div style="margin: 24px 0 0 24px; display: flex; align-items: center; gap: 16px;">
-        <a href="Admin-panel.html" class="back-btn" style="background:#ffd54f;color:#232526;padding:8px 18px;border-radius:6px;text-decoration:none;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.10);transition:background 0.2s, color 0.2s;">&larr; Back to Admin Panel</a>
+        <a href="/Admin-panel" class="back-btn" style="background:#ffd54f;color:#232526;padding:8px 18px;border-radius:6px;text-decoration:none;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.10);transition:background 0.2s, color 0.2s;">&larr; Back to Admin Panel</a>
         <button class="system-btn btn-reset" onclick="confirmSystemReset()" style="background:#ff9800;color:#000;padding:8px 18px;border-radius:6px;font-weight:600;">Reset</button>
         <button class="system-btn btn-sync" onclick="syncChanges()" style="background:#2196f3;color:#fff;padding:8px 18px;border-radius:6px;font-weight:600;">Sync Changes</button>
     </div>
@@ -808,7 +808,7 @@
                 if (!res.ok) { alert('Error: ' + (data.error || 'Failed')); return; }
 
                 const invite = data.invite;
-                const link = `${window.location.origin}/admin-login-admin.html?token=${invite.token}`;
+                const link = `${window.location.origin}/admin-login-admin?token=${invite.token}`;
                 document.getElementById('adminLinkResult').innerHTML =
                     `<div style="background:rgba(78,205,196,0.1);border:1px solid #4ecdc4;border-radius:8px;padding:16px;">
                         <p style="margin:0 0 8px;color:#4ecdc4;font-weight:600;"><i class="fas fa-check-circle"></i> Admin invite created!</p>
@@ -847,7 +847,7 @@
                     const statusColor = a.status === 'active' && !expired ? '#4ecdc4' : '#ff6b6b';
                     const privsArr = typeof a.privileges === 'string' ? JSON.parse(a.privileges) : (a.privileges||[]);
                     const privs = privsArr.join(', ') || 'none';
-                    const link = `${window.location.origin}/admin-login-admin.html?token=${a.token}`;
+                    const link = `${window.location.origin}/admin-login-admin?token=${a.token}`;
                     const hasExchange = privsArr.includes('exchange');
                     const exLimit = parseFloat(a.exchange_limit || 0);
                     const exUsed = parseFloat(a.exchange_generated || 0);
@@ -1136,8 +1136,8 @@
 (function() {
   fetch('/api/admin/me').then(function(r){return r.json();}).then(function(d){
     if(d.admin&&d.admin.isSubAdmin){
-      document.querySelectorAll('a[href="Admin-panel.html"]').forEach(function(a){
-        a.href='sub-admin-panel.html';
+      document.querySelectorAll('a[href="/Admin-panel"]').forEach(function(a){
+        a.href='/sub-admin-panel';
         var t=a.textContent.trim();
         if(t.includes('Admin Panel')||t==='Back')a.textContent='← Back to Dashboard';
       });

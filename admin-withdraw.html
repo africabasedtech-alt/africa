@@ -397,6 +397,19 @@
 
         document.addEventListener('DOMContentLoaded', refreshAll);
     </script>
+<script>
+(function() {
+  fetch('/api/admin/me').then(function(r){return r.json();}).then(function(d){
+    if(d.admin&&d.admin.isSubAdmin){
+      document.querySelectorAll('a[href="/Admin-panel"]').forEach(function(a){
+        a.href='/sub-admin-panel';
+        var t=a.textContent.trim();
+        if(t.includes('Admin')||t.includes('Back'))a.textContent='← Back to Dashboard';
+      });
+    }
+  }).catch(function(){})
+})();
+</script>
 <script src="/js/admin-pin.js"></script>
 <script src="/js/admin-ai-nav.js"></script>
 </body>
