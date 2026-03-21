@@ -17,7 +17,7 @@ The platform utilizes a modern web architecture with a focus on performance, sca
 ### UI/UX Decisions
 The user-facing pages feature a premium gold/dark theme with a unified aesthetic.
 - **Color Scheme:** Primary colors are `--gold:#d4a017`, `--gold-bright:#f5c842`, `--bg:#06090f`, `--card-bg:#0d1520`, `--card-bg2:#111d2e`. Green accents are used for positive indicators. Deposit pages use a fully green M-Pesa-inspired theme (`#4CAF50`, `#2e7d32`, `#81c784`).
-- **Typography:** Poppins font from Google Fonts.
+- **Typography:** Plus Jakarta Sans font from Google Fonts (weights 400–800). Modern geometric sans-serif with premium fintech aesthetic.
 - **Navigation:** A fixed 72px gold bottom tab bar on all authenticated pages (Home, Invest, Holdings, Wallet, Profile).
 - **Landing Page:** Professional fintech layout with feature lists, payment methods grid, and styled testimonials.
 - **Modals:** Animated modals for login success and account creation.

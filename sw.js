@@ -1,4 +1,4 @@
-const CACHE_NAME = 'africabased-v5';
+const CACHE_NAME = 'africabased-v6';
 const OFFLINE_URL = '/offline';
 
 const STATIC_ASSETS = [
@@ -27,8 +27,7 @@ const STATIC_ASSETS = [
   '/js/biometric.js',
   '/css/ai-assistant.css',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
-  'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap',
+  'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap',
 ];
 
 self.addEventListener('install', (event) => {
