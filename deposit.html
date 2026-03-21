@@ -11,57 +11,106 @@
     <meta name="apple-mobile-web-app-title" content="AfricaBased">
     <title>AfricaBased - Deposit</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: #06090f; color: #fff; min-height: 100vh; padding-top: 76px; }
+        body { background: #06090f; color: #fff; min-height: 100vh; padding-top: 20px; padding-bottom: 90px !important; }
 
         .container { max-width: 700px; margin: 0 auto; padding: 32px 20px 60px; }
 
+        .back-link {
+            display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+            color: #4CAF50; font-size: 0.9rem; font-weight: 600;
+            padding: 8px 16px; background: rgba(76,175,80,0.1); border-radius: 8px; margin-bottom: 1.2rem;
+        }
+
         .page-title {
             font-size: 1.4rem; font-weight: 700; color: #fff;
-            display: flex; align-items: center; gap: 10px; margin-bottom: 24px;
+            display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
         }
-        .page-title i { color: #d4a017; }
+        .page-title i { color: #4CAF50; }
 
-        /* Instructions banner — shown in manual mode */
-        .instructions-banner {
-            background: rgba(255,213,79,0.06); border: 1px solid rgba(255,213,79,0.3);
-            border-radius: 14px; padding: 22px 24px; margin-bottom: 22px;
-            display: none;
+        .search-state {
+            text-align: center; padding: 48px 20px;
         }
-        .instr-header {
-            display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+        .search-ring {
+            width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 20px;
+            border: 3px solid rgba(76,175,80,0.15); border-top-color: #4CAF50;
+            animation: spinRing 1s linear infinite;
         }
-        .instr-icon {
-            width: 36px; height: 36px; background: rgba(255,213,79,0.12);
-            border-radius: 8px; display: flex; align-items: center; justify-content: center;
-            color: #ffd54f; font-size: 1rem; flex-shrink: 0;
-        }
-        .instr-title { font-size: 0.95rem; font-weight: 700; color: #ffd54f; }
-        .instr-subtitle { font-size: 0.75rem; color: rgba(255,213,79,0.6); margin-top: 2px; }
-        .instr-body {
-            font-size: 0.88rem; color: rgba(255,255,255,0.82); line-height: 1.75;
-            word-break: break-word;
-        }
-        .instr-body ol { margin: 0; padding-left: 22px; }
-        .instr-body ol li { margin-bottom: 8px; }
-        .instr-body ol li:last-child { margin-bottom: 0; }
-        .instr-body p:last-child { margin-bottom: 0; }
-        .instr-body-empty {
-            font-size: 0.85rem; color: rgba(255,255,255,0.35); font-style: italic;
-        }
+        @keyframes spinRing { to { transform: rotate(360deg); } }
+        .search-text { font-size: 0.95rem; color: rgba(255,255,255,0.5); }
+        .search-sub { font-size: 0.78rem; color: rgba(255,255,255,0.25); margin-top: 6px; }
 
-        /* Mode notice pill */
         .mode-pill {
             display: inline-flex; align-items: center; gap: 7px;
             padding: 6px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 700;
             margin-bottom: 18px;
         }
-        .mode-pill.auto { background: rgba(212,160,23,0.12); color: #d4a017; border: 1px solid rgba(212,160,23,0.3); }
-        .mode-pill.manual { background: rgba(255,107,107,0.12); color: #ff6b6b; border: 1px solid rgba(255,107,107,0.3); }
+        .mode-pill.auto { background: rgba(76,175,80,0.12); color: #4CAF50; border: 1px solid rgba(76,175,80,0.3); }
+        .mode-pill.manual { background: rgba(76,175,80,0.12); color: #4CAF50; border: 1px solid rgba(76,175,80,0.3); }
 
-        /* Content card */
+        .channel-found {
+            background: linear-gradient(165deg, #0a2e12 0%, #0d3d1a 40%, #071f0e 100%);
+            border: 1px solid rgba(76,175,80,0.2); border-radius: 18px;
+            overflow: hidden; margin-bottom: 20px;
+            animation: fadeUp 0.5s ease;
+        }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+        .channel-header {
+            background: linear-gradient(135deg, rgba(76,175,80,0.15), rgba(46,125,50,0.05));
+            border-bottom: 1px solid rgba(76,175,80,0.1);
+            padding: 20px 22px; display: flex; align-items: center; gap: 14px;
+        }
+        .channel-icon-lg {
+            width: 52px; height: 52px; border-radius: 14px; display: flex;
+            align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;
+            background: linear-gradient(135deg, #4CAF50, #2e7d32);
+            color: #fff; box-shadow: 0 4px 16px rgba(76,175,80,0.3);
+        }
+        .channel-meta h3 { font-size: 1rem; font-weight: 700; color: #fff; }
+        .channel-meta .ch-type {
+            font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px;
+            color: #81c784; font-weight: 700; margin-top: 2px;
+        }
+
+        .channel-number-box {
+            margin: 18px 22px; padding: 16px 18px; border-radius: 14px;
+            background: rgba(76,175,80,0.08); border: 1px solid rgba(76,175,80,0.15);
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        }
+        .ch-num-label { font-size: 0.72rem; color: rgba(255,255,255,0.4); margin-bottom: 4px; }
+        .ch-num-value { font-size: 1.25rem; font-weight: 800; color: #4CAF50; letter-spacing: 1px; font-family: 'Courier New', monospace; }
+        .copy-btn {
+            background: rgba(76,175,80,0.2); border: 1px solid rgba(76,175,80,0.3);
+            color: #4CAF50; padding: 8px 16px; border-radius: 10px;
+            font-size: 0.78rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+            display: flex; align-items: center; gap: 5px; transition: background 0.2s; font-family: inherit;
+        }
+        .copy-btn:hover { background: rgba(76,175,80,0.3); }
+        .copy-btn.copied { background: rgba(76,175,80,0.4); color: #fff; }
+
+        .channel-account-box {
+            margin: 0 22px 18px; padding: 12px 18px; border-radius: 12px;
+            background: rgba(33,150,243,0.06); border: 1px solid rgba(33,150,243,0.12);
+        }
+        .acct-label { font-size: 0.72rem; color: rgba(255,255,255,0.4); }
+        .acct-value { font-size: 0.95rem; font-weight: 700; color: #64b5f6; margin-top: 2px; }
+
+        .channel-instructions {
+            margin: 0 22px 22px; padding: 18px 20px; border-radius: 14px;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+        }
+        .instr-title-row {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+            color: #81c784; font-size: 0.85rem; font-weight: 700;
+        }
+        .instr-steps { font-size: 0.85rem; color: rgba(255,255,255,0.7); line-height: 1.8; }
+        .instr-steps ol { margin: 0; padding-left: 20px; list-style: decimal; }
+        .instr-steps ol li { margin-bottom: 6px; }
+        .instr-steps p { margin: 0 0 6px; }
+
         .deposit-card {
             background: rgba(13,21,32,0.98); border-radius: 16px;
             box-shadow: 0 6px 28px rgba(0,0,0,0.4); overflow: hidden;
@@ -69,118 +118,177 @@
 
         #depositFrame { width: 100%; min-height: 540px; border: none; background: transparent; display: block; }
 
-        .loading-state {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 200px; color: rgba(255,255,255,0.35); gap: 14px;
+        .no-channel-msg {
+            text-align: center; padding: 32px 20px;
+            color: rgba(255,255,255,0.4); font-size: 0.88rem;
         }
-        .loading-state i { font-size: 1.8rem; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-    body{padding-bottom:80px !important;}
-</style>
-<!-- Bottom Tab Bar -->
-  <style>
-  .ab-tabs{position:fixed;bottom:0;left:0;right:0;height:72px;background:linear-gradient(180deg,#0d1520 0%,#06090f 100%);border-top:1px solid rgba(212,160,23,0.15);display:flex;justify-content:space-around;align-items:center;z-index:9999;padding-bottom:env(safe-area-inset-bottom,0);}
-  .ab-tabs a{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:rgba(255,255,255,0.45);font-size:0.65rem;font-family:Poppins,sans-serif;transition:color 0.2s;}
-  .ab-tabs a i{font-size:1.15rem;}
-  .ab-tabs a.active{color:#d4a017;}
-  .ab-tabs a.active i{filter:drop-shadow(0 0 6px rgba(212,160,23,0.5));}
-  </style>
+        .no-channel-msg i { font-size: 2rem; color: rgba(255,255,255,0.1); margin-bottom: 12px; display: block; }
+
+        .ab-tabs{position:fixed;bottom:0;left:0;right:0;height:72px;background:linear-gradient(180deg,#0d1520 0%,#06090f 100%);border-top:1px solid rgba(212,160,23,0.15);display:flex;justify-content:space-around;align-items:center;z-index:9999;padding-bottom:env(safe-area-inset-bottom,0);}
+        .ab-tabs a{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:rgba(255,255,255,0.45);font-size:0.65rem;font-family:Poppins,sans-serif;transition:color 0.2s;}
+        .ab-tabs a i{font-size:1.15rem;}
+        .ab-tabs a.active{color:#d4a017;}
+        .ab-tabs a.active i{filter:drop-shadow(0 0 6px rgba(212,160,23,0.5));}
+    </style>
 </head>
 <body>
     <main class="container">
-        <a href="/home" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:#d4a017;font-size:0.9rem;font-weight:600;padding:8px 16px;background:rgba(212,160,23,0.1);border-radius:8px;margin-bottom:1.2rem;"><i class="fas fa-arrow-left"></i> Back to Home</a>
+        <a href="/home" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a>
         <div class="page-title"><i class="fas fa-arrow-down-to-line"></i> Deposit Funds</div>
 
-        <div id="modePill" style="display:none;" class="mode-pill auto">
-            <i class="fas fa-circle" style="font-size:0.5rem;"></i>
-            <span id="modePillText"></span>
+        <div id="searchState" class="search-state">
+            <div class="search-ring"></div>
+            <div class="search-text" data-testid="text-search-status">Looking for deposit channel...</div>
+            <div class="search-sub">Finding the best payment option for you</div>
         </div>
 
-        <!-- Instructions banner: visible only in manual mode -->
-        <div class="instructions-banner" id="instrBanner">
-            <div class="instr-header">
-                <div class="instr-icon"><i class="fas fa-info-circle"></i></div>
-                <div>
-                    <div class="instr-title">How to Deposit</div>
-                    <div class="instr-subtitle">Follow the steps below to complete your deposit</div>
-                </div>
+        <div id="depositContent" style="display:none;">
+            <div id="modePill" style="display:none;" class="mode-pill auto">
+                <i class="fas fa-circle" style="font-size:0.5rem;"></i>
+                <span id="modePillText"></span>
             </div>
-            <div class="instr-body" id="instrBody"></div>
-        </div>
 
-        <div class="deposit-card" id="depositCard">
-            <div class="loading-state" id="loadingState">
-                <i class="fas fa-spinner"></i>
-                <span style="font-size:0.9rem;">Loading deposit options…</span>
+            <div id="channelDisplay" style="display:none;"></div>
+
+            <div class="deposit-card" id="depositCard">
+                <iframe id="depositFrame" src="" style="display:none;" allowtransparency="true"></iframe>
             </div>
-            <iframe id="depositFrame" src="" style="display:none;" allowtransparency="true"></iframe>
         </div>
     </main>
 
     <script>
         function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+        function getChannelIcon(type) {
+            var icons = { mpesa:'fa-mobile-alt', till:'fa-store', paybill:'fa-file-invoice-dollar', bank:'fa-university', other:'fa-ellipsis-h' };
+            return icons[type] || icons.other;
+        }
+
+        function getTypeLabel(type) {
+            var labels = { mpesa:'M-Pesa Send Money', till:'Till Number (Buy Goods)', paybill:'Paybill (Pay Bill)', bank:'Bank Transfer', other:'Payment Channel' };
+            return labels[type] || type;
+        }
+
+        function getNumLabel(type) {
+            var labels = { mpesa:'M-Pesa Number', till:'Till Number', paybill:'Business Number', bank:'Account Number', other:'Payment Number' };
+            return labels[type] || 'Number';
+        }
+
         function formatInstructions(text) {
-            const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            var lines = text.split(/\r?\n/).map(function(l){return l.trim()}).filter(Boolean);
             if (!lines.length) return '';
-            // Check if most lines look like numbered steps (1. or 1) format)
-            const numberedCount = lines.filter(l => /^\d+[\.\)]\s/.test(l)).length;
-            const isListy = numberedCount >= Math.floor(lines.length * 0.5);
+            var numberedCount = lines.filter(function(l){return /^\d+[\.\)]\s/.test(l)}).length;
+            var isListy = numberedCount >= Math.floor(lines.length * 0.5);
             if (isListy) {
-                const items = lines.map(l => '<li>' + esc(l.replace(/^\d+[\.\)]\s+/, '')) + '</li>').join('');
-                return '<ol style="margin:0;padding-left:22px;list-style:decimal;">' + items + '</ol>';
+                var items = lines.map(function(l){return '<li>'+esc(l.replace(/^\d+[\.\)]\s+/,''))+'</li>'}).join('');
+                return '<ol>'+items+'</ol>';
             }
-            // Plain text — wrap each line in a paragraph
-            return lines.map(l => '<p style="margin:0 0 8px;">' + esc(l) + '</p>').join('');
+            return lines.map(function(l){return '<p>'+esc(l)+'</p>'}).join('');
+        }
+
+        function copyNumber(num) {
+            navigator.clipboard.writeText(num).then(function() {
+                var btn = document.getElementById('copyBtn');
+                if (btn) {
+                    btn.classList.add('copied');
+                    btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    setTimeout(function() {
+                        btn.classList.remove('copied');
+                        btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                    }, 2000);
+                }
+            });
         }
 
         async function initDeposit() {
-            try {
-                const res = await fetch('/api/deposit/config');
-                const cfg = await res.json();
-                const mode = cfg.mode || 'auto';
-                const instructions = (cfg.instructions || '').trim();
+            var searchEl = document.getElementById('searchState');
+            var contentEl = document.getElementById('depositContent');
+            var searchText = searchEl.querySelector('.search-text');
 
-                const pill = document.getElementById('modePill');
-                const pillText = document.getElementById('modePillText');
+            try {
+                searchText.textContent = 'Looking for deposit channel...';
+                await new Promise(function(r){setTimeout(r,800)});
+                searchText.textContent = 'Connecting to payment system...';
+
+                var res = await fetch('/api/deposit/config');
+                var cfg = await res.json();
+                var mode = cfg.mode || 'auto';
+
+                await new Promise(function(r){setTimeout(r,600)});
+                searchText.textContent = mode === 'manual' ? 'Payment channel found!' : 'Auto deposit ready!';
+                await new Promise(function(r){setTimeout(r,400)});
+
+                searchEl.style.display = 'none';
+                contentEl.style.display = 'block';
+
+                var pill = document.getElementById('modePill');
+                var pillText = document.getElementById('modePillText');
                 pill.style.display = 'inline-flex';
+
                 if (mode === 'manual') {
                     pill.className = 'mode-pill manual';
                     pillText.textContent = 'Manual Deposit Mode';
+
+                    var chDisplay = document.getElementById('channelDisplay');
+                    if (cfg.channel) {
+                        var ch = cfg.channel;
+                        var html = '<div class="channel-found">' +
+                            '<div class="channel-header">' +
+                                '<div class="channel-icon-lg"><i class="fas '+getChannelIcon(ch.type)+'"></i></div>' +
+                                '<div class="channel-meta">' +
+                                    '<h3>'+esc(ch.name)+'</h3>' +
+                                    '<div class="ch-type">'+esc(getTypeLabel(ch.type))+'</div>' +
+                                '</div>' +
+                            '</div>' +
+                            '<div class="channel-number-box">' +
+                                '<div><div class="ch-num-label">'+esc(getNumLabel(ch.type))+'</div>' +
+                                '<div class="ch-num-value" data-testid="text-channel-number">'+esc(ch.number)+'</div></div>' +
+                                '<button class="copy-btn" id="copyBtn" onclick="copyNumber(\''+esc(ch.number)+'\')" data-testid="button-copy-number"><i class="fas fa-copy"></i> Copy</button>' +
+                            '</div>';
+
+                        if (ch.account_name) {
+                            html += '<div class="channel-account-box">' +
+                                '<div class="acct-label">'+(ch.type==='paybill'?'Account Number':'Account Name')+'</div>' +
+                                '<div class="acct-value">'+esc(ch.account_name)+'</div>' +
+                            '</div>';
+                        }
+
+                        if (ch.instructions) {
+                            html += '<div class="channel-instructions">' +
+                                '<div class="instr-title-row"><i class="fas fa-list-ol"></i> How to Pay</div>' +
+                                '<div class="instr-steps">'+formatInstructions(ch.instructions)+'</div>' +
+                            '</div>';
+                        }
+
+                        html += '</div>';
+                        chDisplay.innerHTML = html;
+                        chDisplay.style.display = 'block';
+                    } else {
+                        chDisplay.innerHTML = '<div class="no-channel-msg"><i class="fas fa-exclamation-triangle"></i>No deposit channels available at the moment.<br>Please contact support for deposit instructions.</div>';
+                        chDisplay.style.display = 'block';
+                    }
                 } else {
                     pill.className = 'mode-pill auto';
                     pillText.textContent = 'Auto Mode — Deposits are credited instantly';
                 }
 
-                if (mode === 'manual') {
-                    const banner = document.getElementById('instrBanner');
-                    const bodyEl = document.getElementById('instrBody');
-                    banner.style.display = 'block';
-                    if (instructions) {
-                        bodyEl.innerHTML = formatInstructions(instructions);
-                    } else {
-                        bodyEl.innerHTML = '<span class="instr-body-empty">No instructions set yet. Contact support for deposit details.</span>';
-                    }
-                }
-
-                const frame = document.getElementById('depositFrame');
-                const loading = document.getElementById('loadingState');
+                var frame = document.getElementById('depositFrame');
                 frame.src = mode === 'auto' ? 'auto-deposit.html' : 'manual-deposit.html';
                 frame.onload = function() {
-                    loading.style.display = 'none';
                     frame.style.display = 'block';
                     try {
-                        const body = frame.contentDocument || frame.contentWindow.document;
+                        var body = frame.contentDocument || frame.contentWindow.document;
                         if (body) {
-                            const h = body.documentElement.scrollHeight;
+                            var h = body.documentElement.scrollHeight;
                             if (h > 100) frame.style.minHeight = h + 'px';
                         }
                     } catch(e) {}
                 };
             } catch(e) {
-                document.getElementById('loadingState').innerHTML =
-                    '<i class="fas fa-exclamation-circle" style="color:#ff6b6b;animation:none;"></i>' +
-                    '<span style="font-size:0.88rem;color:rgba(255,255,255,0.5);">Failed to load deposit options. Please refresh.</span>';
+                searchEl.innerHTML =
+                    '<i class="fas fa-exclamation-circle" style="font-size:2rem;color:#f44336;margin-bottom:12px;"></i>' +
+                    '<div class="search-text" style="color:#f44336;">Failed to load deposit options</div>' +
+                    '<div class="search-sub">Please refresh the page and try again</div>';
             }
         }
 

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Channels - AfricaBased Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #4ecdc4;
+            --green: #4CAF50;
+            --green-dark: #2e7d32;
+            --bg: #0f172a;
+            --surface: rgba(26,34,56,0.98);
+            --text: #fff;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        body { background:var(--bg); color:var(--text); min-height:100vh; }
+
+        .top-bar {
+            background:rgba(15,23,42,0.95); border-bottom:1px solid rgba(78,205,196,0.1);
+            padding:16px 24px; display:flex; align-items:center; gap:14px;
+            position:sticky; top:0; z-index:100; backdrop-filter:blur(10px);
+        }
+        .top-bar a { color:var(--accent); text-decoration:none; font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:6px; }
+        .top-bar h1 { font-size:1.1rem; font-weight:700; flex:1; }
+
+        .container { max-width:900px; margin:0 auto; padding:24px 16px 60px; }
+
+        .stats-row { display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
+        .stat-card {
+            flex:1; min-width:120px; background:var(--surface); border-radius:12px;
+            padding:16px; text-align:center; border:1px solid rgba(255,255,255,0.05);
+        }
+        .stat-card .stat-num { font-size:1.5rem; font-weight:800; color:var(--green); }
+        .stat-card .stat-label { font-size:0.72rem; color:rgba(255,255,255,0.4); margin-top:4px; }
+
+        .add-btn {
+            background:linear-gradient(135deg,var(--green),var(--green-dark));
+            border:none; color:#fff; padding:12px 24px; border-radius:12px;
+            font-weight:700; font-size:0.9rem; cursor:pointer; display:flex;
+            align-items:center; gap:8px; margin-bottom:20px; transition:transform 0.2s;
+        }
+        .add-btn:hover { transform:translateY(-2px); }
+
+        .channel-list { display:flex; flex-direction:column; gap:12px; }
+        .channel-card {
+            background:var(--surface); border-radius:14px; padding:20px;
+            border:1px solid rgba(255,255,255,0.05); transition:border-color 0.2s;
+        }
+        .channel-card:hover { border-color:rgba(78,205,196,0.2); }
+        .channel-top { display:flex; align-items:center; gap:14px; margin-bottom:12px; }
+        .channel-icon {
+            width:46px; height:46px; border-radius:12px; display:flex;
+            align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0;
+        }
+        .channel-icon.mpesa { background:rgba(76,175,80,0.15); color:#4CAF50; }
+        .channel-icon.till { background:rgba(255,152,0,0.15); color:#ff9800; }
+        .channel-icon.paybill { background:rgba(33,150,243,0.15); color:#2196f3; }
+        .channel-icon.bank { background:rgba(156,39,176,0.15); color:#9c27b0; }
+        .channel-icon.other { background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.5); }
+        .channel-info { flex:1; min-width:0; }
+        .channel-name { font-size:0.95rem; font-weight:700; }
+        .channel-number { font-size:0.82rem; color:rgba(255,255,255,0.5); margin-top:2px; }
+        .channel-type-badge {
+            font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;
+            padding:3px 10px; border-radius:6px; display:inline-block; margin-top:4px;
+        }
+        .badge-mpesa { background:rgba(76,175,80,0.15); color:#4CAF50; }
+        .badge-till { background:rgba(255,152,0,0.15); color:#ff9800; }
+        .badge-paybill { background:rgba(33,150,243,0.15); color:#2196f3; }
+        .badge-bank { background:rgba(156,39,176,0.15); color:#9c27b0; }
+        .badge-other { background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.5); }
+        .channel-status { display:flex; align-items:center; gap:6px; }
+        .status-dot { width:8px; height:8px; border-radius:50%; }
+        .status-dot.active { background:#4CAF50; box-shadow:0 0 8px rgba(76,175,80,0.5); }
+        .status-dot.inactive { background:#f44336; }
+        .channel-actions { display:flex; gap:8px; margin-top:12px; }
+        .ch-btn {
+            padding:8px 14px; border-radius:8px; border:none; font-size:0.78rem;
+            font-weight:600; cursor:pointer; display:flex; align-items:center; gap:5px;
+            transition:opacity 0.2s; font-family:inherit;
+        }
+        .ch-btn:hover { opacity:0.85; }
+        .ch-btn.toggle { background:rgba(255,152,0,0.15); color:#ff9800; }
+        .ch-btn.edit { background:rgba(78,205,196,0.15); color:var(--accent); }
+        .ch-btn.delete { background:rgba(244,67,54,0.1); color:#f44336; }
+
+        .empty-state {
+            text-align:center; padding:48px 20px; color:rgba(255,255,255,0.3);
+        }
+        .empty-state i { font-size:2.5rem; margin-bottom:14px; color:rgba(255,255,255,0.1); }
+        .empty-state p { font-size:0.88rem; }
+
+        .modal-ov {
+            position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9998;
+            display:flex; align-items:center; justify-content:center; padding:20px;
+            opacity:0; pointer-events:none; transition:opacity 0.3s;
+        }
+        .modal-ov.open { opacity:1; pointer-events:auto; }
+        .modal-box {
+            background:linear-gradient(135deg,#0f172a,#1a2238); border:1px solid rgba(78,205,196,0.15);
+            border-radius:18px; padding:28px 24px; max-width:440px; width:100%;
+            transform:scale(0.9); transition:transform 0.3s;
+        }
+        .modal-ov.open .modal-box { transform:scale(1); }
+        .modal-title { font-size:1.05rem; font-weight:700; margin-bottom:18px; display:flex; align-items:center; gap:10px; }
+        .modal-title i { color:var(--green); }
+
+        .form-group { margin-bottom:14px; }
+        .form-label { display:block; font-size:0.78rem; font-weight:600; color:rgba(255,255,255,0.5); margin-bottom:6px; }
+        .form-input, .form-select, .form-textarea {
+            width:100%; padding:11px 14px; background:rgba(255,255,255,0.05);
+            border:1px solid rgba(255,255,255,0.1); border-radius:10px;
+            color:#fff; font-size:0.88rem; font-family:inherit; outline:none;
+            transition:border-color 0.2s;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--accent); }
+        .form-select { appearance:none; cursor:pointer; }
+        .form-textarea { resize:vertical; min-height:80px; }
+        .form-hint { font-size:0.72rem; color:rgba(255,255,255,0.3); margin-top:4px; }
+
+        .modal-actions { display:flex; gap:10px; margin-top:20px; }
+        .modal-btn {
+            flex:1; padding:12px; border:none; border-radius:10px; font-weight:700;
+            font-size:0.88rem; cursor:pointer; font-family:inherit; transition:opacity 0.2s;
+        }
+        .modal-btn:hover { opacity:0.85; }
+        .modal-btn.cancel { background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.6); }
+        .modal-btn.save { background:linear-gradient(135deg,var(--green),var(--green-dark)); color:#fff; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/Admin-panel"><i class="fas fa-arrow-left"></i> Back</a>
+        <h1><i class="fas fa-credit-card" style="color:var(--green)"></i> Payment Channels</h1>
+    </div>
+
+    <div class="container">
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-num" id="totalCount">0</div>
+                <div class="stat-label">Total Channels</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" id="activeCount" style="color:#4CAF50">0</div>
+                <div class="stat-label">Active</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" id="inactiveCount" style="color:#f44336">0</div>
+                <div class="stat-label">Inactive</div>
+            </div>
+        </div>
+
+        <button class="add-btn" data-testid="button-add-channel" onclick="openModal()">
+            <i class="fas fa-plus-circle"></i> Add Payment Channel
+        </button>
+
+        <div class="channel-list" id="channelList">
+            <div class="empty-state" id="emptyState">
+                <i class="fas fa-credit-card"></i>
+                <p>No payment channels yet.<br>Add your first deposit number, till, or paybill.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-ov" id="channelModal">
+        <div class="modal-box">
+            <div class="modal-title"><i class="fas fa-plus-circle"></i> <span id="modalTitle">Add Payment Channel</span></div>
+            <input type="hidden" id="editId">
+            <div class="form-group">
+                <label class="form-label">Channel Type</label>
+                <select class="form-select" id="chType" data-testid="select-channel-type">
+                    <option value="mpesa">M-Pesa Number (Send Money)</option>
+                    <option value="till">Till Number (Buy Goods)</option>
+                    <option value="paybill">Paybill Number (Pay Bill)</option>
+                    <option value="bank">Bank Transfer</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Display Name</label>
+                <input class="form-input" id="chName" placeholder="e.g. AfricaBased Deposits" data-testid="input-channel-name">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Number / Account</label>
+                <input class="form-input" id="chNumber" placeholder="e.g. 0712345678 or 123456" data-testid="input-channel-number">
+            </div>
+            <div class="form-group" id="accountNameGroup">
+                <label class="form-label">Account Name / Number <span style="color:rgba(255,255,255,0.3)">(optional)</span></label>
+                <input class="form-input" id="chAccountName" placeholder="For paybill: account number" data-testid="input-account-name">
+                <div class="form-hint">For Paybill: the account number. For Bank: account holder name.</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Custom Instructions <span style="color:rgba(255,255,255,0.3)">(optional)</span></label>
+                <textarea class="form-textarea" id="chInstructions" placeholder="Leave blank for auto-generated instructions based on channel type" data-testid="textarea-instructions"></textarea>
+                <div class="form-hint">If blank, instructions will be auto-generated based on the channel type and number.</div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal()">Cancel</button>
+                <button class="modal-btn save" data-testid="button-save-channel" onclick="saveChannel()"><i class="fas fa-check"></i> Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function getCookie(n) { var m = document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)'); return m ? m[2] : null; }
+        var sessionToken = getCookie('_abAdminSession');
+        if (!sessionToken) window.location.href = '/admin-login';
+
+        var channels = [];
+
+        async function apiFetch(url, opts) {
+            opts = opts || {};
+            opts.headers = opts.headers || {};
+            opts.headers['Content-Type'] = 'application/json';
+            opts.credentials = 'include';
+            var res = await fetch(url, opts);
+            return res;
+        }
+
+        async function loadChannels() {
+            try {
+                var res = await apiFetch('/api/admin/payment-channels');
+                var data = await res.json();
+                channels = data.channels || [];
+                renderChannels();
+            } catch(e) {
+                document.getElementById('channelList').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Failed to load channels.</p></div>';
+            }
+        }
+
+        function getIcon(type) {
+            var icons = { mpesa:'fa-mobile-alt', till:'fa-store', paybill:'fa-file-invoice-dollar', bank:'fa-university', other:'fa-ellipsis-h' };
+            return icons[type] || icons.other;
+        }
+
+        function getTypeLabel(type) {
+            var labels = { mpesa:'M-Pesa', till:'Till Number', paybill:'Paybill', bank:'Bank Transfer', other:'Other' };
+            return labels[type] || type;
+        }
+
+        function renderChannels() {
+            var total = channels.length;
+            var active = channels.filter(function(c){return c.is_active}).length;
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('activeCount').textContent = active;
+            document.getElementById('inactiveCount').textContent = total - active;
+
+            var list = document.getElementById('channelList');
+            if (!total) {
+                list.innerHTML = '<div class="empty-state"><i class="fas fa-credit-card"></i><p>No payment channels yet.<br>Add your first deposit number, till, or paybill.</p></div>';
+                return;
+            }
+
+            list.innerHTML = channels.map(function(ch) {
+                return '<div class="channel-card" data-testid="card-channel-'+ch.id+'">' +
+                    '<div class="channel-top">' +
+                        '<div class="channel-icon '+ch.type+'"><i class="fas '+getIcon(ch.type)+'"></i></div>' +
+                        '<div class="channel-info">' +
+                            '<div class="channel-name">'+esc(ch.name)+'</div>' +
+                            '<div class="channel-number"><i class="fas fa-hashtag" style="font-size:0.7rem;opacity:0.4"></i> '+esc(ch.number)+(ch.account_name ? ' • '+esc(ch.account_name) : '')+'</div>' +
+                            '<span class="channel-type-badge badge-'+ch.type+'">'+getTypeLabel(ch.type)+'</span>' +
+                        '</div>' +
+                        '<div class="channel-status"><span class="status-dot '+(ch.is_active?'active':'inactive')+'"></span><span style="font-size:0.75rem;color:rgba(255,255,255,0.4)">'+(ch.is_active?'Active':'Off')+'</span></div>' +
+                    '</div>' +
+                    (ch.instructions ? '<div style="font-size:0.78rem;color:rgba(255,255,255,0.35);padding:8px 12px;background:rgba(255,255,255,0.02);border-radius:8px;margin-bottom:10px;white-space:pre-line;">'+esc(ch.instructions)+'</div>' : '') +
+                    '<div class="channel-actions">' +
+                        '<button class="ch-btn toggle" onclick="toggleChannel('+ch.id+','+(!ch.is_active)+')"><i class="fas '+(ch.is_active?'fa-pause':'fa-play')+'"></i> '+(ch.is_active?'Disable':'Enable')+'</button>' +
+                        '<button class="ch-btn edit" onclick="editChannel('+ch.id+')"><i class="fas fa-pen"></i> Edit</button>' +
+                        '<button class="ch-btn delete" onclick="deleteChannel('+ch.id+')"><i class="fas fa-trash"></i></button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function esc(s) { var d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+
+        function openModal(ch) {
+            document.getElementById('editId').value = ch ? ch.id : '';
+            document.getElementById('modalTitle').textContent = ch ? 'Edit Payment Channel' : 'Add Payment Channel';
+            document.getElementById('chType').value = ch ? ch.type : 'mpesa';
+            document.getElementById('chName').value = ch ? ch.name : '';
+            document.getElementById('chNumber').value = ch ? ch.number : '';
+            document.getElementById('chAccountName').value = ch ? (ch.account_name||'') : '';
+            document.getElementById('chInstructions').value = ch ? (ch.instructions||'') : '';
+            document.getElementById('channelModal').classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('channelModal').classList.remove('open');
+        }
+
+        async function saveChannel() {
+            var id = document.getElementById('editId').value;
+            var body = {
+                type: document.getElementById('chType').value,
+                name: document.getElementById('chName').value.trim(),
+                number: document.getElementById('chNumber').value.trim(),
+                account_name: document.getElementById('chAccountName').value.trim(),
+                instructions: document.getElementById('chInstructions').value.trim()
+            };
+            if (!body.name || !body.number) { alert('Name and number are required'); return; }
+
+            try {
+                var url = id ? '/api/admin/payment-channels/'+id : '/api/admin/payment-channels';
+                var method = id ? 'PUT' : 'POST';
+                var res = await apiFetch(url, { method:method, body:JSON.stringify(body) });
+                if (!res.ok) { var e = await res.json(); alert(e.error||'Failed'); return; }
+                closeModal();
+                loadChannels();
+            } catch(e) { alert('Error saving channel'); }
+        }
+
+        async function toggleChannel(id, newState) {
+            try {
+                await apiFetch('/api/admin/payment-channels/'+id, { method:'PUT', body:JSON.stringify({is_active:newState}) });
+                loadChannels();
+            } catch(e) {}
+        }
+
+        function editChannel(id) {
+            var ch = channels.find(function(c){return c.id===id});
+            if (ch) openModal(ch);
+        }
+
+        async function deleteChannel(id) {
+            if (!confirm('Delete this payment channel?')) return;
+            try {
+                await apiFetch('/api/admin/payment-channels/'+id, { method:'DELETE' });
+                loadChannels();
+            } catch(e) {}
+        }
+
+        document.getElementById('channelModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        loadChannels();
+    </script>
+    <script src="/js/admin-ai-nav.js"></script>
+</body>
+</html>

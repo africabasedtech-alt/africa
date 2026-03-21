@@ -318,7 +318,7 @@ const PROTECTED_ADMIN_PAGES = [
   'Admin-panel','admin-settings','admin-management','admin-product',
   'admin-approve','admin-deposit','admin-exchange','admin-pending-applications',
   'admin-referrals','admin-service','admin-user','admin-withdraw',
-  'admin-withdraw-new','sub-admin-panel','impersonate'
+  'admin-withdraw-new','admin-payment-channels','sub-admin-panel','impersonate'
 ];
 
 app.use((req, res, next) => {
@@ -2762,7 +2762,17 @@ app.get('/api/admin/referrals', requireSuperAdmin, async (req, res) => {
         created_at TIMESTAMPTZ DEFAULT NOW(),
         expires_at TIMESTAMPTZ NOT NULL
       )`,
-      `ALTER TABLE products ADD COLUMN IF NOT EXISTS used_units INTEGER NOT NULL DEFAULT 0`
+      `ALTER TABLE products ADD COLUMN IF NOT EXISTS used_units INTEGER NOT NULL DEFAULT 0`,
+      `CREATE TABLE IF NOT EXISTS payment_channels (
+        id SERIAL PRIMARY KEY,
+        type VARCHAR(50) NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        number VARCHAR(50) NOT NULL,
+        account_name VARCHAR(100),
+        instructions TEXT,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`
     ];
     for (const sql of migrations) {
       try { await client.query(sql); }
@@ -2988,20 +2998,109 @@ app.post('/api/withdraw/bank', requireAuth, rejectIfImpersonated, async (req, re
   }
 });
 
-// ─── PUBLIC: DEPOSIT CONFIG (mode + instructions) ────────────────────────────
+// ─── PUBLIC: DEPOSIT CONFIG (mode + instructions + channel) ──────────────────
 app.get('/api/deposit/config', async (req, res) => {
   try {
     const { rows } = await pool.query(
       "SELECT key, value FROM system_settings WHERE key IN ('deposit_mode','deposit_instructions')"
     );
-    const cfg = { mode: 'auto', instructions: '' };
+    const cfg = { mode: 'auto', instructions: '', channel: null };
     rows.forEach(r => {
       if (r.key === 'deposit_mode') cfg.mode = r.value;
       if (r.key === 'deposit_instructions') cfg.instructions = r.value;
     });
+
+    if (cfg.mode === 'manual') {
+      try {
+        const chResult = await pool.query(
+          'SELECT id, type, name, number, account_name, instructions FROM payment_channels WHERE is_active = true'
+        );
+        if (chResult.rows.length > 0) {
+          const idx = Math.floor(Math.random() * chResult.rows.length);
+          const ch = chResult.rows[idx];
+          let autoInstructions = '';
+          if (ch.type === 'mpesa') {
+            autoInstructions = `Send money via M-Pesa:\n1. Go to M-Pesa on your phone\n2. Select "Send Money"\n3. Enter the number: ${ch.number}\n4. Enter the amount you wish to deposit\n5. Enter your M-Pesa PIN and confirm\n6. Copy the M-Pesa confirmation message\n7. Come back here and paste the confirmation code`;
+          } else if (ch.type === 'till') {
+            autoInstructions = `Pay via M-Pesa Till Number:\n1. Go to M-Pesa on your phone\n2. Select "Lipa na M-Pesa" → "Buy Goods and Services"\n3. Enter Till Number: ${ch.number}\n4. Enter the amount you wish to deposit\n5. Enter your M-Pesa PIN and confirm\n6. Copy the M-Pesa confirmation message\n7. Come back here and paste the confirmation code`;
+          } else if (ch.type === 'paybill') {
+            autoInstructions = `Pay via M-Pesa Paybill:\n1. Go to M-Pesa on your phone\n2. Select "Lipa na M-Pesa" → "Pay Bill"\n3. Enter Business Number: ${ch.number}${ch.account_name ? '\n4. Enter Account Number: ' + ch.account_name : ''}\n${ch.account_name ? '5' : '4'}. Enter the amount you wish to deposit\n${ch.account_name ? '6' : '5'}. Enter your M-Pesa PIN and confirm\n${ch.account_name ? '7' : '6'}. Copy the M-Pesa confirmation message\n${ch.account_name ? '8' : '7'}. Come back here and paste the confirmation code`;
+          } else {
+            autoInstructions = ch.instructions || `Send payment to ${ch.number} (${ch.name})`;
+          }
+          cfg.channel = {
+            id: ch.id,
+            type: ch.type,
+            name: ch.name,
+            number: ch.number,
+            account_name: ch.account_name,
+            instructions: ch.instructions || autoInstructions
+          };
+          if (!ch.instructions) cfg.channel.instructions = autoInstructions;
+        }
+      } catch(chErr) {
+        console.warn('Payment channel fetch error:', chErr.message);
+      }
+    }
+
     res.json(cfg);
   } catch (e) {
     res.status(500).json({ error: 'Failed to fetch deposit config' });
+  }
+});
+
+// ─── ADMIN: PAYMENT CHANNELS CRUD ───────────────────────────────────────────
+app.get('/api/admin/payment-channels', requireAnyAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM payment_channels ORDER BY created_at DESC');
+    res.json({ channels: rows });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to fetch payment channels' });
+  }
+});
+
+app.post('/api/admin/payment-channels', requireAnyAdmin, async (req, res) => {
+  try {
+    const { type, name, number, account_name, instructions } = req.body;
+    if (!type || !name || !number) {
+      return res.status(400).json({ error: 'Type, name, and number are required' });
+    }
+    const validTypes = ['mpesa', 'till', 'paybill', 'bank', 'other'];
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({ error: 'Invalid channel type' });
+    }
+    const { rows } = await pool.query(
+      'INSERT INTO payment_channels (type, name, number, account_name, instructions) VALUES ($1,$2,$3,$4,$5) RETURNING *',
+      [type, name.trim(), number.trim(), (account_name || '').trim() || null, (instructions || '').trim() || null]
+    );
+    res.json({ channel: rows[0] });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to add payment channel' });
+  }
+});
+
+app.put('/api/admin/payment-channels/:id', requireAnyAdmin, async (req, res) => {
+  try {
+    const { type, name, number, account_name, instructions, is_active } = req.body;
+    const { rows } = await pool.query(
+      `UPDATE payment_channels SET type=COALESCE($1,type), name=COALESCE($2,name), number=COALESCE($3,number),
+       account_name=$4, instructions=$5, is_active=COALESCE($6,is_active) WHERE id=$7 RETURNING *`,
+      [type||null, name||null, number||null, (account_name||'').trim()||null, (instructions||'').trim()||null, is_active, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Channel not found' });
+    res.json({ channel: rows[0] });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to update payment channel' });
+  }
+});
+
+app.delete('/api/admin/payment-channels/:id', requireAnyAdmin, async (req, res) => {
+  try {
+    const { rowCount } = await pool.query('DELETE FROM payment_channels WHERE id=$1', [req.params.id]);
+    if (!rowCount) return res.status(404).json({ error: 'Channel not found' });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to delete payment channel' });
   }
 });
 
