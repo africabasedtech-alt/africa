@@ -99,4 +99,74 @@
       el.style.display = 'none';
     });
   });
+
+  // ═══ Offline / Online notification banner ═══
+  (function () {
+    var offlineBanner = null;
+    var onlineTimeout = null;
+
+    function injectStyles() {
+      if (document.getElementById('ab-net-styles')) return;
+      var s = document.createElement('style');
+      s.id = 'ab-net-styles';
+      s.textContent = [
+        '@keyframes abNetSlide{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}',
+        '@keyframes abNetFade{from{opacity:1}to{opacity:0}}',
+        '#ab-net-banner{position:fixed;top:0;left:0;right:0;z-index:999999;display:flex;align-items:center;gap:10px;',
+        'padding:12px 16px;font-family:"Plus Jakarta Sans",sans-serif;font-size:0.88rem;font-weight:600;',
+        'animation:abNetSlide 0.35s ease;box-shadow:0 4px 20px rgba(0,0,0,0.3)}',
+        '#ab-net-banner.offline{background:linear-gradient(135deg,#b71c1c,#c62828);color:#fff}',
+        '#ab-net-banner.online{background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff}',
+        '#ab-net-banner .ab-net-icon{font-size:1.15rem;flex-shrink:0}',
+        '#ab-net-banner .ab-net-text{flex:1}',
+        '#ab-net-banner.fade-out{animation:abNetFade 0.4s ease forwards}'
+      ].join('');
+      document.head.appendChild(s);
+    }
+
+    function showBanner(type) {
+      removeBanner(true);
+      injectStyles();
+      offlineBanner = document.createElement('div');
+      offlineBanner.id = 'ab-net-banner';
+      offlineBanner.className = type;
+      if (type === 'offline') {
+        offlineBanner.innerHTML = '<span class="ab-net-icon"><i class="fas fa-wifi-slash" style="display:inline"></i><i class="fas fa-exclamation-triangle" style="display:none"></i></span><span class="ab-net-text">You are offline. Some features may be unavailable.</span>';
+        var icon = offlineBanner.querySelector('.fa-wifi-slash');
+        if (!icon) {
+          offlineBanner.querySelector('.ab-net-icon').innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+        }
+      } else {
+        offlineBanner.innerHTML = '<span class="ab-net-icon"><i class="fas fa-wifi"></i></span><span class="ab-net-text">Back online!</span>';
+        onlineTimeout = setTimeout(function () {
+          if (offlineBanner) {
+            offlineBanner.classList.add('fade-out');
+            setTimeout(function () { removeBanner(false); }, 450);
+          }
+        }, 3000);
+      }
+      document.body.appendChild(offlineBanner);
+    }
+
+    function removeBanner(immediate) {
+      if (onlineTimeout) { clearTimeout(onlineTimeout); onlineTimeout = null; }
+      if (offlineBanner) {
+        if (immediate) { offlineBanner.remove(); offlineBanner = null; }
+        else { offlineBanner.remove(); offlineBanner = null; }
+      }
+      var existing = document.getElementById('ab-net-banner');
+      if (existing) existing.remove();
+    }
+
+    window.addEventListener('offline', function () { showBanner('offline'); });
+    window.addEventListener('online', function () { showBanner('online'); });
+
+    if (!navigator.onLine) {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () { showBanner('offline'); });
+      } else {
+        showBanner('offline');
+      }
+    }
+  })();
 })();
