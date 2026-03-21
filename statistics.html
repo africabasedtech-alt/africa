@@ -232,8 +232,9 @@
 </head>
 <body>
     <div class="statistics-dashboard">
-        <div class="header">
+        <div class="header" style="position:relative">
             <h1>Financial Statistics</h1>
+            <button id="toggleStatsBtn" onclick="toggleStatsValues()" data-testid="button-toggle-stats" style="position:absolute;right:50px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,0.5);font-size:1.1rem;cursor:pointer;padding:6px"><i class="fas fa-eye"></i></button>
             <a href="home.html" class="back-button">
                 <i class="fas fa-arrow-left"></i> Back to Dashboard
             </a>
@@ -247,7 +248,7 @@
                     </div>
                     <div class="stat-title">Deposit Balance</div>
                 </div>
-                <div class="stat-value" id="walletBalanceStat">KSH 0.00</div>
+                <div class="stat-value hv-amount" id="walletBalanceStat">KSH 0.00</div>
                 <div class="stat-change" id="walletBalanceDesc">Remaining deposited funds available to invest</div>
             </div>
 
@@ -258,7 +259,7 @@
                     </div>
                     <div class="stat-title">Earnings Balance</div>
                 </div>
-                <div class="stat-value" id="accountBalanceStat">KSH 0.00</div>
+                <div class="stat-value hv-amount" id="accountBalanceStat">KSH 0.00</div>
                 <div class="stat-change">Earnings · Can withdraw or invest</div>
             </div>
 
@@ -269,7 +270,7 @@
                     </div>
                     <div class="stat-title">Total Assets</div>
                 </div>
-                <div class="stat-value" id="totalAssetsStat">KSH 0.00</div>
+                <div class="stat-value hv-amount" id="totalAssetsStat">KSH 0.00</div>
                 <div class="stat-change">Invested product only</div>
             </div>
 
@@ -280,7 +281,7 @@
                     </div>
                     <div class="stat-title">Total Earnings</div>
                 </div>
-                <div class="stat-value" id="totalIncomeStat">KSH 0.00</div>
+                <div class="stat-value hv-amount" id="totalIncomeStat">KSH 0.00</div>
                 <div class="stat-change" id="totalIncomeDesc">Total Commission: KSH 0.00 · Redemption: KSH 0.00</div>
             </div>
 
@@ -291,7 +292,7 @@
                     </div>
                     <div class="stat-title">Today's Income</div>
                 </div>
-                <div class="stat-value" id="todayIncomeStat">KSH 0.00</div>
+                <div class="stat-value hv-amount" id="todayIncomeStat">KSH 0.00</div>
                 <div class="stat-change" id="todayIncomeDesc">Collections from active investments today</div>
             </div>
 
@@ -302,7 +303,7 @@
                     </div>
                     <div class="stat-title">Total Deposit</div>
                 </div>
-                <div class="stat-value" id="totalDepositStat">KSH 0.00</div>
+                <div class="stat-value hv-amount" id="totalDepositStat">KSH 0.00</div>
                 <div class="stat-change">All deposits to wallet</div>
             </div>
 
@@ -313,7 +314,7 @@
                     </div>
                     <div class="stat-title">Total Withdrawal</div>
                 </div>
-                <div class="stat-value" id="totalWithdrawalStat">KSH 0.00</div>
+                <div class="stat-value hv-amount" id="totalWithdrawalStat">KSH 0.00</div>
                 <div class="stat-change">Withdrawals from account balance only</div>
             </div>
         </div>
@@ -698,6 +699,28 @@
 
         document.addEventListener('DOMContentLoaded', loadStats);
     </script>
+<script>
+(function(){
+  var hidden = localStorage.getItem('ab_hide_values') === '1';
+  function apply() {
+    document.querySelectorAll('.hv-amount').forEach(function(el) {
+      if (hidden) { el.setAttribute('data-real', el.textContent); el.textContent = '******'; }
+      else { var r = el.getAttribute('data-real'); if (r) el.textContent = r; }
+    });
+    var btn = document.getElementById('toggleStatsBtn');
+    if (btn) btn.innerHTML = hidden ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+  }
+  window.toggleStatsValues = function() {
+    hidden = !hidden;
+    localStorage.setItem('ab_hide_values', hidden ? '1' : '0');
+    apply();
+  };
+  window._applyStatsValVisibility = apply;
+  var obs = new MutationObserver(function() { if (hidden) apply(); });
+  document.querySelectorAll('.hv-amount').forEach(function(el) { obs.observe(el, { childList: true }); });
+  apply();
+})();
+</script>
 <script src="/js/impersonation-guard.js"></script>
 <script src="/js/ai-assistant.js"></script>
 <script src="/js/toast-modal.js"></script>
@@ -707,7 +730,7 @@
   <a href="/products"><i class="fas fa-chart-line"></i><span>Invest</span></a>
   <a href="/My-products"><i class="fas fa-wallet"></i><span>Holdings</span></a>
   <a href="/deposit"><i class="fas fa-money-bill-wave"></i><span>Wallet</span></a>
-  <a href="/profile"><i class="fas fa-user"></i><span>Profile</span></a>
+  <a href="/profile"><i class="fas fa-user"></i><span>My</span></a>
 </nav>
 </body>
 </html>
