@@ -352,7 +352,11 @@
                     btn.innerHTML = '<i class="fas fa-hand-holding-usd me-2"></i>Collect';
                     return;
                 }
-                showABModal({ type:'success', title:'Income Collected!', message:'KSH ' + formatCurrency(data.collected) + ' added to your earnings balance.', confirmText:'Great' });
+                if (data.matured) {
+                  showABModal({ type:'success', title:'Investment Completed!', message:'KSH ' + formatCurrency(data.collected) + ' collected. All expected returns have been received — this investment is now fully matured!', confirmText:'Awesome' });
+                } else {
+                  showABModal({ type:'success', title:'Income Collected!', message:'KSH ' + formatCurrency(data.collected) + ' added to your earnings balance.', confirmText:'Great' });
+                }
                 loadProducts();
             } catch (e) {
                 showABToast('Error: ' + e.message, 'error');
@@ -379,7 +383,7 @@
                 });
                 if (res.status === 401) { window.location.href = 'login.html'; return; }
                 const data = await res.json();
-                const investments = (data.investments || []).filter(i => i.status === 'active');
+                const investments = (data.investments || []).filter(i => i.status === 'active' || i.status === 'matured');
 
                 if (!investments.length) {
                     container.innerHTML = '';
@@ -402,24 +406,25 @@
                     const totalCollected = parseFloat(inv.total_collected) || 0;
                     const collectionCount = parseInt(inv.collection_count) || 0;
                     totalInvested += amount;
-                    totalDaily += daily;
+                    if (inv.status === 'active') totalDaily += daily;
                     grandTotalCollected += totalCollected;
 
                     const startDate = new Date(inv.start_date);
                     const endDate = new Date(inv.end_date);
                     const holdDays = Math.max(1, Math.round((endDate - startDate) / (1000 * 60 * 60 * 24)));
-                    const progressPercent = Math.min(Math.round((collectionCount / holdDays) * 100), 100);
+                    const expectedTotal = daily * holdDays;
+                    const progressPercent = expectedTotal > 0
+                        ? Math.min(Math.round((totalCollected / expectedTotal) * 100), 100)
+                        : Math.min(Math.round((collectionCount / holdDays) * 100), 100);
 
                     const lastCollect = inv.last_collected_at ? new Date(inv.last_collected_at) : startDate;
                     const nextCollect = new Date(lastCollect.getTime() + 24 * 60 * 60 * 1000);
-                    const isMatured = now >= endDate;
+                    const isMatured = inv.status === 'matured' || (expectedTotal > 0 && totalCollected >= expectedTotal);
                     const canCollect = !isMatured && now >= nextCollect;
 
                     const statusBadge = isMatured
-                        ? '<span style="color:#ff6b6b;font-size:0.8rem;font-weight:600;">MATURED</span>'
+                        ? '<span style="color:#4CAF50;font-size:0.8rem;font-weight:600;">COMPLETED</span>'
                         : '<span style="color:#d4a017;font-size:0.8rem;font-weight:600;">ACTIVE</span>';
-
-                    const expectedTotal = daily * holdDays;
 
                     return `
                         <div class="col-md-6 col-lg-4">
@@ -447,14 +452,14 @@
                                             <div class="info-value">${collectionCount}/${holdDays} days collected</div>
                                         </div>
                                         <div class="info-box">
-                                            <div class="info-label">Ends</div>
-                                            <div class="info-value" style="font-size:0.95rem;">${endDate.toLocaleDateString('en-KE')}</div>
+                                            <div class="info-label">Collected / Expected</div>
+                                            <div class="info-value" style="font-size:0.88rem;color:${isMatured ? '#4CAF50' : '#d4a017'}">KSH ${formatCurrency(totalCollected)} / ${formatCurrency(expectedTotal)}</div>
                                         </div>
                                     </div>
 
                                     <div class="progress mb-3" style="height: 6px; background: rgba(255,255,255,0.1);">
                                         <div class="progress-bar" role="progressbar"
-                                             style="width: ${progressPercent}%; background: #d4a017;"
+                                             style="width: ${progressPercent}%; background: ${isMatured ? '#4CAF50' : '#d4a017'};"
                                              aria-valuenow="${progressPercent}" aria-valuemin="0" aria-valuemax="100">
                                         </div>
                                     </div>
@@ -472,7 +477,7 @@
                                             <div>
                                                 <div class="info-label mb-1">Next Collection</div>
                                                 <div class="info-value" style="color: #d4a017; font-size:0.95rem;">
-                                                    ${isMatured ? 'Investment matured' : canCollect ? 'Available Now' : nextCollect.toLocaleTimeString('en-KE')}
+                                                    ${isMatured ? 'All returns collected ✓' : canCollect ? 'Available Now' : nextCollect.toLocaleTimeString('en-KE')}
                                                 </div>
                                             </div>
                                             <button onclick="collectIncome('${inv.id}', this)"

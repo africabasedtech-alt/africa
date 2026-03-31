@@ -1162,7 +1162,7 @@ app.get('/api/investments', requireAuth, async (req, res) => {
          SELECT investment_id, COUNT(*)::int as collection_count
          FROM collection_logs WHERE user_id = $1::text GROUP BY investment_id
        ) cl ON cl.investment_id = i.id
-       WHERE i.user_id = $1::uuid ORDER BY i.start_date DESC`,
+       WHERE i.user_id = $1::uuid AND i.status IN ('active', 'matured') ORDER BY i.start_date DESC`,
       [req.user.id]
     );
     res.json({ investments: result.rows });
@@ -1188,8 +1188,12 @@ app.post('/api/investments/collect/:id', requireAuth, rejectIfImpersonated, asyn
     );
     if (!inv.rows.length) return res.status(404).json({ error: 'Investment not found' });
     const { daily_earnings, last_collected_at, start_date, end_date } = inv.rows[0];
-    const endDate = new Date(end_date);
-    if (now > endDate) return res.status(400).json({ error: 'Investment period has ended' });
+    const totalCollected = parseFloat(inv.rows[0].total_collected) || 0;
+    const holdDays = Math.max(1, Math.round((new Date(end_date) - new Date(start_date)) / 86400000));
+    const expectedTotal = (parseFloat(daily_earnings) || 0) * holdDays;
+    if (expectedTotal > 0 && totalCollected >= expectedTotal) {
+      return res.status(400).json({ error: 'This investment has fully matured. All expected returns have been collected.' });
+    }
     const referenceTime = last_collected_at ? new Date(last_collected_at) : new Date(start_date);
     const hoursSinceRef = (now - referenceTime) / 3600000;
     if (hoursSinceRef < 24) {
@@ -1198,7 +1202,9 @@ app.post('/api/investments/collect/:id', requireAuth, rejectIfImpersonated, asyn
       return res.status(400).json({ error: `Next collection available at ${nextStr} EAT` });
     }
     const earnings = parseFloat(daily_earnings) || 0;
+    const newTotal = totalCollected + earnings;
     const productName = inv.rows[0].product_name || 'Investment';
+    const isNowFullyMatured = expectedTotal > 0 && newTotal >= expectedTotal;
     await pool.query('BEGIN');
     await pool.query('UPDATE profiles SET account_balance = COALESCE(account_balance,0) + $1 WHERE user_id=$2', [earnings, userId]);
     await pool.query('UPDATE investments SET last_collected_at=NOW(), total_collected=COALESCE(total_collected,0)+$1 WHERE id=$2', [earnings, id]);
@@ -1206,9 +1212,12 @@ app.post('/api/investments/collect/:id', requireAuth, rejectIfImpersonated, asyn
       'INSERT INTO collection_logs (investment_id, user_id, product_name, amount) VALUES ($1, $2, $3, $4)',
       [id, userId, productName, earnings]
     );
+    if (isNowFullyMatured) {
+      await pool.query("UPDATE investments SET status='matured' WHERE id=$1", [id]);
+    }
     await pool.query('COMMIT');
     const prof = await pool.query('SELECT account_balance FROM profiles WHERE user_id=$1', [userId]);
-    res.json({ success: true, collected: earnings, account_balance: parseFloat(prof.rows[0].account_balance || 0) });
+    res.json({ success: true, collected: earnings, account_balance: parseFloat(prof.rows[0].account_balance || 0), matured: isNowFullyMatured });
   } catch (e) {
     await pool.query('ROLLBACK').catch(() => {});
     console.error('Collect error:', e);
@@ -1752,7 +1761,7 @@ INVESTMENT LIFECYCLE:
 2. Investment becomes "active" with start/end dates
 3. User collects daily income every 24 hours from My Products page
 4. Collected income goes to earnings balance
-5. Investment matures when hold period ends
+5. Investment matures only when ALL expected returns have been collected (not based on end date). Status changes to 'matured' automatically on the final collection.
 - Sunday = maintenance day (no collections)
 
 PERMISSION SYSTEM (Sub-admins):
@@ -1775,7 +1784,8 @@ TROUBLESHOOTING COMMON ISSUES:
 - "Deposit not showing": Check if pending_review (needs approval), check payment mode (auto vs manual), verify transaction code
 - "Can't withdraw": Only earnings balance is withdrawable (NOT wallet/deposit balance), check if account is locked
 - "Can't log in": Check if account is locked/suspended, reset password from User Management
-- "Investment not collecting": Sunday = no collections, 24h cooldown between collections, check if matured
+- "Investment not collecting": Sunday = no collections, 24h cooldown between collections, check if all returns collected
+- Investment shows "COMPLETED" (green) when fully matured — all expected returns collected
 - "Exchange code not working": Check if deactivated, expired, max redemptions reached, or already used
 - "Sub-admin can't access page": Check privileges array and sub-permissions in Sub-Admin Management
 
