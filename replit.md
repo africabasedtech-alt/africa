@@ -58,6 +58,7 @@ The user-facing pages feature a premium gold/dark theme with a unified aesthetic
 - **Permissions:** Granular, role-based access for sub-admins across product, deposit, withdraw, user, service, and settings areas.
 - **Impersonation:** Read-only access for admins, with clear UI indicators and safeguards against mutating actions.
 - **Exchange Codes:** Admin creation and management of various code types, user redemption.
+- **Admin PDF Manuals:** Downloadable branded PDF manuals generated on-the-fly via `pdfkit`. Four manuals: Product & Investment, Referral & Commission, Deposit & Withdrawal, Platform Operations Guide. Individual PDF download or bulk ZIP download (via `archiver`). Admin-only endpoints at `/api/admin/manuals`, `/api/admin/manuals/:id`, `/api/admin/manuals-all`. Manual generator module at `js/admin-manuals.js`. Admin page at `admin-manuals.html`, linked from Admin Panel nav grid.
 - **AI Assistants:** Context-aware, keyword-based FAQ, live notifications, status dashboards, analytics, and ChatGPT integration for comprehensive support.
 - **Balance Rules:** Specific logic for `wallet_balance` vs. `account_balance`, investment deductions, and withdrawal refunds.
 - **Investment Rules:** Enforced 24-hour collection rule and weekend collection blocking.

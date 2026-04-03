@@ -18,6 +18,7 @@ import {
 } from '@simplewebauthn/server';
 
 import OpenAI from 'openai';
+import { MANUAL_CATALOG } from './js/admin-manuals.js';
 
 const _require = createRequire(import.meta.url);
 const IntaSend = _require('intasend-node');
@@ -329,7 +330,7 @@ const PROTECTED_ADMIN_PAGES = [
   'Admin-panel','admin-settings','admin-management','admin-product',
   'admin-approve','admin-deposit','admin-exchange','admin-pending-applications',
   'admin-referrals','admin-service','admin-user','admin-withdraw',
-  'admin-withdraw-new','admin-payment-channels','sub-admin-panel','impersonate'
+  'admin-withdraw-new','admin-payment-channels','admin-manuals','sub-admin-panel','impersonate'
 ];
 
 app.use((req, res, next) => {
@@ -4087,6 +4088,36 @@ app.get('/api/exchange/history', requireAuth, async (req, res) => {
     console.error('Exchange history error:', e);
     res.status(500).json({ error: 'Failed to fetch history' });
   }
+});
+
+// ─── Admin PDF Manual Downloads ──────────────────────────────────────────────
+app.get('/api/admin/manuals', requireAnyAdmin, (req, res) => {
+  res.json(MANUAL_CATALOG.map(m => ({ id: m.id, name: m.name, filename: m.filename, icon: m.icon, color: m.color })));
+});
+
+app.get('/api/admin/manuals/:id', requireAnyAdmin, async (req, res) => {
+  const manual = MANUAL_CATALOG.find(m => m.id === req.params.id);
+  if (!manual) return res.status(404).json({ error: 'Manual not found' });
+  try {
+    const pdfBuffer = await manual.generator();
+    res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${manual.filename}"`, 'Content-Length': pdfBuffer.length });
+    res.send(pdfBuffer);
+  } catch (err) { console.error('PDF generation error:', err); res.status(500).json({ error: 'Failed to generate PDF' }); }
+});
+
+app.get('/api/admin/manuals-all', requireAnyAdmin, async (req, res) => {
+  try {
+    const archiver = (await import('archiver')).default;
+    res.set({ 'Content-Type': 'application/zip', 'Content-Disposition': 'attachment; filename="AfricaBased_Admin_Manuals.zip"' });
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.on('error', err => { throw err; });
+    archive.pipe(res);
+    for (const manual of MANUAL_CATALOG) {
+      const buf = await manual.generator();
+      archive.append(buf, { name: manual.filename });
+    }
+    await archive.finalize();
+  } catch (err) { console.error('ZIP generation error:', err); if (!res.headersSent) res.status(500).json({ error: 'Failed to generate ZIP' }); }
 });
 
 // ─── Clean URL middleware ─────────────────────────────────────────────────────
