@@ -21,48 +21,57 @@
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/fintech-theme.css">
     <style>
         body {
-            background: #06090f;
-            color: #fff;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            padding-top: 60px;
+            background: var(--ft-bg);
+            color: var(--ft-text);
+            font-family: var(--ft-font);
+            padding-top: 24px;
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
 
         .dashboard-header {
-            margin-bottom: 40px;
-            text-align: center;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+        .dashboard-header h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
         }
 
         .dashboard-summary {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 28px;
         }
 
         .summary-card {
-            background: linear-gradient(135deg, #111d2e, #152535);
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            background: var(--ft-card);
+            border-radius: var(--ft-radius-lg);
+            padding: 16px 18px;
+            text-align: left;
+            border: 1px solid var(--ft-border);
+            box-shadow: var(--ft-shadow);
         }
 
         .investment-card {
-            background: linear-gradient(145deg, #111d2e, #0d1520);
-            border-radius: 15px;
+            background: var(--ft-card);
+            border-radius: var(--ft-radius-lg);
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: var(--ft-shadow);
+            transition: var(--ft-transition);
             height: 100%;
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid var(--ft-border);
         }
 
         .investment-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 25px rgba(0,0,0,0.2);
+            transform: translateY(-3px);
+            border-color: var(--ft-border-hover);
+            box-shadow: var(--ft-shadow-lg);
         }
 
         .investment-details {
@@ -70,26 +79,30 @@
         }
 
         .investment-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--ft-text);
         }
 
         .investment-sector {
-            color: #d4a017;
-            font-size: 0.9rem;
-            margin-bottom: 20px;
+            color: var(--ft-gold);
+            font-size: 0.78rem;
+            margin-bottom: 16px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
         }
 
         .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 10px;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding: 14px;
+            background: rgba(255,255,255,0.03);
+            border-radius: var(--ft-radius-sm);
+            border: 1px solid var(--ft-border);
         }
 
         .info-box {
@@ -97,68 +110,75 @@
         }
 
         .info-label {
-            color: #999;
-            font-size: 0.85rem;
-            margin-bottom: 5px;
+            color: var(--ft-text-muted);
+            font-size: 0.72rem;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            font-weight: 600;
         }
 
         .info-value {
-            color: #fff;
-            font-size: 1.2rem;
-            font-weight: 600;
+            color: var(--ft-text);
+            font-size: 1.05rem;
+            font-weight: 700;
         }
 
         .earnings-box {
-            padding: 15px;
-            background: rgba(212,160,23,0.1);
-            border-radius: 10px;
-            margin-top: 20px;
+            padding: 14px;
+            background: var(--ft-gold-dim);
+            border-radius: var(--ft-radius-sm);
+            margin-top: 16px;
+            border: 1px solid rgba(212,160,23,0.15);
         }
 
         .action-btn {
-            background: linear-gradient(135deg, #d4a017, #45b8b0);
-            color: #fff;
+            background: var(--ft-gold);
+            color: #09090b;
             border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
+            padding: 11px 20px;
+            border-radius: var(--ft-radius-sm);
             width: 100%;
-            font-weight: 600;
+            font-weight: 700;
+            font-family: var(--ft-font);
             cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            transition: var(--ft-transition);
+            letter-spacing: 0.02em;
             text-decoration: none;
             display: inline-block;
             text-align: center;
+            font-size: 0.88rem;
         }
 
         .action-btn:disabled {
-            background: linear-gradient(135deg, #666, #555);
+            background: rgba(255,255,255,0.06);
+            color: var(--ft-text-muted);
             cursor: not-allowed;
             opacity: 0.7;
         }
 
         .action-btn:not(:disabled):hover {
-            background: linear-gradient(135deg, #45b8b0, #3ca49d);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(212,160,23,0.3);
+            background: var(--ft-gold-bright);
+            transform: translateY(-1px);
         }
 
         .history-toggle {
-            background: rgba(212,160,23,0.1);
-            border: 1px solid rgba(212,160,23,0.2);
-            color: #d4a017;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--ft-border);
+            color: var(--ft-text-secondary);
             padding: 8px 16px;
-            border-radius: 8px;
+            border-radius: var(--ft-radius-sm);
             cursor: pointer;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 600;
+            font-family: var(--ft-font);
             width: 100%;
             margin-top: 10px;
-            transition: all 0.3s;
+            transition: var(--ft-transition);
         }
         .history-toggle:hover {
-            background: rgba(212,160,23,0.2);
+            background: rgba(255,255,255,0.06);
+            border-color: var(--ft-border-hover);
         }
 
         .collection-history {
@@ -176,48 +196,51 @@
             justify-content: space-between;
             align-items: center;
             padding: 8px 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid var(--ft-border);
             font-size: 0.85rem;
         }
         .history-item:last-child { border-bottom: none; }
-        .history-date { color: #999; }
-        .history-amount { color: #2ecc71; font-weight: 600; }
+        .history-date { color: var(--ft-text-muted); }
+        .history-amount { color: #22c55e; font-weight: 600; }
 
         .total-collected-box {
-            background: rgba(46,204,113,0.1);
-            border: 1px solid rgba(46,204,113,0.2);
-            border-radius: 10px;
+            background: rgba(34,197,94,0.06);
+            border: 1px solid rgba(34,197,94,0.15);
+            border-radius: var(--ft-radius-sm);
             padding: 12px 16px;
             margin-top: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .total-collected-label { color: #999; font-size: 0.85rem; font-weight: 600; }
-        .total-collected-value { color: #2ecc71; font-size: 1.1rem; font-weight: 700; }
+        .total-collected-label { color: var(--ft-text-muted); font-size: 0.82rem; font-weight: 600; }
+        .total-collected-value { color: #22c55e; font-size: 1.05rem; font-weight: 700; }
 
         @media (max-width: 768px) {
             .dashboard-summary {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr 1fr;
             }
             body {
-                padding-top: 40px;
+                padding-top: 20px;
+            }
+        }
+        @media (max-width: 400px) {
+            .dashboard-summary {
+                grid-template-columns: 1fr;
             }
         }
     body{padding-bottom:80px !important;}
 </style>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<!-- Bottom Tab Bar -->
   <style>
-  .ab-tabs{position:fixed;bottom:0;left:0;right:0;height:72px;background:linear-gradient(180deg,#0d1520 0%,#06090f 100%);border-top:1px solid rgba(212,160,23,0.15);display:flex;justify-content:space-around;align-items:center;z-index:9999;padding-bottom:env(safe-area-inset-bottom,0);}
-  .ab-tabs a{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:rgba(255,255,255,0.45);font-size:0.65rem;font-family:'Plus Jakarta Sans',sans-serif;transition:color 0.2s;}
+  .ab-tabs{position:fixed;bottom:0;left:0;right:0;height:var(--ft-tab-h);background:rgba(9,9,11,0.95);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-top:1px solid var(--ft-border);display:flex;justify-content:space-around;align-items:center;z-index:9999;padding-bottom:env(safe-area-inset-bottom,0);}
+  .ab-tabs a{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--ft-text-muted);font-size:0.62rem;font-family:var(--ft-font);font-weight:600;transition:var(--ft-transition);position:relative;padding:6px 0;}
   .ab-tabs a i{font-size:1.15rem;}
-  .ab-tabs a.active{color:#d4a017;}
-  .ab-tabs a.active i{filter:drop-shadow(0 0 6px rgba(212,160,23,0.5));}
+  .ab-tabs a.active{color:var(--ft-gold);}
+  .ab-tabs a.active::before{content:'';position:absolute;top:-1px;left:50%;transform:translateX(-50%);width:24px;height:2px;border-radius:2px;background:var(--ft-gold);}
   </style>
 </head>
 <body>
-    <a href="products.html" class="btn action-btn" style="position: fixed; top: 20px; left: 20px; width: auto; z-index: 1000;">
+    <a href="products.html" style="position:sticky;top:12px;left:20px;z-index:1000;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.04);border:1px solid var(--ft-border);color:var(--ft-text-secondary);padding:8px 16px;border-radius:var(--ft-radius-sm);font-size:0.85rem;font-weight:600;font-family:var(--ft-font);text-decoration:none;transition:var(--ft-transition);margin-bottom:8px;">
         <i class="fas fa-arrow-left"></i> Back to Products
     </a>
     <div class="container">
@@ -226,7 +249,7 @@
         </div>
 
         <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
-            <button id="toggleValues" data-testid="button-toggle-values" onclick="toggleHoldingsValues()" style="background:rgba(212,160,23,0.1);border:1px solid rgba(212,160,23,0.2);color:#d4a017;padding:8px 16px;border-radius:10px;cursor:pointer;font-size:0.82rem;font-weight:600;display:flex;align-items:center;gap:6px;transition:all 0.2s;">
+            <button id="toggleValues" data-testid="button-toggle-values" onclick="toggleHoldingsValues()" style="background:rgba(255,255,255,0.04);border:1px solid var(--ft-border);color:var(--ft-text-secondary);padding:8px 16px;border-radius:var(--ft-radius-sm);cursor:pointer;font-size:0.82rem;font-weight:600;font-family:var(--ft-font);display:flex;align-items:center;gap:6px;transition:var(--ft-transition);">
                 <i class="fas fa-eye" id="toggleIcon"></i> <span id="toggleText">Hide Values</span>
             </button>
         </div>

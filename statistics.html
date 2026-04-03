@@ -19,6 +19,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/public/icons/icon-192x192.png">
     <title>Statistics Dashboard - AfricaBased</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/css/fintech-theme.css">
     <script src="/js/token.js"></script>
     <script>
         if (!getABToken()) {
@@ -27,37 +28,37 @@
     </script>
     <style>
         :root {
-            --primary: #0d1520;
+            --primary: #16161a;
             --accent: #d4a017;
-            --accent-gradient: linear-gradient(45deg, #d4a017, #ff6b6b);
-            --secondary: #ff6b6b;
-            --text: #ffffff;
-            --text-dark: #333333;
-            --text-light: #666666;
-            --bg: #06090f;
-            --background-color: #06090f;
-            --card-color: rgba(13,21,32,0.98);
+            --accent-gradient: linear-gradient(135deg, #d4a017, #f0c040);
+            --secondary: #f0c040;
+            --text: #fafafa;
+            --text-dark: #fafafa;
+            --text-light: #a1a1aa;
+            --bg: #09090b;
+            --background-color: #09090b;
+            --card-color: #16161a;
             --success-color: #d4a017;
-            --warning-color: #ffd54f;
-            --danger-color: #ff6b6b;
-            --text-color: #ffffff;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --text-color: #fafafa;
             --text-color-secondary: rgba(255, 255, 255, 0.7);
-            --shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            --transition: all 0.3s ease;
+            --shadow: var(--ft-shadow);
+            --transition: var(--ft-transition);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: var(--ft-font);
         }
 
         body {
             background: var(--bg);
-            background-image: radial-gradient(circle at center, var(--primary) 0%, var(--bg) 100%);
             padding: 20px;
             color: var(--text);
+            -webkit-font-smoothing: antialiased;
         }
 
         .statistics-dashboard {
@@ -68,13 +69,13 @@
         .header {
             background-color: var(--card-color);
             padding: 20px;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
+            border-radius: var(--ft-radius-lg);
+            box-shadow: var(--ft-shadow);
             margin-bottom: 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--ft-border);
             position: relative;
             overflow: hidden;
         }
@@ -85,24 +86,24 @@
         }
 
         .back-button {
-            background: var(--accent-gradient);
-            color: var(--text);
-            padding: 10px 20px;
-            border-radius: 8px;
+            background: rgba(255,255,255,0.04);
+            color: var(--ft-text-secondary);
+            padding: 8px 16px;
+            border-radius: var(--ft-radius-sm);
             text-decoration: none;
-            transition: var(--transition);
+            transition: var(--ft-transition);
             display: flex;
             align-items: center;
             gap: 8px;
-            font-weight: 500;
-            border: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: 1px solid var(--ft-border);
             cursor: pointer;
         }
 
         .back-button:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(212, 160, 23, 0.3);
+            background: rgba(255,255,255,0.06);
+            border-color: var(--ft-border-hover);
         }
 
         .stats-grid {
@@ -114,19 +115,18 @@
         .stat-card {
             background: var(--card-color);
             padding: 25px;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            transition: var(--transition);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--ft-radius-lg);
+            box-shadow: var(--ft-shadow);
+            transition: var(--ft-transition);
+            border: 1px solid var(--ft-border);
             position: relative;
             overflow: hidden;
         }
 
         .stat-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--accent);
-            box-shadow: 0 8px 32px rgba(212, 160, 23, 0.15);
-            background: linear-gradient(135deg, var(--card-color) 0%, rgba(13,21,32,0.85) 100%);
+            transform: translateY(-3px);
+            border-color: var(--ft-border-hover);
+            box-shadow: var(--ft-shadow-lg);
         }
 
         .stat-header {
@@ -231,11 +231,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <!-- Bottom Tab Bar -->
   <style>
-  .ab-tabs{position:fixed;bottom:0;left:0;right:0;height:72px;background:linear-gradient(180deg,#0d1520 0%,#06090f 100%);border-top:1px solid rgba(212,160,23,0.15);display:flex;justify-content:space-around;align-items:center;z-index:9999;padding-bottom:env(safe-area-inset-bottom,0);}
-  .ab-tabs a{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:rgba(255,255,255,0.45);font-size:0.65rem;font-family:'Plus Jakarta Sans',sans-serif;transition:color 0.2s;}
+  .ab-tabs{position:fixed;bottom:0;left:0;right:0;height:var(--ft-tab-h);background:rgba(9,9,11,0.95);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-top:1px solid var(--ft-border);display:flex;justify-content:space-around;align-items:center;z-index:9999;padding-bottom:env(safe-area-inset-bottom,0);}
+  .ab-tabs a{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--ft-text-muted);font-size:0.62rem;font-family:var(--ft-font);font-weight:600;transition:var(--ft-transition);position:relative;padding:6px 0;}
   .ab-tabs a i{font-size:1.15rem;}
-  .ab-tabs a.active{color:#d4a017;}
-  .ab-tabs a.active i{filter:drop-shadow(0 0 6px rgba(212,160,23,0.5));}
+  .ab-tabs a.active{color:var(--ft-gold);}
+  .ab-tabs a.active::before{content:'';position:absolute;top:-1px;left:50%;transform:translateX(-50%);width:24px;height:2px;border-radius:2px;background:var(--ft-gold);}
   </style>
 </head>
 <body>

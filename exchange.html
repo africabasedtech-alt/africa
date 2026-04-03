@@ -31,60 +31,55 @@
             } catch(e) { /* offline — let them through */ }
         })();
     </script>
+    <link rel="stylesheet" href="/css/fintech-theme.css">
     <style>
-        /* Common styles */
         :root {
-            --primary: #0d1520;
+            --primary: #16161a;
             --accent: #d4a017;
             --accent-color: #d4a017;
-            --accent-gradient: linear-gradient(45deg, #d4a017, #ff6b6b);
-            --secondary: #ff6b6b;
-            --text: #ffffff;
-            --text-dark: #333333;
-            --text-light: #666666;
-            --bg: #06090f;
-            --bg-dark: #06090f;
-            --border: #e0e0e0;
-            --shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            --accent-gradient: linear-gradient(135deg, #d4a017, #f0c040);
+            --secondary: #f0c040;
+            --text: #fafafa;
+            --text-dark: #fafafa;
+            --text-light: #a1a1aa;
+            --bg: #09090b;
+            --bg-dark: #09090b;
+            --border: rgba(255,255,255,0.06);
+            --shadow: var(--ft-shadow);
             --color-dashboard: #d4a017;
-            --color-exchange: #ff6b6b;
-            --color-services: #9b59b6;
-            --color-withdraw: #e74c3c;
-            --color-products: #3498db;
-            --color-deposit: #2ecc71;
-            --color-active: #f1c40f;
-            --color-referrals: #1abc9c;
-            --color-statistics: #34495e;
-            --color-profile: #8e44ad;
+            --color-exchange: #f0c040;
             --text-secondary: rgba(255, 255, 255, 0.7);
-            --nav-bg: rgba(13, 21, 32, 0.98);
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --hover-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
-            --transition: all 0.3s ease;
+            --nav-bg: rgba(22,22,26,0.98);
+            --card-bg: #16161a;
+            --hover-shadow: var(--ft-shadow-lg);
+            --transition: var(--ft-transition);
             --primary-color: var(--primary);
         }
         body {
             background: var(--bg);
             color: var(--text);
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: var(--ft-font);
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
         .container {
             max-width: 500px;
-            margin: 60px auto;
-            background: rgba(13,21,32,0.98);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            margin: 40px auto;
+            background: var(--ft-card);
+            border-radius: var(--ft-radius-lg);
+            box-shadow: var(--ft-shadow);
             padding: 2rem;
+            border: 1px solid var(--ft-border);
         }
         .modal {
             display: block;
             position: relative;
-            background: #0d1520;
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            background: var(--ft-card);
+            border-radius: var(--ft-radius-lg);
+            box-shadow: var(--ft-shadow);
             padding: 2rem;
             margin-bottom: 2rem;
+            border: 1px solid var(--ft-border);
         }
         .modal-header h2 {
             font-size: 1.5rem;
@@ -115,23 +110,24 @@
         }
         .modal-button {
             width: 100%;
-            background: linear-gradient(45deg, #d4a017, #ff6b6b);
-            color: white;
+            background: var(--ft-gold);
+            color: #09090b;
             padding: 1rem;
             border: none;
-            border-radius: 15px;
-            font-size: 1.1rem;
-            font-weight: 600;
+            border-radius: var(--ft-radius-sm);
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: var(--ft-font);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            transition: all 0.3s ease;
+            transition: var(--ft-transition);
         }
         .modal-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+            background: var(--ft-gold-bright);
+            transform: translateY(-1px);
         }
         .status-message {
             padding: 1rem;
@@ -223,15 +219,16 @@
         }
         
         .redemption-modal-content {
-            background: linear-gradient(145deg, #0d1520, #232845);
+            background: var(--ft-card);
             padding: 2.5rem;
-            border-radius: 20px;
+            border-radius: var(--ft-radius-xl);
             text-align: center;
             max-width: 400px;
             width: 90%;
             transform: translateY(20px);
             transition: transform 0.3s ease-out;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            box-shadow: var(--ft-shadow-lg);
+            border: 1px solid var(--ft-border);
         }
         
         .redemption-modal.show .redemption-modal-content {
@@ -253,13 +250,12 @@
         }
         
         .redemption-modal h2 {
-            background: linear-gradient(45deg, #d4a017, #ff6b6b);
+            background: linear-gradient(135deg, var(--ft-gold), var(--ft-gold-bright));
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
             font-size: 1.75rem;
             margin-bottom: 1rem;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
         
         .success-details {
@@ -296,15 +292,16 @@
         }
         
         .close-modal-btn {
-            background: linear-gradient(45deg, #d4a017, #ff6b6b);
-            color: white;
+            background: var(--ft-gold);
+            color: #09090b;
             border: none;
             padding: 1rem 2rem;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 600;
+            border-radius: var(--ft-radius-sm);
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: var(--ft-font);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--ft-transition);
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
@@ -312,8 +309,8 @@
         }
         
         .close-modal-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(255, 213, 79, 0.2);
+            background: var(--ft-gold-bright);
+            transform: translateY(-1px);
         }
         
         .close-modal-btn:active {
@@ -341,15 +338,16 @@
         }
         
         .success-modal-content {
-            background: linear-gradient(145deg, #0d1520, #232845);
+            background: var(--ft-card);
             padding: 2.5rem;
-            border-radius: 20px;
+            border-radius: var(--ft-radius-xl);
             max-width: 400px;
             width: 90%;
             text-align: center;
             transform: translateY(20px);
             transition: transform 0.3s ease;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            box-shadow: var(--ft-shadow-lg);
+            border: 1px solid var(--ft-border);
         }
         
         .success-modal.show .success-modal-content {
@@ -398,21 +396,22 @@
         .modal-button {
             padding: 1rem;
             border: none;
-            border-radius: 15px;
-            background: linear-gradient(45deg, #d4a017, #ff6b6b);
-            color: white;
+            border-radius: var(--ft-radius-sm);
+            background: var(--ft-gold);
+            color: #09090b;
             font-size: 1rem;
-            font-weight: 600;
+            font-weight: 700;
+            font-family: var(--ft-font);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            transition: all 0.3s ease;
+            transition: var(--ft-transition);
         }
         .modal-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+            background: var(--ft-gold-bright);
+            transform: translateY(-1px);
         }
         .modal-message {
             text-align: center;
@@ -483,11 +482,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <!-- Bottom Tab Bar -->
   <style>
-  .ab-tabs{position:fixed;bottom:0;left:0;right:0;height:72px;background:linear-gradient(180deg,#0d1520 0%,#06090f 100%);border-top:1px solid rgba(212,160,23,0.15);display:flex;justify-content:space-around;align-items:center;z-index:9999;padding-bottom:env(safe-area-inset-bottom,0);}
-  .ab-tabs a{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:rgba(255,255,255,0.45);font-size:0.65rem;font-family:'Plus Jakarta Sans',sans-serif;transition:color 0.2s;}
+  .ab-tabs{position:fixed;bottom:0;left:0;right:0;height:var(--ft-tab-h);background:rgba(9,9,11,0.95);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-top:1px solid var(--ft-border);display:flex;justify-content:space-around;align-items:center;z-index:9999;padding-bottom:env(safe-area-inset-bottom,0);}
+  .ab-tabs a{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--ft-text-muted);font-size:0.62rem;font-family:var(--ft-font);font-weight:600;transition:var(--ft-transition);position:relative;padding:6px 0;}
   .ab-tabs a i{font-size:1.15rem;}
-  .ab-tabs a.active{color:#d4a017;}
-  .ab-tabs a.active i{filter:drop-shadow(0 0 6px rgba(212,160,23,0.5));}
+  .ab-tabs a.active{color:var(--ft-gold);}
+  .ab-tabs a.active::before{content:'';position:absolute;top:-1px;left:50%;transform:translateX(-50%);width:24px;height:2px;border-radius:2px;background:var(--ft-gold);}
   </style>
 </head>
 <body>
