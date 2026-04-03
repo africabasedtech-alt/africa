@@ -4120,6 +4120,38 @@ app.get('/api/admin/manuals-all', requireAnyAdmin, async (req, res) => {
   } catch (err) { console.error('ZIP generation error:', err); if (!res.headersSent) res.status(500).json({ error: 'Failed to generate ZIP' }); }
 });
 
+app.get('/api/manuals', requireAuth, (req, res) => {
+  res.json(MANUAL_CATALOG.map(m => ({ id: m.id, name: m.name, filename: m.filename, icon: m.icon, color: m.color })));
+});
+
+app.get('/api/manuals/download/all', requireAuth, async (req, res) => {
+  try {
+    const allBuffers = [];
+    for (const manual of MANUAL_CATALOG) {
+      allBuffers.push(await manual.generator());
+    }
+    const archiver = (await import('archiver')).default;
+    res.set({ 'Content-Type': 'application/zip', 'Content-Disposition': 'attachment; filename="AfricaBased_Manuals.zip"' });
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.on('error', err => { throw err; });
+    archive.pipe(res);
+    for (let i = 0; i < MANUAL_CATALOG.length; i++) {
+      archive.append(allBuffers[i], { name: MANUAL_CATALOG[i].filename });
+    }
+    await archive.finalize();
+  } catch (err) { console.error('All manuals download error:', err); if (!res.headersSent) res.status(500).json({ error: 'Failed to generate manuals' }); }
+});
+
+app.get('/api/manuals/:id', requireAuth, async (req, res) => {
+  const manual = MANUAL_CATALOG.find(m => m.id === req.params.id);
+  if (!manual) return res.status(404).json({ error: 'Manual not found' });
+  try {
+    const pdfBuffer = await manual.generator();
+    res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${manual.filename}"`, 'Content-Length': pdfBuffer.length });
+    res.send(pdfBuffer);
+  } catch (err) { console.error('PDF generation error:', err); res.status(500).json({ error: 'Failed to generate PDF' }); }
+});
+
 // ─── Clean URL middleware ─────────────────────────────────────────────────────
 // 1. Redirect any direct *.html request to the same path without .html
 app.use((req, res, next) => {
