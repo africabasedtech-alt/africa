@@ -167,15 +167,14 @@ export function generateProductManual() {
     ]);
 
     checkPage(doc, 160);
-    sectionTitle(doc, '7. Admin Product Management');
-    bodyText(doc, 'Administrators can manage products from the Admin Panel → Products section:');
+    sectionTitle(doc, '7. Frequently Asked Questions');
+    bodyText(doc, 'Common questions about products and investments:');
     bulletList(doc, [
-      'Create new products with all parameters (name, price, daily returns, sector, etc.)',
-      'Edit existing products — update pricing, availability, limits',
-      'Disable/enable products to control visibility',
-      'Track used units and remaining availability',
-      'View estimated return preview before publishing',
-      'Set investor limits and per-user unit caps',
+      'Can I invest using my Earnings Balance? — Yes, you can use either Deposit or Earnings Balance.',
+      'What happens if I miss a collection day? — Your returns are not lost. The investment simply extends until all returns are collected.',
+      'Can I cancel an investment? — No, once invested the funds are locked until maturity.',
+      'What happens after maturity? — The investment is marked as completed and you can reinvest.',
+      'How do I see my active investments? — Go to the Holdings page from the bottom navigation.',
     ]);
 
     addFooter(doc);
@@ -251,13 +250,14 @@ export function generateCommissionManual() {
     sectionTitle(doc, '6. Active vs. Inactive Referrals');
     bodyText(doc, 'A referral is considered "active" only if they have at least one active (ongoing) investment. Users with no active investments do not generate commissions and do not count toward tier requirements.');
 
-    sectionTitle(doc, '7. Admin Referral Management');
-    bodyText(doc, 'Administrators can view and manage the referral system:');
+    sectionTitle(doc, '7. Tips for Growing Your Network');
+    bodyText(doc, 'Strategies for maximizing your referral earnings:');
     bulletList(doc, [
-      'View any user\'s referral tree (3 levels deep)',
-      'See commission rates and membership tiers',
-      'Monitor referral activity and commission payouts',
-      'Accessible from Admin Panel → Referrals',
+      'Share your referral link on social media and WhatsApp groups',
+      'Help your referrals make their first investment to activate commissions',
+      'Encourage your Level 1 referrals to also invite others — you earn from 3 levels deep',
+      'Focus on reaching Basic tier (5 active referrals) to start earning commissions',
+      'Track your referral progress on the Referrals page',
     ]);
 
     addFooter(doc);
@@ -273,7 +273,7 @@ export function generatePlatformGuide() {
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    addHeader(doc, 'Platform Operations Guide');
+    addHeader(doc, 'Platform User Guide');
 
     sectionTitle(doc, '1. User Registration & Authentication');
     bodyText(doc, 'New users register through the signup page:');
@@ -309,71 +309,36 @@ export function generatePlatformGuide() {
     ]);
 
     checkPage(doc, 200);
-    sectionTitle(doc, '4. Admin Panel Overview');
-    bodyText(doc, 'The Admin Panel provides comprehensive platform management:');
-
-    subTitle(doc, 'Core Sections');
+    sectionTitle(doc, '4. Exchange Codes');
+    bodyText(doc, 'Exchange codes are promotional or reward codes that add funds to your account:');
     bulletList(doc, [
-      'Users — Search, view, edit, lock/unlock, credit/debit user accounts',
-      'Products — Create, edit, enable/disable investment products',
-      'Deposits — View and approve/reject pending deposits',
-      'Withdrawals — Process withdrawal requests (approve/reject)',
-      'Approvals — Quick access to pending deposits and withdrawals',
-      'Referrals — View referral trees and commission data',
-      'Exchange — Create and manage exchange/redemption codes',
-      'Services — Manage platform services and tiers',
-      'Settings — Platform configuration',
-      'Management — Sub-admin creation and privilege management',
-      'Pay Channels — Configure payment channels (M-Pesa numbers, banks)',
-    ]);
-
-    checkPage(doc, 200);
-    sectionTitle(doc, '5. Sub-Admin System');
-    bodyText(doc, 'Super admins can create sub-admins with granular permissions:');
-    bulletList(doc, [
-      'Each sub-admin gets specific section access (product, deposit, withdraw, user, etc.)',
-      'Sub-permissions allow fine-grained control within each section',
-      'Sub-admins access their panel at a dedicated URL',
-      'Sub-admin actions are logged and can be monitored',
-      'Only super admins can create, edit, or delete sub-admin accounts',
+      'Go to the Exchange page from the bottom navigation or quick actions',
+      'Enter the code you received and tap "Redeem"',
+      'The code value is added to your Earnings Balance',
+      'Each code can only be used once',
+      'Some codes may have an expiry date',
     ]);
 
     checkPage(doc, 180);
-    sectionTitle(doc, '6. Exchange Codes');
-    bodyText(doc, 'Admins can create promotional or reward codes:');
+    sectionTitle(doc, '5. Account Security');
+    bodyText(doc, 'Keep your account safe with these security features:');
     bulletList(doc, [
-      'Single codes — One code for one redemption',
-      'Bulk codes — Generate multiple codes at once',
-      'Random codes — Auto-generated random code strings',
-      'Referral codes — Linked to referral rewards',
-      'User-assigned codes — Targeted to specific users',
-      'Codes can have expiry dates and maximum redemption limits',
-    ]);
-
-    checkPage(doc, 180);
-    sectionTitle(doc, '7. Security Features');
-    bodyText(doc, 'The platform includes multiple security layers:');
-    bulletList(doc, [
-      'JWT-based authentication with 7-day expiry',
-      'HTTP-only cookies for admin sessions',
-      'Rate limiting on sensitive endpoints (login, OTP, registration)',
-      'Account lockout after failed login attempts',
-      'Biometric authentication (WebAuthn) support',
-      'Admin impersonation is read-only — no data modification possible',
-      'All passwords hashed with bcrypt (12 rounds)',
-      'CORS and Helmet security headers',
+      'Use a strong, unique password for your account',
+      'Enable biometric login (fingerprint/Face ID) from your Profile page',
+      'Never share your login credentials or referral earnings with others',
+      'Your session automatically expires after inactivity for security',
+      'If you forget your password, use the "Forgot Password" link on the login page',
     ]);
 
     checkPage(doc, 160);
-    sectionTitle(doc, '8. Email Notifications');
-    bodyText(doc, 'The platform sends automated emails for:');
+    sectionTitle(doc, '6. Email Notifications');
+    bodyText(doc, 'You will receive email notifications for important account activity:');
     bulletList(doc, [
-      'Registration OTP verification',
-      'Welcome email after successful registration',
+      'Registration verification code',
+      'Welcome email after successful sign-up',
       'Password reset links',
-      'Deposit received / confirmed / rejected notifications',
-      'Withdrawal request received / processed / rejected notifications',
-      'Admin broadcast emails to all users',
+      'Deposit confirmation or rejection',
+      'Withdrawal processing status updates',
     ]);
 
     addFooter(doc);
@@ -417,51 +382,40 @@ export function generateDepositWithdrawalManual() {
     ]);
 
     checkPage(doc, 200);
-    sectionTitle(doc, '4. Payment Channels');
-    bodyText(doc, 'Admins configure payment channels from Admin Panel → Pay Channels:');
+    sectionTitle(doc, '4. Payment Methods');
+    bodyText(doc, 'The platform supports multiple payment methods for deposits:');
     bulletList(doc, [
-      'M-Pesa — Personal or business M-Pesa numbers',
-      'Till Number — Lipa na M-Pesa buy goods till numbers',
-      'Paybill — M-Pesa paybill numbers with account details',
-      'Bank Transfer — Bank name, account number, branch details',
-      'Other — Custom payment method with instructions',
-      'Multiple channels can be active — system randomly selects one for each deposit',
-      'Each channel auto-generates relevant step-by-step instructions for the user',
+      'M-Pesa — Send directly to the provided M-Pesa number',
+      'Till Number — Pay via Lipa na M-Pesa buy goods',
+      'Paybill — Send to the paybill number with your account details',
+      'Bank Transfer — Transfer to the company bank account',
+      'Follow the on-screen instructions carefully for each method',
+      'Always enter the correct transaction code after sending money',
     ]);
 
     checkPage(doc, 200);
     sectionTitle(doc, '5. Withdrawal Process');
-    bodyText(doc, 'Users withdraw from their Earnings Balance only:');
+    bodyText(doc, 'How to withdraw your earnings:');
     bulletList(doc, [
-      'Wallet Balance (deposits) CANNOT be withdrawn — only used for investing',
-      'User selects withdrawal method: M-Pesa or Bank Transfer',
-      'Processing fees are deducted from the withdrawal amount',
-      'Withdrawal request enters "Pending" status',
-      'Admin reviews and processes the withdrawal',
-      'On approval, funds are sent to the user\'s M-Pesa or bank account',
-      'On rejection, the amount is refunded to the user\'s Earnings Balance',
+      'Only your Earnings Balance can be withdrawn — Deposit Balance is for investing only',
+      'Go to the Withdraw page from the quick actions or bottom navigation',
+      'Select your withdrawal method: M-Pesa or Bank Transfer',
+      'Enter the amount you wish to withdraw',
+      'Processing fees will be shown before you confirm',
+      'Your request is submitted for processing',
+      'You will receive an email notification once processed',
+      'If rejected, the amount is returned to your Earnings Balance',
     ]);
 
     checkPage(doc, 200);
-    sectionTitle(doc, '6. Admin Deposit Management');
-    bodyText(doc, 'From the Admin Panel, administrators can:');
+    sectionTitle(doc, '6. Deposit & Withdrawal Tips');
+    bodyText(doc, 'Important things to keep in mind:');
     bulletList(doc, [
-      'View all deposits (pending, approved, rejected)',
-      'Approve pending deposits — credits user\'s Wallet Balance',
-      'Reject deposits with a reason — user is notified via email',
-      'View deposit details including transaction codes and timestamps',
-      'Switch between automatic and manual deposit modes in Settings',
-    ]);
-
-    checkPage(doc, 160);
-    sectionTitle(doc, '7. Admin Withdrawal Management');
-    bodyText(doc, 'From the Admin Panel, administrators can:');
-    bulletList(doc, [
-      'View all withdrawal requests',
-      'Approve/process withdrawals — marks as paid',
-      'Reject withdrawals with reason — refunds to user\'s Earnings Balance',
-      'Track processing fees and net amounts',
-      'View withdrawal history and statistics',
+      'Always double-check the payment details before sending money',
+      'Save your M-Pesa transaction code — you will need it to confirm the deposit',
+      'Deposits may take some time to be confirmed depending on processing mode',
+      'Ensure your phone number and bank details are up to date in your Profile',
+      'Contact support if your deposit or withdrawal is delayed beyond 24 hours',
     ]);
 
     addFooter(doc);
@@ -473,5 +427,5 @@ export const MANUAL_CATALOG = [
   { id: 'product', name: 'Product & Investment Manual', filename: 'AfricaBased_Product_Manual.pdf', generator: generateProductManual, icon: 'fa-box', color: '#d4a017' },
   { id: 'commission', name: 'Referral & Commission Manual', filename: 'AfricaBased_Commission_Manual.pdf', generator: generateCommissionManual, icon: 'fa-network-wired', color: '#4CAF50' },
   { id: 'deposit-withdrawal', name: 'Deposit & Withdrawal Manual', filename: 'AfricaBased_Deposit_Withdrawal_Manual.pdf', generator: generateDepositWithdrawalManual, icon: 'fa-money-bill-wave', color: '#2196F3' },
-  { id: 'platform', name: 'Platform Operations Guide', filename: 'AfricaBased_Platform_Guide.pdf', generator: generatePlatformGuide, icon: 'fa-cogs', color: '#9C27B0' },
+  { id: 'platform', name: 'Platform User Guide', filename: 'AfricaBased_Platform_Guide.pdf', generator: generatePlatformGuide, icon: 'fa-cogs', color: '#9C27B0' },
 ];
