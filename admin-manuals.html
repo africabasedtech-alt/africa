@@ -114,9 +114,12 @@
   <div class="toast" id="toast"></div>
 
   <script>
+    const ADMIN_KEY = localStorage.getItem('_abAdminKey') || '1540568e';
+    const authHeaders = { 'x-admin-key': ADMIN_KEY };
+
     async function loadManuals() {
       try {
-        const res = await fetch('/api/admin/manuals', { credentials: 'include' });
+        const res = await fetch('/api/admin/manuals', { headers: authHeaders });
         if (!res.ok) { window.location.href = '/admin-login'; return; }
         const manuals = await res.json();
         const grid = document.getElementById('manualGrid');
@@ -145,7 +148,7 @@
       btn.disabled = true;
       btn.classList.add('loading');
       try {
-        const res = await fetch('/api/admin/manuals/' + id, { credentials: 'include' });
+        const res = await fetch('/api/admin/manuals/' + id, { headers: authHeaders });
         if (!res.ok) throw new Error('Download failed');
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
@@ -175,7 +178,7 @@
       try {
         const isAll = val === 'all';
         const url = isAll ? '/api/admin/manuals-all' : '/api/admin/manuals/' + val;
-        const res = await fetch(url, { credentials: 'include' });
+        const res = await fetch(url, { headers: authHeaders });
         if (!res.ok) throw new Error('Download failed');
         const blob = await res.blob();
         const a = document.createElement('a');
