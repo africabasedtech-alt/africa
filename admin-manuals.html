@@ -16,16 +16,29 @@
     .intro { background: rgba(212,160,23,0.08); border: 1px solid rgba(212,160,23,0.2); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
     .intro h2 { color: #d4a017; font-size: 1.1rem; margin-bottom: 0.5rem; }
     .intro p { color: rgba(255,255,255,0.6); font-size: 0.88rem; line-height: 1.6; }
-    .download-all-wrap { text-align: center; margin-bottom: 2rem; }
-    .download-all-btn {
-      display: inline-flex; align-items: center; gap: 10px;
-      background: linear-gradient(135deg, #d4a017, #b8860b); color: #0f0f1a;
-      border: none; border-radius: 10px; padding: 0.85rem 2rem;
-      font-size: 1rem; font-weight: 700; cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.15s;
+    .quick-download { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 1.5rem; margin-bottom: 2rem; }
+    .quick-download h3 { font-size: 1rem; color: #d4a017; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+    .quick-download-row { display: flex; gap: 10px; align-items: center; }
+    .quick-download select {
+      flex: 1; padding: 0.75rem 1rem; background: rgba(255,255,255,0.06); color: #fff;
+      border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+      font-family: 'Segoe UI', sans-serif; font-size: 0.9rem;
+      outline: none; appearance: none; -webkit-appearance: none;
+      background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23a1a1aa%22 stroke-width=%222%22%3E%3Cpath d=%22M6 9l6 6 6-6%22/%3E%3C/svg%3E');
+      background-repeat: no-repeat; background-position: right 12px center;
+      cursor: pointer;
     }
-    .download-all-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(212,160,23,0.35); }
-    .download-all-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .quick-download select:focus { border-color: rgba(212,160,23,0.5); }
+    .quick-download select option { background: #1a1a2e; color: #fff; }
+    .quick-dl-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: linear-gradient(135deg, #d4a017, #b8860b); color: #0f0f1a;
+      border: none; border-radius: 8px; padding: 0.75rem 1.5rem;
+      font-size: 0.9rem; font-weight: 700; cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s; white-space: nowrap;
+    }
+    .quick-dl-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(212,160,23,0.3); }
+    .quick-dl-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
     .manual-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; }
     .manual-card {
       background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
@@ -60,6 +73,8 @@
       .manual-grid { grid-template-columns: 1fr; }
       .topbar { padding: 0.8rem 1rem; }
       .topbar h1 { font-size: 1.1rem; }
+      .quick-download-row { flex-direction: column; }
+      .quick-dl-btn { width: 100%; justify-content: center; }
     }
   </style>
 </head>
@@ -75,10 +90,22 @@
       <p>Download comprehensive PDF manuals covering all aspects of the AfricaBased platform. Each manual is generated with the latest information and branded with the company logo. Share these with your team or keep them for reference.</p>
     </div>
 
-    <div class="download-all-wrap">
-      <button class="download-all-btn" id="downloadAllBtn" data-testid="button-download-all" onclick="downloadAll()">
-        <i class="fas fa-file-archive"></i> Download All Manuals (ZIP)
-      </button>
+    <div class="quick-download" data-testid="section-quick-download">
+      <h3><i class="fas fa-bolt"></i> Quick Download</h3>
+      <div class="quick-download-row">
+        <select id="manualSelect" data-testid="select-manual">
+          <option value="" disabled selected>Choose a manual...</option>
+          <option value="commission">Commission & Referral Manual</option>
+          <option value="deposit-withdrawal">Deposit & Withdrawal Manual</option>
+          <option value="product">Products & Investment Manual</option>
+          <option value="platform">Platform Operations Guide</option>
+          <option value="all">All Manuals (ZIP)</option>
+        </select>
+        <button class="quick-dl-btn" id="quickDlBtn" data-testid="button-quick-download" onclick="quickDownload()">
+          <i class="fas fa-download" id="quickDlIcon"></i>
+          <span id="quickDlText">Download PDF</span>
+        </button>
+      </div>
     </div>
 
     <div class="manual-grid" id="manualGrid" data-testid="section-manual-grid"></div>
@@ -135,27 +162,40 @@
       }
     }
 
-    async function downloadAll() {
-      const btn = document.getElementById('downloadAllBtn');
-      if (btn.disabled) return;
+    async function quickDownload() {
+      const sel = document.getElementById('manualSelect');
+      const btn = document.getElementById('quickDlBtn');
+      const icon = document.getElementById('quickDlIcon');
+      const txt = document.getElementById('quickDlText');
+      const val = sel.value;
+      if (!val) { showToast('Please select a manual first'); return; }
       btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating ZIP...';
+      icon.className = 'fas fa-spinner fa-spin';
+      txt.textContent = 'Generating...';
       try {
-        const res = await fetch('/api/admin/manuals-all', { credentials: 'include' });
-        if (!res.ok) throw new Error('ZIP download failed');
+        const isAll = val === 'all';
+        const url = isAll ? '/api/admin/manuals-all' : '/api/admin/manuals/' + val;
+        const res = await fetch(url, { credentials: 'include' });
+        if (!res.ok) throw new Error('Download failed');
         const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = 'AfricaBased_Admin_Manuals.zip'; document.body.appendChild(a); a.click();
-        document.body.removeChild(a); URL.revokeObjectURL(url);
-        showToast('All manuals downloaded as ZIP!');
+        a.href = URL.createObjectURL(blob);
+        const ct = res.headers.get('content-disposition') || '';
+        const fnMatch = ct.match(/filename="?([^"]+)"?/);
+        a.download = fnMatch ? fnMatch[1] : (isAll ? 'AfricaBased_Manuals.zip' : 'AfricaBased_Manual.pdf');
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(a.href);
+        showToast(isAll ? 'All manuals downloaded as ZIP!' : 'PDF downloaded successfully!');
+        icon.className = 'fas fa-check';
+        txt.textContent = 'Downloaded!';
+        setTimeout(() => { icon.className = 'fas fa-download'; txt.textContent = 'Download PDF'; }, 2500);
       } catch (e) {
-        showToast('Failed to generate ZIP');
         console.error(e);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-file-archive"></i> Download All Manuals (ZIP)';
-      }
+        showToast('Download failed. Please try again.');
+        icon.className = 'fas fa-exclamation-triangle';
+        txt.textContent = 'Failed';
+        setTimeout(() => { icon.className = 'fas fa-download'; txt.textContent = 'Download PDF'; }, 2500);
+      } finally { btn.disabled = false; }
     }
 
     function showToast(msg) {

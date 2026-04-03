@@ -308,40 +308,6 @@
       <a href="javascript:void(0)" class="qa ab-install-trigger" onclick="window.abTriggerInstall&&window.abTriggerInstall()" data-testid="button-install-app-home"><i class="fas fa-mobile-screen-button"></i> Install</a>
     </div>
 
-    <div class="manual-dl-section" data-testid="section-manuals">
-      <div class="section-header" style="padding-bottom:0">
-        <h2 class="stitle"><i class="fas fa-book" style="color:var(--ft-gold);margin-right:6px;font-size:1rem"></i> Platform Manuals</h2>
-      </div>
-      <p class="ssub" style="padding-bottom:10px">Download guides in PDF format</p>
-      <div style="display:flex;gap:8px;align-items:center">
-        <select id="manualSelect" data-testid="select-manual" style="
-          flex:1;padding:10px 14px;background:var(--ft-card);color:var(--ft-text);
-          border:1px solid var(--ft-border);border-radius:var(--ft-radius-sm);
-          font-family:var(--ft-font);font-size:.85rem;font-weight:500;
-          outline:none;appearance:none;-webkit-appearance:none;
-          background-image:url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23a1a1aa%22 stroke-width=%222%22%3E%3Cpath d=%22M6 9l6 6 6-6%22/%3E%3C/svg%3E');
-          background-repeat:no-repeat;background-position:right 12px center;
-          cursor:pointer;
-        ">
-          <option value="" disabled selected>Choose a manual...</option>
-          <option value="commission">Commission & Referral Manual</option>
-          <option value="deposit-withdrawal">Deposit & Withdrawal Manual</option>
-          <option value="product">Products & Investment Manual</option>
-          <option value="platform">Platform Operations Guide</option>
-          <option value="all">All Manuals (ZIP)</option>
-        </select>
-        <button id="manualDlBtn" data-testid="button-download-manual" onclick="downloadManual()" style="
-          padding:10px 18px;background:var(--ft-gold);color:#09090b;
-          border:none;border-radius:var(--ft-radius-sm);font-family:var(--ft-font);
-          font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap;
-          transition:var(--ft-transition);display:flex;align-items:center;gap:6px;
-        ">
-          <i class="fas fa-download" id="manualDlIcon"></i>
-          <span id="manualDlText">Download</span>
-        </button>
-      </div>
-    </div>
-
     <div class="section-header">
       <h2 class="stitle">Investment Opportunities</h2>
     </div>
@@ -504,39 +470,6 @@
     (function(){var c=0,t=null;document.querySelector('.brand').addEventListener('click',function(){c++;clearTimeout(t);t=setTimeout(function(){c=0},3000);if(c>=5){c=0;window.location.href='/ab-secure'}})})();
   </script>
 
-  <script>
-    async function downloadManual(){
-      const sel=document.getElementById('manualSelect');
-      const btn=document.getElementById('manualDlBtn');
-      const icon=document.getElementById('manualDlIcon');
-      const txt=document.getElementById('manualDlText');
-      const val=sel.value;
-      if(!val){alert('Please select a manual first');return}
-      btn.disabled=true;
-      icon.className='fas fa-spinner fa-spin';
-      txt.textContent='Generating...';
-      try{
-        const url=val==='all'?'/api/manuals/download/all':'/api/manuals/'+val;
-        const r=await fetch(url,{headers:{'Authorization':'Bearer '+getABToken()}});
-        if(!r.ok)throw new Error('Download failed');
-        const blob=await r.blob();
-        const a=document.createElement('a');
-        a.href=URL.createObjectURL(blob);
-        const ct=r.headers.get('content-disposition')||'';
-        const fnMatch=ct.match(/filename="?([^"]+)"?/);
-        a.download=fnMatch?fnMatch[1]:(val==='all'?'AfricaBased_Manuals.zip':'AfricaBased_Manual.pdf');
-        document.body.appendChild(a);a.click();a.remove();
-        URL.revokeObjectURL(a.href);
-        txt.textContent='Downloaded!';
-        icon.className='fas fa-check';
-        setTimeout(()=>{txt.textContent='Download';icon.className='fas fa-download';},2000);
-      }catch(e){
-        console.error(e);
-        txt.textContent='Failed';icon.className='fas fa-exclamation-triangle';
-        setTimeout(()=>{txt.textContent='Download';icon.className='fas fa-download';},2500);
-      }finally{btn.disabled=false}
-    }
-  </script>
   <script src="/js/impersonation-guard.js"></script>
   <script src="/js/ai-assistant.js"></script>
   <script src="/js/toast-modal.js"></script>
