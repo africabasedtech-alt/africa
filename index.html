@@ -1093,25 +1093,20 @@
           const saved = sessionStorage.getItem('_abPendingReg');
           if (saved) _pendingReg = JSON.parse(saved);
         } catch(e) {}
-        // If we don't have pendingReg, create a stub so the OTP modal can open
-        // (user will need to fill in their password if they opened the link in a new browser)
         if (!_pendingReg) {
           _pendingReg = { email: urlEmail, _urlVerify: true };
         }
-        // Show screens
         const welcomeScreen = document.getElementById('welcomeScreen');
         const registerScreen = document.getElementById('registerScreen');
         if (welcomeScreen && registerScreen) {
           welcomeScreen.classList.add('hidden');
           registerScreen.classList.add('visible');
         }
-        // Show OTP modal and auto-fill the code
         showOtpModal(urlEmail);
         setTimeout(() => {
           const digits = document.querySelectorAll('.otp-digit');
           urlOtp.split('').forEach((d, i) => { if (digits[i]) digits[i].value = d; });
-          // Auto-submit after short delay
-          setTimeout(() => { if (_pendingReg && !_pendingReg._urlVerify) document.getElementById('otpConfirmBtn').click(); }, 350);
+          setTimeout(() => document.getElementById('otpConfirmBtn').click(), 350);
         }, 200);
         return;
       }
@@ -1249,18 +1244,16 @@
             document.getElementById('otpErr').style.display = 'block';
             return;
         }
-        // If user opened email link in a new browser, they don't have registration data
-        if (_pendingReg && _pendingReg._urlVerify && !_pendingReg.username) {
-            document.getElementById('otpErr').innerHTML = 'Please complete registration on the same device &amp; browser where you signed up. <a href="/" style="color:#d4a017;">Start again</a>';
-            document.getElementById('otpErr').style.display = 'block';
-            return;
-        }
         const btn = document.getElementById('otpConfirmBtn');
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner"></span> Verifying...';
         document.getElementById('otpErr').style.display = 'none';
 
-        const { username, email, password, referral, fp } = _pendingReg;
+        const username = _pendingReg.username || '';
+        const email = _pendingReg.email || '';
+        const password = _pendingReg.password || '';
+        const referral = _pendingReg.referral || '';
+        const fp = _pendingReg.fp || null;
         const { data, error } = await signUp(username, null, email, password, otp, referral, fp);
         if (error) {
             document.getElementById('otpErr').textContent = error.message || 'Verification failed.';

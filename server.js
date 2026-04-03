@@ -457,9 +457,15 @@ app.post('/api/auth/send-otp', otpLimiter, async (req, res) => {
       return res.status(400).json({ error: 'This username is already taken' });
     }
 
+    const password_hash = await bcrypt.hash(password, 12);
     const otp     = generateOtp();
     const expires = Date.now() + 5 * 60 * 1000; // 5 minutes
-    regOtpStore.set(email, { otp, expires, attempts: 0 });
+    regOtpStore.set(email, {
+      otp, expires, attempts: 0,
+      username, password_hash,
+      referral_code: sanitizeString(req.body.referral_code || ''),
+      fingerprint: typeof req.body.fingerprint === 'string' ? req.body.fingerprint.slice(0, 128) : null,
+    });
 
     await sendMail({
       to: email,
@@ -476,17 +482,11 @@ app.post('/api/auth/send-otp', otpLimiter, async (req, res) => {
 
 // ─── AUTH: Register ──────────────────────────────────────────────────────────
 app.post('/api/auth/register', registerLimiter, async (req, res) => {
-  const username      = sanitizeString(req.body.username || '');
-  const phone         = sanitizeString(req.body.phone || '');
   const email         = sanitizeString((req.body.email || '').toLowerCase());
-  const password      = req.body.password || '';
   const otp           = sanitizeString(req.body.otp || '');
-  const referral_code = sanitizeString(req.body.referral_code || '');
-  const fingerprint   = typeof req.body.fingerprint === 'string' ? req.body.fingerprint.slice(0, 128) : null;
-  const phoneVal      = phone || null;
 
-  if (!username || !email || !password) {
-    return res.status(400).json({ error: 'Username, email and password are required' });
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
   }
   if (!otp) {
     return res.status(400).json({ error: 'Verification code is required' });
@@ -509,6 +509,22 @@ app.post('/api/auth/register', registerLimiter, async (req, res) => {
   if (stored.otp !== otp) {
     return res.status(400).json({ error: `Incorrect code. ${5 - stored.attempts} attempt${5 - stored.attempts !== 1 ? 's' : ''} remaining.` });
   }
+
+  const username      = sanitizeString(req.body.username || '') || stored.username;
+  const phone         = sanitizeString(req.body.phone || '');
+  const phoneVal      = phone || null;
+  const referral_code = sanitizeString(req.body.referral_code || '') || stored.referral_code || '';
+  const fingerprint   = (typeof req.body.fingerprint === 'string' ? req.body.fingerprint.slice(0, 128) : null) || stored.fingerprint || null;
+
+  if (!username) {
+    return res.status(400).json({ error: 'Username is required. Please go back and fill in the registration form.' });
+  }
+
+  const password_hash = stored.password_hash || (req.body.password ? await bcrypt.hash(req.body.password, 12) : null);
+  if (!password_hash) {
+    return res.status(400).json({ error: 'Password is required.' });
+  }
+
   regOtpStore.delete(email); // OTP consumed
 
   try {
@@ -523,7 +539,6 @@ app.post('/api/auth/register', registerLimiter, async (req, res) => {
       }
     }
 
-    const password_hash = await bcrypt.hash(password, 12);
     const referred_by   = referral_code ? referral_code.toUpperCase() : null;
     const result = await pool.query(
       'INSERT INTO users (username, phone, email, password_hash, referred_by, device_fingerprint) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, username, phone, email, created_at',
