@@ -3529,6 +3529,26 @@ app.get('/api/admin/withdrawals/stats', requireAnyAdmin, requirePrivilege('withd
   }
 });
 
+// ─── QR CODE GENERATOR ───────────────────────────────────────────────────────
+
+const QRCodeGen = _require('qrcode');
+app.get('/api/qr', async (req, res) => {
+  try {
+    const { url } = req.query;
+    if (!url) return res.status(400).json({ error: 'url parameter required' });
+    const buffer = await QRCodeGen.toBuffer(decodeURIComponent(url), {
+      width: 400, margin: 2,
+      color: { dark: '#09090e', light: '#ffffff' }
+    });
+    res.set('Content-Type', 'image/png');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.send(buffer);
+  } catch (e) {
+    console.error('QR generation error:', e);
+    res.status(500).json({ error: 'QR generation failed' });
+  }
+});
+
 // ─── ADMIN USER MANAGEMENT ───────────────────────────────────────────────────
 
 // List all users with stats
