@@ -221,6 +221,72 @@
       .poster-wrap { display: block !important; }
       .poster-outer { max-width: 100%; border-radius: 0; box-shadow: none; }
     }
+
+    /* ── Phase toggle ── */
+    .phase-toggle { display: flex; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+    .phase-btn { flex: 1; padding: 0.58rem 0.5rem; border: none; background: #f8fafc; color: #64748b; font-family: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 5px; }
+    .phase-btn:first-child { border-right: 1px solid #e2e8f0; }
+    .phase-btn.active { background: #0f172a; color: #f5c842; }
+
+    /* ═══════════════════════════════════
+       PHASE 2 POSTER STYLES
+    ═══════════════════════════════════ */
+    .poster2 {
+      background: var(--p-bg, #ffffff);
+      font-family: 'Inter', sans-serif;
+      color: var(--p-text, #0f172a);
+      --p-accent: #b8860b; --p-accent-light: #fef3c7; --p-accent-muted: #92400e;
+      --p-border: #e2e8f0; --p-muted: #94a3b8; --p-sub: #475569; --p-strong: #0f172a;
+      --p-footer-bg: #0f172a; --p-footer-text: #f5c842; --p-footer-sub: rgba(255,255,255,0.35);
+      --p-stat-bg: #ffffff;
+    }
+
+    .p2-hero-band { background: var(--p-footer-bg); padding: 1.7rem 1.8rem 1.5rem; }
+    .p2-hero-eyebrow { font-size: 0.56rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--p-footer-sub); margin-bottom: 0.5rem; }
+    .p2-hero-title { font-size: 1.65rem; font-weight: 900; line-height: 1.08; color: var(--p-footer-text); letter-spacing: -0.03em; margin-bottom: 0.6rem; }
+    .p2-hero-title em { color: #fff; font-style: normal; }
+    .p2-hero-sub { font-size: 0.8rem; color: rgba(255,255,255,0.68); line-height: 1.65; }
+
+    .p2-pillars { display: grid; grid-template-columns: repeat(3,1fr); border-bottom: 1px solid var(--p-border); }
+    .p2-pillar { padding: 1.05rem 1rem; border-right: 1px solid var(--p-border); background: var(--p-stat-bg); }
+    .p2-pillar:last-child { border-right: none; }
+    .p2-pillar-icon { width: 32px; height: 32px; border-radius: 7px; background: var(--p-accent-light); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: var(--p-accent-muted); margin-bottom: 0.5rem; }
+    .p2-pillar-title { font-size: 0.73rem; font-weight: 800; color: var(--p-strong); margin-bottom: 0.22rem; }
+    .p2-pillar-text { font-size: 0.63rem; color: var(--p-sub); line-height: 1.5; }
+
+    .p2-section { padding: 1.1rem 1.8rem; border-bottom: 1px solid var(--p-border); background: var(--p-bg, #ffffff); }
+    .p2-section-title { font-size: 0.56rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--p-muted); margin-bottom: 0.8rem; }
+
+    .p2-steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.5rem; }
+    .p2-step { text-align: center; }
+    .p2-step-num { width: 30px; height: 30px; border-radius: 50%; background: var(--p-accent); color: #fff; font-size: 0.8rem; font-weight: 900; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.4rem; }
+    .p2-step-title { font-size: 0.7rem; font-weight: 700; color: var(--p-strong); margin-bottom: 0.18rem; }
+    .p2-step-text { font-size: 0.61rem; color: var(--p-sub); line-height: 1.5; }
+    .p2-step-arrow { display: flex; align-items: center; justify-content: center; color: var(--p-accent); font-size: 0.7rem; padding-top: 0.9rem; }
+
+    .p2-features { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem 0.8rem; }
+    .p2-feat { display: flex; align-items: flex-start; gap: 7px; padding: 0.28rem 0; }
+    .p2-feat-icon { width: 22px; height: 22px; border-radius: 5px; background: var(--p-accent-light); color: var(--p-accent-muted); font-size: 0.58rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .p2-feat-text { font-size: 0.66rem; color: var(--p-sub); line-height: 1.4; }
+    .p2-feat-text strong { color: var(--p-strong); display: block; font-size: 0.69rem; margin-bottom: 1px; }
+
+    .p2-ref-band { background: var(--p-accent-light); padding: 0.9rem 1.8rem; border-bottom: 1px solid var(--p-border); }
+    .p2-ref-title { font-size: 0.56rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--p-accent-muted); margin-bottom: 0.65rem; }
+    .p2-ref-levels { display: flex; gap: 0.5rem; }
+    .p2-ref-level { flex: 1; background: #fff; border: 1px solid var(--p-border); border-radius: 7px; padding: 0.65rem 0.5rem; text-align: center; }
+    .p2-ref-pct { font-size: 1.1rem; font-weight: 900; color: var(--p-accent); }
+    .p2-ref-label { font-size: 0.57rem; color: var(--p-sub); margin-top: 3px; line-height: 1.4; }
+
+    .p2-stats { display: grid; grid-template-columns: repeat(4,1fr); border-bottom: 1px solid var(--p-border); }
+    .p2-stat { padding: 0.78rem 0.5rem; border-right: 1px solid var(--p-border); background: var(--p-stat-bg); text-align: center; }
+    .p2-stat:last-child { border-right: none; }
+    .p2-stat-v { font-size: 0.82rem; font-weight: 800; color: var(--p-accent); }
+    .p2-stat-l { font-size: 0.53rem; color: var(--p-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    .p2-callout { background: var(--p-footer-bg); padding: 0.85rem 1.8rem; border-bottom: 1px solid var(--p-border); display: flex; align-items: center; gap: 0.85rem; }
+    .p2-callout-icon { font-size: 1.4rem; color: var(--p-footer-text); flex-shrink: 0; }
+    .p2-callout-text { font-size: 0.78rem; color: rgba(255,255,255,0.8); line-height: 1.55; }
+    .p2-callout-text strong { color: var(--p-footer-text); }
   </style>
 </head>
 <body>
@@ -234,6 +300,15 @@
 
   <!-- ── Form ── -->
   <div class="panel">
+
+    <!-- Phase selector -->
+    <div class="panel-section" style="padding-bottom:0.9rem;margin-bottom:0.9rem;">
+      <div class="section-label">Poster Phase</div>
+      <div class="phase-toggle">
+        <button class="phase-btn active" id="phaseBtn1" onclick="setPhase(1)"><i class="fas fa-image"></i> Phase 1 — Snapshot</button>
+        <button class="phase-btn" id="phaseBtn2" onclick="setPhase(2)"><i class="fas fa-newspaper"></i> Phase 2 — Full Story</button>
+      </div>
+    </div>
 
     <!-- Agent search -->
     <div class="panel-section">
@@ -359,6 +434,193 @@
         <div class="p-footer">
           <div class="p-footer-url">www.africabasedtech.com</div>
           <div class="p-footer-tag">Investing made simple for Africa</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PHASE 2 POSTER
+  ══════════════════════════════════════════════════ -->
+  <div class="poster-wrap" id="posterWrap2">
+    <div class="poster-outer">
+      <div class="poster poster2" id="posterFrame2">
+
+        <div class="p-stripe"></div>
+
+        <!-- Header -->
+        <div class="p-header">
+          <div class="p-brand">
+            <img src="/public/logo-transparent.png" alt="AfricaBased" class="p-logo" onerror="this.style.display='none'">
+            <div>
+              <div class="p-brand-name">AfricaBased Technologies</div>
+              <div class="p-brand-sub">Kenya's Premier Investment Ecosystem</div>
+            </div>
+          </div>
+          <div class="p-header-right">
+            <div class="p-header-url">www.africabasedtech.com</div>
+            <div class="p-header-date" id="posterDate2"></div>
+          </div>
+        </div>
+
+        <!-- Dark hero band -->
+        <div class="p2-hero-band">
+          <div class="p2-hero-eyebrow">AfricaBased Technologies — Not Just an App</div>
+          <div class="p2-hero-title">Your Gateway to<br><em>Financial Freedom</em><br>in Africa.</div>
+          <div class="p2-hero-sub">AfricaBased Technologies is more than a mobile app — it is a complete investment ecosystem built to help ordinary Africans build extraordinary wealth through daily returns, transparent plans, and a powerful referral network that pays you every single day.</div>
+        </div>
+
+        <!-- 3 Pillars -->
+        <div class="p2-pillars">
+          <div class="p2-pillar">
+            <div class="p2-pillar-icon"><i class="fas fa-shield-alt"></i></div>
+            <div class="p2-pillar-title">Built on Trust</div>
+            <div class="p2-pillar-text">Full capital protection on every plan. Your principal is never at risk — guaranteed.</div>
+          </div>
+          <div class="p2-pillar">
+            <div class="p2-pillar-icon"><i class="fas fa-mobile-alt"></i></div>
+            <div class="p2-pillar-title">Africa-First</div>
+            <div class="p2-pillar-text">Designed for M-Pesa from the ground up. No bank account required — ever.</div>
+          </div>
+          <div class="p2-pillar">
+            <div class="p2-pillar-icon"><i class="fas fa-chart-line"></i></div>
+            <div class="p2-pillar-title">Daily Returns</div>
+            <div class="p2-pillar-text">Profits credited to your wallet every single day without delays or conditions.</div>
+          </div>
+        </div>
+
+        <!-- Callout -->
+        <div class="p2-callout">
+          <div class="p2-callout-icon"><i class="fas fa-quote-left"></i></div>
+          <div class="p2-callout-text"><strong>We believe every African deserves access to real financial growth.</strong> AfricaBased was built to make professional-grade investing simple, safe, and accessible — starting from as little as KES 1,200.</div>
+        </div>
+
+        <!-- How it works -->
+        <div class="p2-section">
+          <div class="p2-section-title">How It Works — 3 Simple Steps</div>
+          <div class="p2-steps">
+            <div class="p2-step">
+              <div class="p2-step-num">1</div>
+              <div class="p2-step-title">Register Free</div>
+              <div class="p2-step-text">Create your account in under 2 minutes using your phone number. No documents needed.</div>
+            </div>
+            <div class="p2-step">
+              <div class="p2-step-num">2</div>
+              <div class="p2-step-title">Deposit via M-Pesa</div>
+              <div class="p2-step-text">Fund your wallet instantly from <span id="p2MinInline">KES 1,200</span>. Funds reflect in seconds.</div>
+            </div>
+            <div class="p2-step">
+              <div class="p2-step-num">3</div>
+              <div class="p2-step-title">Earn Every Day</div>
+              <div class="p2-step-text">Watch profits grow daily. Withdraw anytime — straight to M-Pesa with zero delays.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Features grid -->
+        <div class="p2-section">
+          <div class="p2-section-title">Everything You Get as a Member</div>
+          <div class="p2-features">
+            <div class="p2-feat">
+              <div class="p2-feat-icon"><i class="fas fa-wallet"></i></div>
+              <div class="p2-feat-text"><strong>Multiple Investment Plans</strong>From KES 1,200 with daily profit returns</div>
+            </div>
+            <div class="p2-feat">
+              <div class="p2-feat-icon"><i class="fas fa-lock"></i></div>
+              <div class="p2-feat-text"><strong>Capital Protection</strong>Your full deposit returned at cycle end</div>
+            </div>
+            <div class="p2-feat">
+              <div class="p2-feat-icon"><i class="fas fa-bolt"></i></div>
+              <div class="p2-feat-text"><strong>Instant Withdrawals</strong>No waiting periods — direct to M-Pesa</div>
+            </div>
+            <div class="p2-feat">
+              <div class="p2-feat-icon"><i class="fas fa-tachometer-alt"></i></div>
+              <div class="p2-feat-text"><strong>Live Dashboard</strong>Track every transaction and earning in real time</div>
+            </div>
+            <div class="p2-feat">
+              <div class="p2-feat-icon"><i class="fas fa-users"></i></div>
+              <div class="p2-feat-text"><strong>3-Level Referral Network</strong>Earn commissions from your entire downline</div>
+            </div>
+            <div class="p2-feat">
+              <div class="p2-feat-icon"><i class="fas fa-headset"></i></div>
+              <div class="p2-feat-text"><strong>24/7 WhatsApp Support</strong>Real human support whenever you need it</div>
+            </div>
+            <div class="p2-feat">
+              <div class="p2-feat-icon"><i class="fas fa-bell"></i></div>
+              <div class="p2-feat-text"><strong>Instant Notifications</strong>SMS and in-app alerts for every transaction</div>
+            </div>
+            <div class="p2-feat">
+              <div class="p2-feat-icon"><i class="fas fa-globe-africa"></i></div>
+              <div class="p2-feat-text"><strong>Open to All Africans</strong>Anyone with M-Pesa can join and start earning</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Referral rewards -->
+        <div class="p2-ref-band">
+          <div class="p2-ref-title">Referral Rewards — Earn Passively from Your Network</div>
+          <div class="p2-ref-levels">
+            <div class="p2-ref-level">
+              <div class="p2-ref-pct">10%</div>
+              <div class="p2-ref-label">Level 1<br>Direct Referrals</div>
+            </div>
+            <div class="p2-ref-level">
+              <div class="p2-ref-pct">6%</div>
+              <div class="p2-ref-label">Level 2<br>Their Referrals</div>
+            </div>
+            <div class="p2-ref-level">
+              <div class="p2-ref-pct">1%</div>
+              <div class="p2-ref-label">Level 3<br>Third-Tier Network</div>
+            </div>
+            <div class="p2-ref-level" style="background:var(--p-accent-light);border-color:var(--p-accent);">
+              <div class="p2-ref-pct">∞</div>
+              <div class="p2-ref-label">No limit on<br>who you refer</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats bar -->
+        <div class="p2-stats">
+          <div class="p2-stat">
+            <div class="p2-stat-v" id="p2MinStat">KES 1,200</div>
+            <div class="p2-stat-l">Starting From</div>
+          </div>
+          <div class="p2-stat">
+            <div class="p2-stat-v">Daily</div>
+            <div class="p2-stat-l">Profit Payouts</div>
+          </div>
+          <div class="p2-stat">
+            <div class="p2-stat-v">100%</div>
+            <div class="p2-stat-l">Capital Safe</div>
+          </div>
+          <div class="p2-stat">
+            <div class="p2-stat-v">M-Pesa</div>
+            <div class="p2-stat-l">Instant Payments</div>
+          </div>
+        </div>
+
+        <!-- Contact + QR -->
+        <div class="p-bottom">
+          <div class="p-qr-col">
+            <div class="p-qr-eyebrow">Scan to Register Free</div>
+            <div class="p-qr-box" id="posterQRBox2">
+              <div class="qr-ph"><i class="fas fa-qrcode" style="font-size:2.4rem;color:#e2e8f0;display:block;margin-bottom:4px;"></i>QR here</div>
+            </div>
+            <div class="p-qr-note">Point your camera here<br>to open a free account</div>
+          </div>
+          <div class="p-contact-col">
+            <div class="p-contact-label">Contact Your Agent</div>
+            <div id="posterContact2">
+              <div style="color:#cbd5e1;font-size:0.78rem;">Generate to see contact.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-footer">
+          <div class="p-footer-url">www.africabasedtech.com</div>
+          <div class="p-footer-tag">Africa's Complete Investment Ecosystem</div>
         </div>
 
       </div>
@@ -508,6 +770,17 @@
   ];
 
   let activeTheme = THEMES[0];
+  let activePhase = 1;
+
+  function setPhase(n) {
+    activePhase = n;
+    document.getElementById('phaseBtn1').classList.toggle('active', n === 1);
+    document.getElementById('phaseBtn2').classList.toggle('active', n === 2);
+    document.getElementById('posterWrap').classList.remove('show');
+    document.getElementById('posterWrap2').classList.remove('show');
+    document.getElementById('downloadBtn').disabled = true;
+    document.getElementById('printBtn').disabled = true;
+  }
 
   function buildThemeSwatches() {
     const grid = document.getElementById('themeGrid');
@@ -523,9 +796,8 @@
 
   function applyTheme(id) {
     activeTheme = THEMES.find(t => t.id === id) || THEMES[0];
-    const poster = document.getElementById('posterFrame');
     const v = activeTheme;
-    poster.style.cssText = `
+    const css = `
       --p-accent: ${v.accent};
       --p-accent-light: ${v.accentLight};
       --p-accent-muted: ${v.accentMuted};
@@ -542,6 +814,8 @@
       background: ${v.bg};
       color: ${v.text};
     `;
+    document.getElementById('posterFrame').style.cssText = css;
+    document.getElementById('posterFrame2').style.cssText = css;
     document.querySelectorAll('.theme-swatch').forEach(el => el.classList.remove('active'));
     document.querySelector(`.theme-swatch[onclick="applyTheme('${id}')"]`).classList.add('active');
   }
@@ -552,8 +826,9 @@
 
   async function init() {
     buildThemeSwatches();
-    document.getElementById('posterDate').textContent =
-      new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' });
+    const dateStr = new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' });
+    document.getElementById('posterDate').textContent = dateStr;
+    document.getElementById('posterDate2').textContent = dateStr;
 
     try {
       const [usersRes, minRes] = await Promise.all([
@@ -579,6 +854,8 @@
     const fmt = fmtKES(raw);
     document.getElementById('posterMinStat').textContent = fmt;
     document.getElementById('minAmountDisplay').textContent = fmt;
+    document.getElementById('p2MinStat').textContent = fmt;
+    document.getElementById('p2MinInline').textContent = fmt;
   }
 
   /* ── Search ── */
@@ -631,6 +908,38 @@
   }
 
   /* ── Generate ── */
+  function buildContactRows(name, whatsapp, phone, email) {
+    const rows = [];
+    if (name)
+      rows.push(`<div class="p-contact-row"><div class="p-contact-icon ic-nm"><i class="fas fa-user"></i></div><div class="p-contact-val">${name}</div></div>`);
+    rows.push(`
+      <div style="margin-bottom:0.45rem;margin-top:${name?'0.4rem':'0'};">
+        <span class="p-wa-badge"><i class="fab fa-whatsapp"></i> WhatsApp</span>
+      </div>
+      <div class="p-contact-row"><div class="p-contact-icon ic-wa"><i class="fab fa-whatsapp"></i></div><div class="p-contact-val">${whatsapp}</div></div>
+    `);
+    if (phone && phone !== whatsapp)
+      rows.push(`<div class="p-contact-row"><div class="p-contact-icon ic-ph"><i class="fas fa-phone"></i></div><div class="p-contact-val">${phone}</div></div>`);
+    if (email)
+      rows.push(`<div class="p-contact-row"><div class="p-contact-icon ic-em"><i class="fas fa-envelope"></i></div><div class="p-contact-val">${email}</div></div>`);
+    return rows.join('');
+  }
+
+  function loadQR(boxId, refLink) {
+    const qrBox = document.getElementById(boxId);
+    qrBox.innerHTML = '<div class="qr-ph"><i class="fas fa-spinner fa-spin" style="font-size:1.8rem;color:#94a3b8;"></i></div>';
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      qrBox.innerHTML = '';
+      img.style.cssText = 'width:100%;height:100%;display:block;object-fit:contain;';
+      qrBox.appendChild(img);
+      showToast('Poster ready');
+    };
+    img.onerror = () => { qrBox.innerHTML = '<div class="qr-ph" style="color:#ef4444;">QR failed</div>'; };
+    img.src = '/api/qr?url=' + encodeURIComponent(refLink);
+  }
+
   function generatePoster() {
     const whatsapp = document.getElementById('posterWhatsapp').value.trim();
     if (!whatsapp) { showToast('WhatsApp number is required'); return; }
@@ -647,49 +956,25 @@
       : window.location.origin + '/';
 
     document.getElementById('posterRefLink').value = refLink;
-
-    /* Update minimum amount on poster */
     updateMinDisplay();
-
-    /* Apply selected theme */
     applyTheme(activeTheme.id);
 
-    /* Build contact block */
-    const rows = [];
-    if (name)
-      rows.push(`<div class="p-contact-row"><div class="p-contact-icon ic-nm"><i class="fas fa-user"></i></div><div class="p-contact-val">${name}</div></div>`);
+    const contactHTML = buildContactRows(name, whatsapp, phone, email);
 
-    rows.push(`
-      <div style="margin-bottom:0.45rem;margin-top:${name?'0.4rem':'0'};">
-        <span class="p-wa-badge"><i class="fab fa-whatsapp"></i> WhatsApp</span>
-      </div>
-      <div class="p-contact-row"><div class="p-contact-icon ic-wa"><i class="fab fa-whatsapp"></i></div><div class="p-contact-val">${whatsapp}</div></div>
-    `);
+    if (activePhase === 1) {
+      document.getElementById('posterWrap2').classList.remove('show');
+      document.getElementById('posterContact').innerHTML = contactHTML;
+      document.getElementById('posterWrap').classList.add('show');
+      loadQR('posterQRBox', refLink);
+    } else {
+      document.getElementById('posterWrap').classList.remove('show');
+      document.getElementById('posterContact2').innerHTML = contactHTML;
+      document.getElementById('posterWrap2').classList.add('show');
+      loadQR('posterQRBox2', refLink);
+    }
 
-    if (phone && phone !== whatsapp)
-      rows.push(`<div class="p-contact-row"><div class="p-contact-icon ic-ph"><i class="fas fa-phone"></i></div><div class="p-contact-val">${phone}</div></div>`);
-    if (email)
-      rows.push(`<div class="p-contact-row"><div class="p-contact-icon ic-em"><i class="fas fa-envelope"></i></div><div class="p-contact-val">${email}</div></div>`);
-
-    document.getElementById('posterContact').innerHTML = rows.join('');
-
-    document.getElementById('posterWrap').classList.add('show');
     document.getElementById('printBtn').disabled = false;
     document.getElementById('downloadBtn').disabled = false;
-
-    /* Load QR */
-    const qrBox = document.getElementById('posterQRBox');
-    qrBox.innerHTML = '<div class="qr-ph"><i class="fas fa-spinner fa-spin" style="font-size:1.8rem;color:#94a3b8;"></i></div>';
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      qrBox.innerHTML = '';
-      img.style.cssText = 'width:100%;height:100%;display:block;object-fit:contain;';
-      qrBox.appendChild(img);
-      showToast('Poster ready');
-    };
-    img.onerror = () => { qrBox.innerHTML = '<div class="qr-ph" style="color:#ef4444;">QR failed</div>'; };
-    img.src = '/api/qr?url=' + encodeURIComponent(refLink);
   }
 
   /* ── Download ── */
@@ -700,12 +985,14 @@
     try {
       const { default: html2canvas } = await import('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/+esm');
       const bg = activeTheme.bg || '#ffffff';
-      const canvas = await html2canvas(document.getElementById('posterFrame'), {
+      const frameId = activePhase === 2 ? 'posterFrame2' : 'posterFrame';
+      const label   = activePhase === 2 ? 'Phase2' : 'Phase1';
+      const canvas = await html2canvas(document.getElementById(frameId), {
         scale: 3, useCORS: true, allowTaint: false, backgroundColor: bg, logging: false
       });
       const a = document.createElement('a');
       a.href = canvas.toDataURL('image/png');
-      a.download = `AfricaBased_Poster_${activeTheme.name.replace(/\s/g,'_')}.png`;
+      a.download = `AfricaBased_${label}_${activeTheme.name.replace(/\s/g,'_')}.png`;
       document.body.appendChild(a); a.click(); a.remove();
       showToast('Downloaded');
     } catch(e) {
@@ -722,6 +1009,7 @@
     document.getElementById('posterMinEntry').value = 1200;
     updateMinDisplay();
     document.getElementById('posterWrap').classList.remove('show');
+    document.getElementById('posterWrap2').classList.remove('show');
     document.getElementById('printBtn').disabled = true;
     document.getElementById('downloadBtn').disabled = true;
     document.getElementById('searchResults').classList.remove('show');
