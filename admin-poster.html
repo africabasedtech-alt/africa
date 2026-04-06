@@ -273,17 +273,24 @@
       if (email) contactHtml.push(`<div class="poster-contact-item"><i class="fas fa-envelope"></i> ${email}</div>`);
       document.getElementById('posterContact').innerHTML = contactHtml.join('');
 
-      const qrWrap = document.getElementById('posterQR');
-      qrWrap.innerHTML = '';
-      const qrData = refLink || window.location.origin + '/register';
-      QRCode.toCanvas(qrData, { width: 140, margin: 0, color: { dark: '#09090b', light: '#ffffff' } }, (err, canvas) => {
-        if (!err) qrWrap.appendChild(canvas);
-      });
-
       document.getElementById('posterPreview').classList.add('show');
       document.getElementById('printBtn').disabled = false;
       document.getElementById('downloadBtn').disabled = false;
       showToast('Poster generated!');
+
+      const qrWrap = document.getElementById('posterQR');
+      qrWrap.innerHTML = '';
+      const qrData = refLink || window.location.origin + '/register';
+      try {
+        if (typeof QRCode === 'undefined') throw new Error('QRCode library not loaded');
+        QRCode.toCanvas(qrData, { width: 140, margin: 0, color: { dark: '#09090b', light: '#ffffff' } }, (err, canvas) => {
+          if (!err) qrWrap.appendChild(canvas);
+          else qrWrap.innerHTML = '<div style="color:#d4a017;font-size:0.75rem;padding:8px;">QR unavailable</div>';
+        });
+      } catch (e) {
+        console.error('QR generation error:', e);
+        qrWrap.innerHTML = '<div style="color:#d4a017;font-size:0.75rem;padding:8px;">QR unavailable</div>';
+      }
     }
 
     async function downloadPoster() {
