@@ -1377,6 +1377,15 @@ app.get('/api/admin/products', requireAnyAdmin, requireProductPermission('produc
   }
 });
 
+app.get('/api/products/min-price', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT MIN(price) AS min_price FROM products WHERE disabled = FALSE');
+    res.json({ min_price: parseFloat(result.rows[0]?.min_price) || 1200 });
+  } catch (e) {
+    res.json({ min_price: 1200 });
+  }
+});
+
 app.get('/api/products/active', async (req, res) => {
   try {
     const result = await pool.query(
@@ -2790,6 +2799,11 @@ app.get('/api/admin/referrals', requireSuperAdmin, async (req, res) => {
         expires_at TIMESTAMPTZ NOT NULL
       )`,
       `ALTER TABLE products ADD COLUMN IF NOT EXISTS used_units INTEGER NOT NULL DEFAULT 0`,
+      `INSERT INTO products (name, description, price, daily_return, duration_days, category, invest_limit, total_units, max_units_per_user, used_units, disabled)
+       SELECT 'Starter Growth Plan',
+              'Begin your investment journey with as little as KES 1,200. Earn consistent daily returns and grow your wealth with AfricaBased.',
+              1200, 120, 30, 'Starter', 0, 0, 1, 0, FALSE
+       WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = 'Starter Growth Plan')`,
       `CREATE TABLE IF NOT EXISTS payment_channels (
         id SERIAL PRIMARY KEY,
         type VARCHAR(50) NOT NULL,
