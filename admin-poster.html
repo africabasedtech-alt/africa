@@ -321,6 +321,44 @@
     .p2-trust-item { display: flex; align-items: center; gap: 5px; }
     .p2-trust-icon { color: var(--p-accent); font-size: 0.72rem; }
     .p2-trust-text { font-size: 0.61rem; font-weight: 600; color: var(--p-strong); }
+
+    /* ── SAMPLE EARNINGS ── */
+    .p2-earn { padding: 1rem 1.8rem; border-bottom: 1px solid var(--p-border); background: var(--p-bg, #fff); }
+    .p2-earn-label { font-size: 0.55rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: var(--p-muted); margin-bottom: 0.75rem; }
+    .p2-earn-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.5rem; }
+    .p2-earn-card {
+      border: 1px solid var(--p-border); border-radius: 8px; padding: 0.7rem 0.6rem;
+      background: var(--p-stat-bg); text-align: center; position: relative;
+    }
+    .p2-earn-card.featured { border-color: var(--p-accent); background: var(--p-accent-light); }
+    .p2-earn-badge {
+      position: absolute; top: -9px; left: 50%; transform: translateX(-50%);
+      background: var(--p-accent); color: #fff;
+      font-size: 0.5rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em;
+      padding: 1px 7px; border-radius: 100px; white-space: nowrap;
+    }
+    .p2-earn-plan { font-size: 0.6rem; font-weight: 700; color: var(--p-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.3rem; }
+    .p2-earn-invest { font-size: 0.8rem; font-weight: 900; color: var(--p-accent); letter-spacing: -0.02em; }
+    .p2-earn-divider { width: 24px; height: 1px; background: var(--p-border); margin: 0.35rem auto; }
+    .p2-earn-daily { font-size: 0.68rem; font-weight: 700; color: var(--p-strong); }
+    .p2-earn-daily span { font-size: 0.54rem; font-weight: 400; color: var(--p-muted); display: block; margin-top: 1px; }
+    .p2-earn-monthly { font-size: 0.6rem; color: var(--p-sub); margin-top: 0.3rem; }
+    .p2-earn-monthly strong { color: var(--p-accent-muted); font-weight: 700; }
+    .p2-earn-note { font-size: 0.55rem; color: var(--p-muted); margin-top: 0.6rem; font-style: italic; text-align: center; }
+
+    /* ── COMPARISON TABLE ── */
+    .p2-compare { background: var(--p-footer-bg); padding: 1rem 1.8rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .p2-compare-label { font-size: 0.55rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: var(--p-footer-sub); margin-bottom: 0.3rem; }
+    .p2-compare-headline { font-size: 0.85rem; font-weight: 800; color: var(--p-footer-text); margin-bottom: 0.75rem; }
+    .p2-compare-table { width: 100%; border-collapse: collapse; }
+    .p2-compare-table th { font-size: 0.58rem; font-weight: 700; padding: 0.3rem 0.5rem; text-align: center; color: rgba(255,255,255,0.5); letter-spacing: 0.06em; text-transform: uppercase; }
+    .p2-compare-table th:first-child { text-align: left; }
+    .p2-compare-table th.p2-col-ab { color: var(--p-accent); }
+    .p2-compare-table td { font-size: 0.62rem; padding: 0.32rem 0.5rem; border-top: 1px solid rgba(255,255,255,0.06); text-align: center; color: rgba(255,255,255,0.6); }
+    .p2-compare-table td:first-child { text-align: left; color: rgba(255,255,255,0.8); font-weight: 600; }
+    .p2-compare-table td.p2-col-ab { color: var(--p-accent); font-weight: 700; }
+    .p2-no { color: rgba(255,80,80,0.75) !important; }
+    .p2-yes { color: #4ade80 !important; font-weight: 800 !important; }
   </style>
 </head>
 <body>
@@ -498,27 +536,27 @@
           </div>
         </div>
 
-        <!-- HERO BAND -->
+        <!-- ① HERO BAND -->
         <div class="p2-hero">
-          <div class="p2-hero-tag"><i class="fas fa-fire"></i> Exclusive Investment Opportunity</div>
+          <div class="p2-hero-tag"><i class="fas fa-star"></i> Kenya's #1 Digital Investment Platform</div>
           <div class="p2-hero-h1">Not Just an App.</div>
           <div class="p2-hero-h2">A Financial Movement.</div>
           <div class="p2-hero-divider"></div>
-          <div class="p2-hero-sub">AfricaBased Technologies gives every African the power to invest, grow, and earn — starting from <span id="p2MinInline">KES 1,200</span>, with daily returns paid straight to M-Pesa.</div>
+          <div class="p2-hero-sub">AfricaBased Technologies gives every Kenyan the power to invest, grow wealth, and earn daily returns — starting from <span id="p2MinInline">KES 1,200</span>, paid straight to M-Pesa every single day.</div>
           <div class="p2-hero-pills">
-            <span class="p2-pill"><i class="fas fa-circle"></i> Daily Returns</span>
-            <span class="p2-pill"><i class="fas fa-circle"></i> M-Pesa Instant</span>
-            <span class="p2-pill"><i class="fas fa-circle"></i> Capital Protected</span>
-            <span class="p2-pill"><i class="fas fa-circle"></i> Free to Join</span>
+            <span class="p2-pill"><i class="fas fa-check-circle"></i> Daily Returns</span>
+            <span class="p2-pill"><i class="fas fa-check-circle"></i> M-Pesa Instant</span>
+            <span class="p2-pill"><i class="fas fa-check-circle"></i> Capital Protected</span>
+            <span class="p2-pill"><i class="fas fa-check-circle"></i> Free to Join</span>
           </div>
         </div>
 
-        <!-- BIG STATS -->
+        <!-- ② KEY NUMBERS -->
         <div class="p2-bigstats">
           <div class="p2-bigstat">
             <div class="p2-bigstat-num" id="p2MinStat">KES 1,200</div>
             <div class="p2-bigstat-sub">Minimum Entry</div>
-            <div class="p2-bigstat-cap">Start earning today</div>
+            <div class="p2-bigstat-cap">Anyone can start today</div>
           </div>
           <div class="p2-bigstat">
             <div class="p2-bigstat-num">Daily</div>
@@ -527,98 +565,193 @@
           </div>
           <div class="p2-bigstat">
             <div class="p2-bigstat-num">100%</div>
-            <div class="p2-bigstat-sub">Capital Safe</div>
-            <div class="p2-bigstat-cap">Full refund at plan end</div>
+            <div class="p2-bigstat-sub">Capital Guaranteed</div>
+            <div class="p2-bigstat-cap">Full return at cycle end</div>
           </div>
         </div>
 
-        <!-- OPPORTUNITY CHECKLIST -->
+        <!-- ③ SAMPLE EARNINGS -->
+        <div class="p2-earn">
+          <div class="p2-earn-label">See What You Could Earn — Sample Plans</div>
+          <div class="p2-earn-row">
+            <div class="p2-earn-card">
+              <div class="p2-earn-plan">Starter</div>
+              <div class="p2-earn-invest">KES 1,200</div>
+              <div class="p2-earn-divider"></div>
+              <div class="p2-earn-daily">KES 120/day<span>daily profit</span></div>
+              <div class="p2-earn-monthly">KES <strong>3,600</strong> earned in 30 days</div>
+            </div>
+            <div class="p2-earn-card featured">
+              <div class="p2-earn-badge">Most Popular</div>
+              <div class="p2-earn-plan">Growth</div>
+              <div class="p2-earn-invest">KES 5,000</div>
+              <div class="p2-earn-divider"></div>
+              <div class="p2-earn-daily">KES 500/day<span>daily profit</span></div>
+              <div class="p2-earn-monthly">KES <strong>15,000</strong> earned in 30 days</div>
+            </div>
+            <div class="p2-earn-card">
+              <div class="p2-earn-plan">Premium</div>
+              <div class="p2-earn-invest">KES 10,000</div>
+              <div class="p2-earn-divider"></div>
+              <div class="p2-earn-daily">KES 1,000/day<span>daily profit</span></div>
+              <div class="p2-earn-monthly">KES <strong>30,000</strong> earned in 30 days</div>
+            </div>
+          </div>
+          <div class="p2-earn-note">Capital is fully returned at the end of each plan cycle. Profits are paid daily to your wallet.</div>
+        </div>
+
+        <!-- ④ VS COMPETITION -->
+        <div class="p2-compare">
+          <div class="p2-compare-label">Why AfricaBased Wins</div>
+          <div class="p2-compare-headline">We Outperform Banks, SACCOs &amp; Chamas</div>
+          <table class="p2-compare-table">
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th>Banks</th>
+                <th>Chamas</th>
+                <th class="p2-col-ab">AfricaBased</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Daily Returns</td>
+                <td class="p2-no">✗</td>
+                <td class="p2-no">✗</td>
+                <td class="p2-col-ab p2-yes">✓ Every Day</td>
+              </tr>
+              <tr>
+                <td>Withdraw Anytime</td>
+                <td class="p2-no">✗ Lock-in</td>
+                <td class="p2-no">✗ Waiting</td>
+                <td class="p2-col-ab p2-yes">✓ Instant</td>
+              </tr>
+              <tr>
+                <td>Capital Protected</td>
+                <td class="p2-no">Partial</td>
+                <td class="p2-no">✗ At Risk</td>
+                <td class="p2-col-ab p2-yes">✓ 100%</td>
+              </tr>
+              <tr>
+                <td>No Bank Account</td>
+                <td class="p2-no">✗ Required</td>
+                <td class="p2-no">✗ Required</td>
+                <td class="p2-col-ab p2-yes">✓ M-Pesa Only</td>
+              </tr>
+              <tr>
+                <td>Earn from Referrals</td>
+                <td class="p2-no">✗ None</td>
+                <td class="p2-no">✗ None</td>
+                <td class="p2-col-ab p2-yes">✓ 3 Levels</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ⑤ WHY CHOOSE US -->
         <div class="p2-opp">
-          <div class="p2-opp-label">Why Thousands Are Choosing AfricaBased</div>
+          <div class="p2-opp-label">10 Reasons Kenyans Trust AfricaBased</div>
           <div class="p2-opp-grid">
             <div class="p2-opp-item">
               <div class="p2-opp-check"><i class="fas fa-check"></i></div>
-              <span class="p2-opp-text">Daily profits to your wallet</span>
+              <span class="p2-opp-text">Profits paid every 24 hours</span>
             </div>
             <div class="p2-opp-item">
               <div class="p2-opp-check"><i class="fas fa-check"></i></div>
-              <span class="p2-opp-text">Withdraw anytime via M-Pesa</span>
+              <span class="p2-opp-text">Withdraw to M-Pesa anytime</span>
             </div>
             <div class="p2-opp-item">
               <div class="p2-opp-check"><i class="fas fa-check"></i></div>
-              <span class="p2-opp-text">No bank account required</span>
+              <span class="p2-opp-text">100% capital returned at cycle end</span>
             </div>
             <div class="p2-opp-item">
               <div class="p2-opp-check"><i class="fas fa-check"></i></div>
-              <span class="p2-opp-text">Capital returned at cycle end</span>
+              <span class="p2-opp-text">Zero hidden fees or charges</span>
             </div>
             <div class="p2-opp-item">
               <div class="p2-opp-check"><i class="fas fa-check"></i></div>
-              <span class="p2-opp-text">Real-time earnings dashboard</span>
+              <span class="p2-opp-text">No bank account needed</span>
             </div>
             <div class="p2-opp-item">
               <div class="p2-opp-check"><i class="fas fa-check"></i></div>
-              <span class="p2-opp-text">Earn from your referral network</span>
+              <span class="p2-opp-text">Earn 10% commission per referral</span>
+            </div>
+            <div class="p2-opp-item">
+              <div class="p2-opp-check"><i class="fas fa-check"></i></div>
+              <span class="p2-opp-text">Live transaction dashboard</span>
+            </div>
+            <div class="p2-opp-item">
+              <div class="p2-opp-check"><i class="fas fa-check"></i></div>
+              <span class="p2-opp-text">Open to all Kenyans &amp; Africans</span>
+            </div>
+            <div class="p2-opp-item">
+              <div class="p2-opp-check"><i class="fas fa-check"></i></div>
+              <span class="p2-opp-text">24/7 WhatsApp customer support</span>
+            </div>
+            <div class="p2-opp-item">
+              <div class="p2-opp-check"><i class="fas fa-check"></i></div>
+              <span class="p2-opp-text">Start investing from <span id="p2MinInline2">KES 1,200</span></span>
             </div>
           </div>
         </div>
 
-        <!-- HOW IT WORKS -->
+        <!-- ⑥ HOW IT WORKS -->
         <div class="p2-hiw">
-          <div class="p2-hiw-label">How It Works — 3 Simple Steps</div>
+          <div class="p2-hiw-label">Get Started in 3 Simple Steps</div>
           <div class="p2-hiw-steps">
             <div class="p2-hiw-step">
               <div class="p2-hiw-circle">1</div>
               <div class="p2-hiw-title">Register Free</div>
-              <div class="p2-hiw-desc">Sign up in 2 minutes. No documents. No bank account.</div>
+              <div class="p2-hiw-desc">Sign up in 2 minutes. No ID. No bank account. Just your phone number.</div>
             </div>
             <div class="p2-hiw-step">
               <div class="p2-hiw-circle">2</div>
-              <div class="p2-hiw-title">Deposit via M-Pesa</div>
-              <div class="p2-hiw-desc">Fund your wallet from <span id="p2MinInline2">KES 1,200</span>. Instant confirmation.</div>
+              <div class="p2-hiw-title">Invest via M-Pesa</div>
+              <div class="p2-hiw-desc">Deposit instantly from your M-Pesa. Funds reflect in seconds. Choose your plan.</div>
             </div>
             <div class="p2-hiw-step">
               <div class="p2-hiw-circle">3</div>
               <div class="p2-hiw-title">Earn Every Day</div>
-              <div class="p2-hiw-desc">Profits hit your wallet daily. Withdraw to M-Pesa anytime.</div>
+              <div class="p2-hiw-desc">Daily profits hit your wallet automatically. Withdraw to M-Pesa whenever you like.</div>
             </div>
           </div>
         </div>
 
-        <!-- REFERRAL SECTION -->
+        <!-- ⑦ REFERRAL PROGRAMME -->
         <div class="p2-ref">
-          <div class="p2-ref-label">Referral Programme</div>
-          <div class="p2-ref-headline">Invite Friends. Earn Forever.</div>
+          <div class="p2-ref-label">Referral Programme — Passive Income</div>
+          <div class="p2-ref-headline">Invite Friends. Earn From Their Success.</div>
           <div class="p2-ref-cards">
             <div class="p2-ref-card">
               <div class="p2-ref-pct">10%</div>
               <div class="p2-ref-lv">Level 1</div>
-              <div class="p2-ref-desc">Direct referrals</div>
+              <div class="p2-ref-desc">On direct referrals' investments</div>
             </div>
             <div class="p2-ref-card">
               <div class="p2-ref-pct">6%</div>
               <div class="p2-ref-lv">Level 2</div>
-              <div class="p2-ref-desc">Their referrals</div>
+              <div class="p2-ref-desc">On their referrals' investments</div>
             </div>
             <div class="p2-ref-card">
               <div class="p2-ref-pct">1%</div>
               <div class="p2-ref-lv">Level 3</div>
-              <div class="p2-ref-desc">Third-tier network</div>
+              <div class="p2-ref-desc">On third-tier investments</div>
             </div>
             <div class="p2-ref-card" style="border-color:var(--p-accent);background:rgba(255,255,255,0.08);">
               <div class="p2-ref-pct">∞</div>
-              <div class="p2-ref-lv">No Limit</div>
-              <div class="p2-ref-desc">Refer as many as you want</div>
+              <div class="p2-ref-lv">No Cap</div>
+              <div class="p2-ref-desc">Refer unlimited people</div>
             </div>
           </div>
         </div>
 
-        <!-- TRUST BAR -->
+        <!-- ⑧ TRUST SIGNALS -->
         <div class="p2-trust">
-          <div class="p2-trust-item"><i class="fas fa-shield-alt p2-trust-icon"></i><span class="p2-trust-text">Capital Protected</span></div>
-          <div class="p2-trust-item"><i class="fas fa-lock p2-trust-icon"></i><span class="p2-trust-text">Secure Platform</span></div>
-          <div class="p2-trust-item"><i class="fab fa-whatsapp p2-trust-icon" style="color:#16a34a;"></i><span class="p2-trust-text">24/7 WhatsApp Support</span></div>
-          <div class="p2-trust-item"><i class="fas fa-globe-africa p2-trust-icon"></i><span class="p2-trust-text">Open to All Africans</span></div>
+          <div class="p2-trust-item"><i class="fas fa-shield-alt p2-trust-icon"></i><span class="p2-trust-text">Capital Guaranteed</span></div>
+          <div class="p2-trust-item"><i class="fas fa-lock p2-trust-icon"></i><span class="p2-trust-text">Secure &amp; Transparent</span></div>
+          <div class="p2-trust-item"><i class="fab fa-whatsapp p2-trust-icon" style="color:#16a34a;"></i><span class="p2-trust-text">24/7 Support</span></div>
+          <div class="p2-trust-item"><i class="fas fa-mobile-alt p2-trust-icon"></i><span class="p2-trust-text">M-Pesa Native</span></div>
+          <div class="p2-trust-item"><i class="fas fa-globe-africa p2-trust-icon"></i><span class="p2-trust-text">Pan-African</span></div>
         </div>
 
         <!-- Contact + QR -->
