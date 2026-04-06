@@ -501,7 +501,7 @@
   function updateRefLink() {
     const code = document.getElementById('posterRefCode').value.trim();
     const host = window.location.origin;
-    const link = code ? host + '/register?ref=' + encodeURIComponent(code) : host + '/register';
+    const link = code ? host + '/?ref=' + encodeURIComponent(code) : host + '/';
     document.getElementById('posterRefLink').value = link;
     const note = document.getElementById('qrNote');
     document.getElementById('qrNoteUrl').textContent = link;
@@ -518,8 +518,8 @@
     const refCode = document.getElementById('posterRefCode').value.trim();
     const host    = window.location.origin;
     const refLink = refCode
-      ? host + '/register?ref=' + encodeURIComponent(refCode)
-      : host + '/register';
+      ? host + '/?ref=' + encodeURIComponent(refCode)
+      : host + '/';
 
     document.getElementById('posterRefLink').value = refLink;
 

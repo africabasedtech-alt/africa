@@ -4163,6 +4163,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// ─── /register → / (preserve ?ref= and other query params) ───────────────────
+app.get('/register', (req, res) => {
+  const qs = new URLSearchParams(req.query).toString();
+  res.redirect(301, qs ? `/?${qs}` : '/');
+});
+
 app.use(express.static(__dirname));
 
 // ─── App Download Endpoint ─────────────────────────────────────────────
