@@ -570,31 +570,12 @@
           </div>
         </div>
 
-        <!-- ③ SAMPLE EARNINGS -->
+        <!-- ③ SAMPLE EARNINGS — populated from live products -->
         <div class="p2-earn">
-          <div class="p2-earn-label">See What You Could Earn — Sample Plans</div>
-          <div class="p2-earn-row">
-            <div class="p2-earn-card">
-              <div class="p2-earn-plan">Starter</div>
-              <div class="p2-earn-invest">KES 1,200</div>
-              <div class="p2-earn-divider"></div>
-              <div class="p2-earn-daily">KES 120/day<span>daily profit</span></div>
-              <div class="p2-earn-monthly">KES <strong>3,600</strong> earned in 30 days</div>
-            </div>
-            <div class="p2-earn-card featured">
-              <div class="p2-earn-badge">Most Popular</div>
-              <div class="p2-earn-plan">Growth</div>
-              <div class="p2-earn-invest">KES 5,000</div>
-              <div class="p2-earn-divider"></div>
-              <div class="p2-earn-daily">KES 500/day<span>daily profit</span></div>
-              <div class="p2-earn-monthly">KES <strong>15,000</strong> earned in 30 days</div>
-            </div>
-            <div class="p2-earn-card">
-              <div class="p2-earn-plan">Premium</div>
-              <div class="p2-earn-invest">KES 10,000</div>
-              <div class="p2-earn-divider"></div>
-              <div class="p2-earn-daily">KES 1,000/day<span>daily profit</span></div>
-              <div class="p2-earn-monthly">KES <strong>30,000</strong> earned in 30 days</div>
+          <div class="p2-earn-label">See What You Could Earn — Real Investment Plans</div>
+          <div class="p2-earn-row" id="earnCardsRow">
+            <div class="p2-earn-card" style="grid-column:1/-1;text-align:center;color:var(--p-muted);font-size:0.7rem;padding:1rem;">
+              <i class="fas fa-spinner fa-spin"></i> Loading plans…
             </div>
           </div>
           <div class="p2-earn-note">Capital is fully returned at the end of each plan cycle. Profits are paid daily to your wallet.</div>
@@ -985,9 +966,10 @@
     document.getElementById('posterDate2').textContent = dateStr;
 
     try {
-      const [usersRes, minRes] = await Promise.all([
+      const [usersRes, minRes, prodsRes] = await Promise.all([
         fetch('/api/admin/users', { headers: { 'x-admin-key': ADMIN_KEY } }),
-        fetch('/api/products/min-price')
+        fetch('/api/products/min-price'),
+        fetch('/api/products/active')
       ]);
       if (usersRes.ok) allUsers = (await usersRes.json()).users || [];
       if (minRes.ok) {
@@ -996,7 +978,62 @@
         document.getElementById('posterMinEntry').value = val;
         updateMinDisplay();
       }
-    } catch(e) { console.error(e); }
+      if (prodsRes.ok) {
+        const pd = await prodsRes.json();
+        buildEarnCards(pd.products || []);
+      } else {
+        buildEarnCards([]);
+      }
+    } catch(e) { console.error(e); buildEarnCards([]); }
+  }
+
+  function buildEarnCards(products) {
+    const row = document.getElementById('earnCardsRow');
+    if (!products.length) {
+      row.innerHTML = '<div class="p2-earn-card" style="grid-column:1/-1;text-align:center;color:var(--p-muted);font-size:0.7rem;padding:1rem;">No active plans available.</div>';
+      return;
+    }
+
+    /* Pick up to 3: cheapest entry, mid-range, highest daily earner */
+    const sorted = [...products]
+      .filter(p => p.price > 0 && p.daily_return > 0)
+      .sort((a, b) => a.price - b.price);
+
+    /* Show lowest entry, a solid mid-range, and the top earner to display full potential */
+    let picks = [];
+    if (sorted.length <= 3) {
+      picks = sorted;
+    } else {
+      /* quartile positions: entry (25th pct), mid (50th pct), high (top earner) */
+      const q1 = sorted[Math.floor(sorted.length * 0.25)] || sorted[0];
+      const q2 = sorted[Math.floor(sorted.length * 0.50)] || sorted[1];
+      const topByEarning = [...sorted].sort((a, b) => b.daily_return - a.daily_return)[0];
+      /* Ensure all three are distinct */
+      const set = [sorted[0]];
+      if (q2 !== sorted[0]) set.push(q2); else if (q1 !== sorted[0]) set.push(q1);
+      if (topByEarning !== set[0] && topByEarning !== set[1]) set.push(topByEarning);
+      else set.push(sorted[sorted.length - 1]);
+      picks = set.slice(0, 3);
+    }
+
+    /* Adjust grid columns to match number of cards */
+    row.style.gridTemplateColumns = `repeat(${picks.length},1fr)`;
+
+    row.innerHTML = picks.map((p, i) => {
+      const isFeatured = picks.length === 3 ? i === 1 : (picks.length === 2 ? i === 0 : true);
+      const totalEarned = Math.round(p.daily_return * (p.duration_days || 30));
+      const badge = isFeatured ? '<div class="p2-earn-badge">Most Popular</div>' : '';
+      return `
+        <div class="p2-earn-card${isFeatured ? ' featured' : ''}">
+          ${badge}
+          <div class="p2-earn-plan">${p.name}</div>
+          <div class="p2-earn-invest">${fmtKES(p.price)}</div>
+          <div class="p2-earn-divider"></div>
+          <div class="p2-earn-daily">${fmtKES(p.daily_return)}/day<span>daily profit</span></div>
+          <div class="p2-earn-monthly">${fmtKES(totalEarned)} <strong>total</strong> in ${p.duration_days || 30} days</div>
+        </div>
+      `;
+    }).join('');
   }
 
   function fmtKES(n) {
