@@ -5,344 +5,564 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Poster Generator | AfricaBased Admin</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', sans-serif; background: #0f0f1a; color: #fff; min-height: 100vh; }
-    .topbar { background: #1a1a2e; border-bottom: 1px solid rgba(212,160,23,0.3); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
-    .topbar h1 { font-size: 1.3rem; color: #d4a017; display: flex; align-items: center; gap: 10px; }
-    .topbar a { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 0.9rem; }
+    body { font-family: 'Inter', 'Segoe UI', sans-serif; background: #0a0a12; color: #fff; min-height: 100vh; }
+
+    /* ── Topbar ── */
+    .topbar {
+      background: #121220; border-bottom: 1px solid rgba(212,160,23,0.25);
+      padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .topbar h1 { font-size: 1.15rem; color: #d4a017; display: flex; align-items: center; gap: 10px; font-weight: 700; }
+    .topbar a { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
     .topbar a:hover { color: #d4a017; }
-    .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
-    .form-section { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 1.5rem; margin-bottom: 2rem; }
-    .form-section h3 { color: #d4a017; font-size: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .form-group { display: flex; flex-direction: column; gap: 4px; }
-    .form-group.full { grid-column: 1 / -1; }
-    .form-group label { font-size: 0.82rem; color: rgba(255,255,255,0.6); font-weight: 600; }
-    .form-group label .required { color: #ef4444; margin-left: 2px; }
-    .form-group label .optional { color: rgba(255,255,255,0.3); font-weight: 400; font-size: 0.75rem; }
-    .form-group input, .form-group select {
-      padding: 0.7rem 1rem; background: rgba(255,255,255,0.06); color: #fff;
-      border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
-      font-family: 'Segoe UI', sans-serif; font-size: 0.9rem; outline: none;
+
+    /* ── Layout ── */
+    .page-wrap { max-width: 1140px; margin: 0 auto; padding: 2rem; display: grid; grid-template-columns: 420px 1fr; gap: 2rem; align-items: start; }
+    @media (max-width: 900px) { .page-wrap { grid-template-columns: 1fr; padding: 1rem; } }
+
+    /* ── Left Panel ── */
+    .panel { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 1.5rem; }
+    .panel-title { font-size: 0.8rem; font-weight: 700; color: #d4a017; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 8px; }
+
+    /* User search */
+    .search-wrap { position: relative; margin-bottom: 1.2rem; }
+    .search-wrap input {
+      width: 100%; padding: 0.75rem 1rem 0.75rem 2.6rem;
+      background: rgba(255,255,255,0.06); color: #fff;
+      border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+      font-family: inherit; font-size: 0.88rem; outline: none; transition: border-color 0.2s;
     }
-    .form-group input:focus, .form-group select:focus { border-color: rgba(212,160,23,0.5); }
-    .form-group input::placeholder { color: rgba(255,255,255,0.25); }
-    .form-group select option { background: #1a1a2e; }
-    .user-search-wrap { position: relative; }
-    .user-search-wrap .results {
-      position: absolute; top: 100%; left: 0; right: 0; background: #1a1a2e;
-      border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
-      max-height: 200px; overflow-y: auto; z-index: 10; display: none;
+    .search-wrap input:focus { border-color: rgba(212,160,23,0.5); }
+    .search-wrap input::placeholder { color: rgba(255,255,255,0.25); }
+    .search-wrap .si { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.3); font-size: 0.85rem; }
+    .search-results {
+      position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+      background: #1a1a2e; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+      max-height: 220px; overflow-y: auto; z-index: 50; display: none;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.5);
     }
-    .user-search-wrap .results.show { display: block; }
-    .user-search-wrap .results .item {
-      padding: 10px 14px; cursor: pointer; font-size: 0.85rem;
-      border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between;
+    .search-results.show { display: block; }
+    .search-results .sr-item {
+      padding: 10px 14px; cursor: pointer; font-size: 0.83rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;
+      transition: background 0.15s;
     }
-    .user-search-wrap .results .item:hover { background: rgba(212,160,23,0.1); }
-    .user-search-wrap .results .item .name { color: #fff; font-weight: 600; }
-    .user-search-wrap .results .item .meta { color: rgba(255,255,255,0.4); font-size: 0.78rem; }
-    .btn-row { display: flex; gap: 10px; margin-top: 1rem; flex-wrap: wrap; }
+    .search-results .sr-item:last-child { border-bottom: none; }
+    .search-results .sr-item:hover { background: rgba(212,160,23,0.1); }
+    .search-results .sr-name { color: #fff; font-weight: 600; }
+    .search-results .sr-meta { color: rgba(255,255,255,0.35); font-size: 0.75rem; }
+
+    /* Form fields */
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.05em; }
+    .field label .req { color: #f87171; }
+    .field input {
+      padding: 0.65rem 0.9rem; background: rgba(255,255,255,0.05); color: #fff;
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+      font-family: inherit; font-size: 0.88rem; outline: none; transition: border-color 0.2s;
+    }
+    .field input:focus { border-color: rgba(212,160,23,0.5); background: rgba(255,255,255,0.07); }
+    .field input::placeholder { color: rgba(255,255,255,0.2); }
+    .field input[readonly] { color: rgba(255,255,255,0.35); cursor: default; }
+    .ref-link-badge {
+      margin-top: 0.5rem; padding: 0.5rem 0.8rem; background: rgba(212,160,23,0.08);
+      border: 1px solid rgba(212,160,23,0.2); border-radius: 8px;
+      font-size: 0.75rem; color: rgba(212,160,23,0.8); word-break: break-all; line-height: 1.5;
+      display: none;
+    }
+    .ref-link-badge.show { display: block; }
+    .ref-link-badge strong { color: #d4a017; }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 8px; margin-top: 1.2rem; flex-wrap: wrap; }
     .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 0.7rem 1.4rem; border: none; border-radius: 8px;
-      font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 0.65rem 1.2rem; border: none; border-radius: 9px;
+      font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit;
     }
-    .btn-gold { background: linear-gradient(135deg, #d4a017, #b8860b); color: #0f0f1a; }
-    .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(212,160,23,0.3); }
-    .btn-outline { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; }
-    .btn-outline:hover { border-color: rgba(212,160,23,0.4); background: rgba(212,160,23,0.08); }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-gold { background: linear-gradient(135deg, #d4a017, #c49010); color: #0a0a12; flex: 1; justify-content: center; }
+    .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(212,160,23,0.35); }
+    .btn-ghost { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
+    .btn-ghost:hover { border-color: rgba(212,160,23,0.4); color: #fff; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
-    .poster-preview { display: none; margin-top: 1.5rem; }
-    .poster-preview.show { display: block; }
+    /* ── Right Panel: Poster ── */
+    .poster-wrap { display: none; }
+    .poster-wrap.show { display: block; }
     .poster-frame {
-      width: 100%; max-width: 600px; margin: 0 auto;
-      background: linear-gradient(145deg, #09090b, #16161a);
-      border-radius: 20px; overflow: hidden;
-      border: 2px solid rgba(212,160,23,0.3);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      width: 100%; max-width: 560px; margin: 0 auto;
+      background: #09090e;
+      border-radius: 24px; overflow: hidden;
+      border: 1.5px solid rgba(212,160,23,0.35);
+      box-shadow: 0 0 0 1px rgba(212,160,23,0.08), 0 30px 80px rgba(0,0,0,0.7);
+      position: relative;
     }
-    .poster-inner { padding: 2.5rem 2rem; text-align: center; position: relative; }
-    .poster-inner::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
-      background: linear-gradient(90deg, #d4a017, #f0c040, #d4a017);
-    }
-    .poster-logo { width: 80px; height: 80px; margin: 0 auto 1rem; border-radius: 16px; }
-    .poster-brand { font-size: 1.6rem; font-weight: 800; color: #d4a017; margin-bottom: 0.2rem; letter-spacing: -0.02em; }
-    .poster-tagline { font-size: 0.85rem; color: rgba(255,255,255,0.5); margin-bottom: 1.5rem; }
-    .poster-divider { width: 60px; height: 3px; background: #d4a017; margin: 0 auto 1.5rem; border-radius: 2px; }
-    .poster-heading { font-size: 1.3rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
-    .poster-sub { font-size: 0.85rem; color: rgba(255,255,255,0.5); margin-bottom: 1.5rem; }
-    .poster-qr-wrap {
-      width: 160px; height: 160px; margin: 0 auto 1rem;
-      background: #fff; border-radius: 12px; padding: 10px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .poster-qr-wrap canvas { width: 100% !important; height: 100% !important; }
-    .poster-ref-code {
-      display: inline-block; background: rgba(212,160,23,0.12); border: 1px solid rgba(212,160,23,0.3);
-      border-radius: 8px; padding: 0.5rem 1.5rem; font-size: 1.1rem; font-weight: 700;
-      color: #d4a017; letter-spacing: 2px; margin-bottom: 1.5rem;
-    }
-    .poster-contact { margin-top: 1rem; }
-    .poster-contact-item {
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 6px 0; font-size: 0.88rem; color: rgba(255,255,255,0.7);
-    }
-    .poster-contact-item i { color: #d4a017; width: 18px; text-align: center; }
-    .poster-footer {
-      margin-top: 1.5rem; padding-top: 1rem;
-      border-top: 1px solid rgba(255,255,255,0.06);
-      font-size: 0.75rem; color: rgba(255,255,255,0.3);
-    }
-    .poster-footer a { color: #d4a017; text-decoration: none; }
 
-    .toast { position: fixed; bottom: 2rem; right: 2rem; background: #1a1a2e; border: 1px solid rgba(212,160,23,0.3); color: #fff; padding: 0.8rem 1.5rem; border-radius: 10px; font-size: 0.88rem; transform: translateY(100px); opacity: 0; transition: transform 0.3s, opacity 0.3s; z-index: 999; }
+    /* Gold top stripe */
+    .poster-stripe {
+      height: 6px;
+      background: linear-gradient(90deg, #b8760a, #f0c040, #e8a800, #f0c040, #b8760a);
+      background-size: 200% 100%;
+    }
+
+    /* Header section */
+    .poster-header {
+      padding: 2rem 2rem 1.5rem;
+      text-align: center;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(212,160,23,0.12) 0%, transparent 70%);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .poster-logo { width: 72px; height: 72px; margin: 0 auto 0.75rem; border-radius: 18px; display: block; object-fit: contain; }
+    .poster-brand { font-size: 1.7rem; font-weight: 900; color: #d4a017; letter-spacing: -0.03em; line-height: 1; }
+    .poster-tagline { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-top: 0.25rem; letter-spacing: 0.12em; text-transform: uppercase; }
+
+    /* Hero section */
+    .poster-hero { padding: 1.6rem 2rem 0; text-align: center; }
+    .poster-eyebrow {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(212,160,23,0.1); border: 1px solid rgba(212,160,23,0.25);
+      border-radius: 100px; padding: 4px 14px; font-size: 0.72rem; font-weight: 700;
+      color: #d4a017; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem;
+    }
+    .poster-headline {
+      font-size: 1.6rem; font-weight: 900; color: #fff; line-height: 1.2;
+      margin-bottom: 0.5rem; letter-spacing: -0.02em;
+    }
+    .poster-headline span { color: #d4a017; }
+    .poster-subheadline { font-size: 0.85rem; color: rgba(255,255,255,0.5); line-height: 1.6; margin-bottom: 1.4rem; }
+
+    /* Stats row */
+    .poster-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-bottom: 1.6rem; }
+    .stat-box {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px; padding: 0.7rem 0.4rem; text-align: center;
+    }
+    .stat-value { font-size: 1.1rem; font-weight: 800; color: #d4a017; line-height: 1; }
+    .stat-label { font-size: 0.65rem; color: rgba(255,255,255,0.4); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* QR section */
+    .poster-qr-section { padding: 0 2rem 1.6rem; text-align: center; }
+    .poster-qr-label { font-size: 0.72rem; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.9rem; }
+    .poster-qr-wrap {
+      width: 170px; height: 170px; margin: 0 auto 1rem;
+      background: #fff; border-radius: 16px; padding: 10px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .poster-qr-wrap canvas { width: 100% !important; height: 100% !important; display: block; }
+    .poster-ref-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(212,160,23,0.1); border: 1px solid rgba(212,160,23,0.3);
+      border-radius: 100px; padding: 0.45rem 1.2rem;
+      font-size: 0.95rem; font-weight: 800; color: #d4a017; letter-spacing: 3px;
+      margin-bottom: 1rem;
+    }
+    .poster-ref-pill i { font-size: 0.75rem; }
+    .poster-cta-text { font-size: 0.78rem; color: rgba(255,255,255,0.35); margin-bottom: 1.2rem; }
+
+    /* Benefits */
+    .poster-benefits { margin: 0 2rem 1.6rem; }
+    .benefit-item {
+      display: flex; align-items: flex-start; gap: 10px; padding: 0.65rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .benefit-item:last-child { border-bottom: none; }
+    .benefit-icon { width: 28px; height: 28px; background: rgba(212,160,23,0.12); border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .benefit-icon i { font-size: 0.75rem; color: #d4a017; }
+    .benefit-text { flex: 1; }
+    .benefit-title { font-size: 0.82rem; font-weight: 700; color: #fff; }
+    .benefit-desc { font-size: 0.73rem; color: rgba(255,255,255,0.4); margin-top: 1px; }
+
+    /* Contact section */
+    .poster-contact-section {
+      margin: 0 2rem 1.6rem; background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 1rem;
+    }
+    .contact-header { font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.75rem; }
+    .contact-item {
+      display: flex; align-items: center; gap: 10px; padding: 6px 0;
+      font-size: 0.83rem; color: rgba(255,255,255,0.75);
+    }
+    .contact-item .ci { width: 28px; height: 28px; background: rgba(212,160,23,0.1); border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .contact-item .ci i { color: #d4a017; font-size: 0.75rem; }
+
+    /* Footer */
+    .poster-footer {
+      padding: 1rem 2rem; text-align: center;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      background: rgba(212,160,23,0.04);
+    }
+    .poster-footer-url { font-size: 0.75rem; color: #d4a017; font-weight: 600; letter-spacing: 0.05em; }
+    .poster-footer-note { font-size: 0.65rem; color: rgba(255,255,255,0.2); margin-top: 3px; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 2rem; right: 2rem;
+      background: #1a1a2e; border: 1px solid rgba(212,160,23,0.3); color: #fff;
+      padding: 0.75rem 1.4rem; border-radius: 10px; font-size: 0.85rem;
+      transform: translateY(120px); opacity: 0; transition: transform 0.3s, opacity 0.3s; z-index: 9999;
+      display: flex; align-items: center; gap: 8px;
+    }
     .toast.show { transform: translateY(0); opacity: 1; }
+    .toast i { color: #d4a017; }
 
     @media print {
-      body { background: #fff; }
-      .topbar, .form-section, .btn-row, .toast { display: none !important; }
-      .container { padding: 0; max-width: none; }
-      .poster-preview { display: block !important; }
+      body { background: #fff !important; }
+      .topbar, .panel, .btn-row, .toast { display: none !important; }
+      .page-wrap { display: block; padding: 0; }
+      .poster-wrap { display: block !important; }
       .poster-frame { max-width: 100%; border: none; box-shadow: none; border-radius: 0; }
-    }
-    @media (max-width: 600px) {
-      .container { padding: 1rem; }
-      .form-grid { grid-template-columns: 1fr; }
-      .topbar { padding: 0.8rem 1rem; }
-      .topbar h1 { font-size: 1.1rem; }
-      .poster-inner { padding: 1.5rem 1rem; }
     }
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <h1 data-testid="text-page-title"><i class="fas fa-image"></i> Poster Generator</h1>
-    <a href="/admin-panel" data-testid="link-back"><i class="fas fa-arrow-left"></i> Back to Panel</a>
-  </div>
 
-  <div class="container">
-    <div class="form-section">
-      <h3><i class="fas fa-user-search"></i> Select User or Enter Details</h3>
-      <div class="form-grid">
-        <div class="form-group full user-search-wrap">
-          <label>Search User</label>
-          <input type="text" id="userSearch" placeholder="Type name, email or phone to search..." data-testid="input-user-search" oninput="searchUsers(this.value)">
-          <div class="results" id="searchResults"></div>
-        </div>
-        <div class="form-group">
-          <label>Name <span class="optional">(optional)</span></label>
-          <input type="text" id="posterName" placeholder="e.g. John Doe" data-testid="input-poster-name">
-        </div>
-        <div class="form-group">
-          <label>WhatsApp Number <span class="required">*</span></label>
-          <input type="text" id="posterWhatsapp" placeholder="e.g. 0712345678" data-testid="input-poster-whatsapp">
-        </div>
-        <div class="form-group">
-          <label>Phone Number <span class="optional">(optional)</span></label>
-          <input type="text" id="posterPhone" placeholder="e.g. 0712345678" data-testid="input-poster-phone">
-        </div>
-        <div class="form-group">
-          <label>Email <span class="optional">(optional)</span></label>
-          <input type="text" id="posterEmail" placeholder="e.g. john@example.com" data-testid="input-poster-email">
-        </div>
-        <div class="form-group">
-          <label>Referral Code</label>
-          <input type="text" id="posterRefCode" placeholder="Auto-filled from user" data-testid="input-poster-refcode">
-        </div>
-        <div class="form-group">
-          <label>Referral Link</label>
-          <input type="text" id="posterRefLink" placeholder="Auto-generated" data-testid="input-poster-reflink" readonly style="color:rgba(255,255,255,0.4);">
-        </div>
+<div class="topbar">
+  <h1><i class="fas fa-paint-brush"></i> Poster Generator</h1>
+  <a href="/admin-panel"><i class="fas fa-arrow-left"></i> Back to Panel</a>
+</div>
+
+<div class="page-wrap">
+
+  <!-- ── Left: Form ── -->
+  <div class="panel">
+    <div class="panel-title"><i class="fas fa-user-circle"></i> Agent / User Details</div>
+
+    <div class="search-wrap">
+      <i class="fas fa-search si"></i>
+      <input type="text" id="userSearch" placeholder="Search by name, email or phone..." oninput="searchUsers(this.value)" autocomplete="off">
+      <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <div class="field-grid">
+      <div class="field">
+        <label>Agent Name</label>
+        <input type="text" id="posterName" placeholder="e.g. Jane Mwangi">
       </div>
-      <div class="btn-row">
-        <button class="btn btn-gold" onclick="generatePoster()" data-testid="button-generate-poster">
-          <i class="fas fa-magic"></i> Generate Poster
-        </button>
-        <button class="btn btn-outline" onclick="window.print()" data-testid="button-print-poster" id="printBtn" disabled>
-          <i class="fas fa-print"></i> Print
-        </button>
-        <button class="btn btn-outline" onclick="downloadPoster()" data-testid="button-download-poster" id="downloadBtn" disabled>
-          <i class="fas fa-download"></i> Download Image
-        </button>
-        <button class="btn btn-outline" onclick="clearForm()" data-testid="button-clear-form">
-          <i class="fas fa-eraser"></i> Clear
-        </button>
+      <div class="field">
+        <label>WhatsApp <span class="req">*</span></label>
+        <input type="text" id="posterWhatsapp" placeholder="e.g. 0712 345 678">
+      </div>
+      <div class="field">
+        <label>Phone</label>
+        <input type="text" id="posterPhone" placeholder="e.g. 0712 345 678">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="text" id="posterEmail" placeholder="e.g. jane@email.com">
+      </div>
+      <div class="field">
+        <label>Referral Code</label>
+        <input type="text" id="posterRefCode" placeholder="e.g. JANE2024" oninput="updateRefLink()">
+      </div>
+      <div class="field">
+        <label>Signup Link (auto)</label>
+        <input type="text" id="posterRefLink" readonly placeholder="Generated from code">
       </div>
     </div>
 
-    <div class="poster-preview" id="posterPreview">
-      <div class="poster-frame" id="posterFrame">
-        <div class="poster-inner" id="posterInner">
-          <img src="/public/logo-transparent.png" alt="AfricaBased" class="poster-logo" crossorigin="anonymous">
-          <div class="poster-brand">AfricaBased</div>
-          <div class="poster-tagline">Building Wealth Across Africa</div>
-          <div class="poster-divider"></div>
-          <div class="poster-heading">Join & Start Investing Today!</div>
-          <div class="poster-sub">Scan the QR code or use the referral code below to sign up</div>
-          <div class="poster-qr-wrap" id="posterQR"></div>
-          <div class="poster-ref-code" id="posterRefDisplay"></div>
-          <div class="poster-contact" id="posterContact"></div>
-          <div class="poster-footer">
-            <a href="https://africabasedtech.com">africabasedtech.com</a>
-          </div>
-        </div>
-      </div>
+    <div class="ref-link-badge" id="refLinkBadge">
+      <strong><i class="fas fa-qrcode"></i> QR Code will link to:</strong><br>
+      <span id="refLinkDisplay"></span>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="generatePoster()">
+        <i class="fas fa-magic"></i> Generate Poster
+      </button>
+      <button class="btn btn-ghost" onclick="clearForm()" title="Clear all fields">
+        <i class="fas fa-eraser"></i>
+      </button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="downloadPoster()" id="downloadBtn" disabled style="flex:1;justify-content:center;">
+        <i class="fas fa-download"></i> Download Image
+      </button>
+      <button class="btn btn-ghost" onclick="window.print()" id="printBtn" disabled style="flex:1;justify-content:center;">
+        <i class="fas fa-print"></i> Print
+      </button>
     </div>
   </div>
 
-  <div class="toast" id="toast"></div>
+  <!-- ── Right: Poster Preview ── -->
+  <div class="poster-wrap" id="posterWrap">
+    <div class="poster-frame" id="posterFrame">
 
-  <script>
-    const ADMIN_KEY = localStorage.getItem('_abAdminKey') || '1540568e';
-    const authHeaders = { 'x-admin-key': ADMIN_KEY };
-    let allUsers = [];
-    let searchTimeout = null;
+      <div class="poster-stripe"></div>
 
-    async function loadUsers() {
-      try {
-        const res = await fetch('/api/admin/users', { headers: authHeaders });
-        if (!res.ok) return;
-        const data = await res.json();
-        allUsers = data.users || [];
-      } catch (e) { console.error(e); }
-    }
+      <div class="poster-header">
+        <img src="/public/logo-transparent.png" alt="AfricaBased" class="poster-logo" crossorigin="anonymous"
+             onerror="this.style.display='none'">
+        <div class="poster-brand">AfricaBased</div>
+        <div class="poster-tagline">Africa's #1 Investment Platform</div>
+      </div>
 
-    function searchUsers(query) {
-      clearTimeout(searchTimeout);
-      const box = document.getElementById('searchResults');
-      if (!query || query.length < 2) { box.classList.remove('show'); return; }
-      searchTimeout = setTimeout(() => {
-        const q = query.toLowerCase();
-        const matches = allUsers.filter(u =>
-          (u.username || '').toLowerCase().includes(q) ||
-          (u.email || '').toLowerCase().includes(q) ||
-          (u.phone || '').includes(q)
-        ).slice(0, 8);
-        if (!matches.length) { box.innerHTML = '<div class="item"><span class="meta">No users found</span></div>'; box.classList.add('show'); return; }
-        box.innerHTML = matches.map(u => `
-          <div class="item" onclick="selectUser(${JSON.stringify(u).replace(/"/g,'&quot;')})">
-            <span class="name">${u.username || 'Unknown'}</span>
-            <span class="meta">${u.email || ''} ${u.phone ? '· ' + u.phone : ''}</span>
+      <div class="poster-hero">
+        <div class="poster-eyebrow"><i class="fas fa-fire"></i> Limited Spots Available</div>
+        <div class="poster-headline">
+          Turn KES 500 Into<br><span>Daily Passive Income</span>
+        </div>
+        <div class="poster-subheadline">
+          Thousands of Africans are already earning consistent daily profits. 
+          Join today and watch your money grow — automatically, every single day.
+        </div>
+
+        <div class="poster-stats">
+          <div class="stat-box">
+            <div class="stat-value">10K+</div>
+            <div class="stat-label">Active Investors</div>
           </div>
-        `).join('');
+          <div class="stat-box">
+            <div class="stat-value">Daily</div>
+            <div class="stat-label">Profit Payouts</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value">M-Pesa</div>
+            <div class="stat-label">Instant Deposits</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="poster-benefits">
+        <div class="benefit-item">
+          <div class="benefit-icon"><i class="fas fa-bolt"></i></div>
+          <div class="benefit-text">
+            <div class="benefit-title">Start Earning in Minutes</div>
+            <div class="benefit-desc">Deposit via M-Pesa, choose a plan, and earn from day one — no experience needed.</div>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon"><i class="fas fa-shield-alt"></i></div>
+          <div class="benefit-text">
+            <div class="benefit-title">100% Safe & Verified</div>
+            <div class="benefit-desc">Your capital is protected. Withdraw anytime, directly to your M-Pesa or bank.</div>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon"><i class="fas fa-users"></i></div>
+          <div class="benefit-text">
+            <div class="benefit-title">Earn More by Referring Friends</div>
+            <div class="benefit-desc">Get a bonus every time someone you invite makes their first investment.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="poster-qr-section">
+        <div class="poster-qr-label"><i class="fas fa-qrcode"></i> &nbsp;Scan to Create Your Free Account</div>
+        <div class="poster-qr-wrap" id="posterQR">
+          <i class="fas fa-qrcode" style="font-size:3rem;color:#ccc;"></i>
+        </div>
+        <div class="poster-ref-pill" id="posterRefPill" style="display:none;">
+          <i class="fas fa-tag"></i>
+          <span id="posterRefDisplay"></span>
+        </div>
+        <div class="poster-cta-text">Scan the QR code above or use your agent's referral code to sign up &amp; get started instantly</div>
+      </div>
+
+      <div class="poster-contact-section" id="posterContactSection" style="display:none;">
+        <div class="contact-header"><i class="fas fa-headset"></i> &nbsp;Contact Your Agent</div>
+        <div id="posterContact"></div>
+      </div>
+
+      <div class="poster-footer">
+        <div class="poster-footer-url">africabasedtech.com</div>
+        <div class="poster-footer-note">Invest smart. Grow daily. Live free.</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"><i class="fas fa-check-circle"></i> <span id="toastMsg"></span></div>
+
+<script>
+  const ADMIN_KEY = localStorage.getItem('_abAdminKey') || '1540568e';
+  const authHeaders = { 'x-admin-key': ADMIN_KEY };
+  let allUsers = [];
+  let searchTimeout = null;
+
+  async function loadUsers() {
+    try {
+      const res = await fetch('/api/admin/users', { headers: authHeaders });
+      if (!res.ok) return;
+      const data = await res.json();
+      allUsers = data.users || [];
+    } catch (e) { console.error('Could not load users:', e); }
+  }
+
+  function searchUsers(query) {
+    clearTimeout(searchTimeout);
+    const box = document.getElementById('searchResults');
+    if (!query || query.length < 2) { box.classList.remove('show'); return; }
+    searchTimeout = setTimeout(() => {
+      const q = query.toLowerCase();
+      const matches = allUsers.filter(u =>
+        (u.username || '').toLowerCase().includes(q) ||
+        (u.email || '').toLowerCase().includes(q) ||
+        (u.phone || '').includes(q)
+      ).slice(0, 10);
+      if (!matches.length) {
+        box.innerHTML = '<div class="sr-item"><span class="sr-meta">No users found</span></div>';
         box.classList.add('show');
-      }, 200);
-    }
-
-    function selectUser(user) {
-      document.getElementById('posterName').value = user.username || '';
-      document.getElementById('posterWhatsapp').value = user.phone || '';
-      document.getElementById('posterPhone').value = user.phone || '';
-      document.getElementById('posterEmail').value = user.email || '';
-      document.getElementById('posterRefCode').value = user.referral_code || '';
-      updateRefLink();
-      document.getElementById('searchResults').classList.remove('show');
-      document.getElementById('userSearch').value = user.username || '';
-      showToast('User details loaded: ' + (user.username || user.email));
-    }
-
-    function updateRefLink() {
-      const code = document.getElementById('posterRefCode').value.trim();
-      const host = window.location.origin;
-      document.getElementById('posterRefLink').value = code ? host + '/register?ref=' + code : '';
-    }
-
-    document.getElementById('posterRefCode').addEventListener('input', updateRefLink);
-
-    function generatePoster() {
-      const whatsapp = document.getElementById('posterWhatsapp').value.trim();
-      if (!whatsapp) { showToast('WhatsApp number is required!'); return; }
-
-      const name = document.getElementById('posterName').value.trim();
-      const phone = document.getElementById('posterPhone').value.trim();
-      const email = document.getElementById('posterEmail').value.trim();
-      const refCode = document.getElementById('posterRefCode').value.trim();
-      const refLink = document.getElementById('posterRefLink').value.trim();
-
-      document.getElementById('posterRefDisplay').textContent = refCode || 'N/A';
-
-      const contactHtml = [];
-      if (name) contactHtml.push(`<div class="poster-contact-item"><i class="fas fa-user"></i> ${name}</div>`);
-      contactHtml.push(`<div class="poster-contact-item"><i class="fab fa-whatsapp"></i> ${whatsapp}</div>`);
-      if (phone && phone !== whatsapp) contactHtml.push(`<div class="poster-contact-item"><i class="fas fa-phone"></i> ${phone}</div>`);
-      if (email) contactHtml.push(`<div class="poster-contact-item"><i class="fas fa-envelope"></i> ${email}</div>`);
-      document.getElementById('posterContact').innerHTML = contactHtml.join('');
-
-      document.getElementById('posterPreview').classList.add('show');
-      document.getElementById('printBtn').disabled = false;
-      document.getElementById('downloadBtn').disabled = false;
-      showToast('Poster generated!');
-
-      const qrWrap = document.getElementById('posterQR');
-      qrWrap.innerHTML = '';
-      const qrData = refLink || window.location.origin + '/register';
-      try {
-        if (typeof QRCode === 'undefined') throw new Error('QRCode library not loaded');
-        QRCode.toCanvas(qrData, { width: 140, margin: 0, color: { dark: '#09090b', light: '#ffffff' } }, (err, canvas) => {
-          if (!err) qrWrap.appendChild(canvas);
-          else qrWrap.innerHTML = '<div style="color:#d4a017;font-size:0.75rem;padding:8px;">QR unavailable</div>';
-        });
-      } catch (e) {
-        console.error('QR generation error:', e);
-        qrWrap.innerHTML = '<div style="color:#d4a017;font-size:0.75rem;padding:8px;">QR unavailable</div>';
+        return;
       }
+      box.innerHTML = matches.map(u => `
+        <div class="sr-item" onclick="selectUser(${JSON.stringify(u).replace(/"/g,'&quot;')})">
+          <div>
+            <div class="sr-name">${u.username || 'Unknown'}</div>
+            <div class="sr-meta">${u.email || ''} ${u.phone ? '· ' + u.phone : ''}</div>
+          </div>
+          ${u.referral_code ? `<span style="background:rgba(212,160,23,0.12);color:#d4a017;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:100px;">${u.referral_code}</span>` : ''}
+        </div>
+      `).join('');
+      box.classList.add('show');
+    }, 200);
+  }
+
+  function selectUser(user) {
+    document.getElementById('posterName').value = user.username || '';
+    document.getElementById('posterWhatsapp').value = user.phone || '';
+    document.getElementById('posterPhone').value = user.phone || '';
+    document.getElementById('posterEmail').value = user.email || '';
+    document.getElementById('posterRefCode').value = user.referral_code || '';
+    updateRefLink();
+    document.getElementById('searchResults').classList.remove('show');
+    document.getElementById('userSearch').value = user.username || user.email || '';
+    showToast('Loaded details for ' + (user.username || user.email || 'user'));
+  }
+
+  function updateRefLink() {
+    const code = document.getElementById('posterRefCode').value.trim();
+    const host = window.location.origin;
+    const link = code ? host + '/register?ref=' + encodeURIComponent(code) : '';
+    document.getElementById('posterRefLink').value = link;
+    const badge = document.getElementById('refLinkBadge');
+    const display = document.getElementById('refLinkDisplay');
+    if (link) {
+      display.textContent = link;
+      badge.classList.add('show');
+    } else {
+      badge.classList.remove('show');
+    }
+  }
+
+  function generatePoster() {
+    const whatsapp = document.getElementById('posterWhatsapp').value.trim();
+    if (!whatsapp) { showToast('WhatsApp number is required!'); return; }
+
+    const name     = document.getElementById('posterName').value.trim();
+    const phone    = document.getElementById('posterPhone').value.trim();
+    const email    = document.getElementById('posterEmail').value.trim();
+    const refCode  = document.getElementById('posterRefCode').value.trim();
+    const host     = window.location.origin;
+    const refLink  = refCode
+      ? host + '/register?ref=' + encodeURIComponent(refCode)
+      : host + '/register';
+
+    document.getElementById('posterRefLink').value = refLink;
+
+    const refPill = document.getElementById('posterRefPill');
+    const refDisplay = document.getElementById('posterRefDisplay');
+    if (refCode) {
+      refDisplay.textContent = refCode;
+      refPill.style.display = 'inline-flex';
+    } else {
+      refPill.style.display = 'none';
     }
 
-    async function downloadPoster() {
-      const btn = document.getElementById('downloadBtn');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rendering...';
-      try {
-        const { default: html2canvas } = await import('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/+esm');
-        const frame = document.getElementById('posterFrame');
-        const canvas = await html2canvas(frame, { backgroundColor: '#09090b', scale: 2, useCORS: true });
-        const a = document.createElement('a');
-        a.href = canvas.toDataURL('image/png');
-        a.download = 'AfricaBased_Poster.png';
-        document.body.appendChild(a); a.click(); a.remove();
-        showToast('Poster downloaded as image!');
-      } catch (e) {
-        console.error(e);
-        showToast('Download failed — try Print instead');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-download"></i> Download Image';
-      }
-    }
+    const contactEl = document.getElementById('posterContact');
+    const contactSection = document.getElementById('posterContactSection');
+    const items = [];
+    if (name) items.push(`<div class="contact-item"><div class="ci"><i class="fas fa-user"></i></div>${name}</div>`);
+    items.push(`<div class="contact-item"><div class="ci"><i class="fab fa-whatsapp"></i></div>${whatsapp}</div>`);
+    if (phone && phone !== whatsapp) items.push(`<div class="contact-item"><div class="ci"><i class="fas fa-phone"></i></div>${phone}</div>`);
+    if (email) items.push(`<div class="contact-item"><div class="ci"><i class="fas fa-envelope"></i></div>${email}</div>`);
+    contactEl.innerHTML = items.join('');
+    contactSection.style.display = items.length ? 'block' : 'none';
 
-    function clearForm() {
-      document.getElementById('userSearch').value = '';
-      document.getElementById('posterName').value = '';
-      document.getElementById('posterWhatsapp').value = '';
-      document.getElementById('posterPhone').value = '';
-      document.getElementById('posterEmail').value = '';
-      document.getElementById('posterRefCode').value = '';
-      document.getElementById('posterRefLink').value = '';
-      document.getElementById('posterPreview').classList.remove('show');
-      document.getElementById('printBtn').disabled = true;
-      document.getElementById('downloadBtn').disabled = true;
-      document.getElementById('searchResults').classList.remove('show');
-    }
+    document.getElementById('posterWrap').classList.add('show');
+    document.getElementById('printBtn').disabled = false;
+    document.getElementById('downloadBtn').disabled = false;
+    showToast('Poster generated!');
 
-    function showToast(msg) {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 3000);
+    const qrWrap = document.getElementById('posterQR');
+    qrWrap.innerHTML = '';
+    try {
+      if (typeof QRCode === 'undefined') throw new Error('QRCode library not loaded');
+      QRCode.toCanvas(refLink, {
+        width: 150, margin: 1,
+        color: { dark: '#09090e', light: '#ffffff' }
+      }, (err, canvas) => {
+        if (!err) {
+          canvas.style.width = '100%';
+          canvas.style.height = '100%';
+          canvas.style.display = 'block';
+          qrWrap.appendChild(canvas);
+        } else {
+          qrWrap.innerHTML = '<div style="color:#d4a017;font-size:0.7rem;text-align:center;padding:10px;">QR unavailable</div>';
+        }
+      });
+    } catch (e) {
+      console.error('QR error:', e);
+      qrWrap.innerHTML = '<div style="color:#d4a017;font-size:0.7rem;text-align:center;padding:10px;">QR unavailable</div>';
     }
+  }
 
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.user-search-wrap')) {
-        document.getElementById('searchResults').classList.remove('show');
-      }
+  async function downloadPoster() {
+    const btn = document.getElementById('downloadBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rendering...';
+    try {
+      const { default: html2canvas } = await import('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/+esm');
+      const frame = document.getElementById('posterFrame');
+      const canvas = await html2canvas(frame, { backgroundColor: '#09090e', scale: 2.5, useCORS: true, allowTaint: false });
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = 'AfricaBased_Poster.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      showToast('Poster downloaded!');
+    } catch (e) {
+      console.error(e);
+      showToast('Download failed — try Print instead');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-download"></i> Download Image';
+    }
+  }
+
+  function clearForm() {
+    ['userSearch','posterName','posterWhatsapp','posterPhone','posterEmail','posterRefCode','posterRefLink'].forEach(id => {
+      document.getElementById(id).value = '';
     });
+    document.getElementById('refLinkBadge').classList.remove('show');
+    document.getElementById('posterWrap').classList.remove('show');
+    document.getElementById('printBtn').disabled = true;
+    document.getElementById('downloadBtn').disabled = true;
+    document.getElementById('searchResults').classList.remove('show');
+  }
 
-    loadUsers();
-  </script>
+  function showToast(msg) {
+    document.getElementById('toastMsg').textContent = msg;
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-wrap')) {
+      document.getElementById('searchResults').classList.remove('show');
+    }
+  });
+
+  loadUsers();
+</script>
 </body>
 </html>
