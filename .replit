@@ -45,3 +45,11 @@ outputType = "webview"
 [agent]
 integrations = ["javascript_openai_ai_integrations:2.0.0"]
 expertMode = true
+
+[userenv]
+
+[userenv.shared]
+AI_INTEGRATIONS_OPENAI_BASE_URL = "http://localhost:1106/modelfarm/openai"
+AI_INTEGRATIONS_OPENAI_API_KEY = "_DUMMY_API_KEY_"
+GMAIL_APP_PASSWORD = "yhyo wkkl nzue acme"
+SUPABASE_DATABASE_URL = "postgresql://postgres.xkygvyzlamrmmuixcyuc:africabasedtechnologie@aws-1-eu-west-1.pooler.supabase.com:5432/postgres"
