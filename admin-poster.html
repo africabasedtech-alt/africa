@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poster Generator | AfricaBased Admin</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f0f1a; color: #fff; min-height: 100vh; }
+    .topbar { background: #1a1a2e; border-bottom: 1px solid rgba(212,160,23,0.3); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+    .topbar h1 { font-size: 1.3rem; color: #d4a017; display: flex; align-items: center; gap: 10px; }
+    .topbar a { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 0.9rem; }
+    .topbar a:hover { color: #d4a017; }
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    .form-section { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 1.5rem; margin-bottom: 2rem; }
+    .form-section h3 { color: #d4a017; font-size: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { font-size: 0.82rem; color: rgba(255,255,255,0.6); font-weight: 600; }
+    .form-group label .required { color: #ef4444; margin-left: 2px; }
+    .form-group label .optional { color: rgba(255,255,255,0.3); font-weight: 400; font-size: 0.75rem; }
+    .form-group input, .form-group select {
+      padding: 0.7rem 1rem; background: rgba(255,255,255,0.06); color: #fff;
+      border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+      font-family: 'Segoe UI', sans-serif; font-size: 0.9rem; outline: none;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: rgba(212,160,23,0.5); }
+    .form-group input::placeholder { color: rgba(255,255,255,0.25); }
+    .form-group select option { background: #1a1a2e; }
+    .user-search-wrap { position: relative; }
+    .user-search-wrap .results {
+      position: absolute; top: 100%; left: 0; right: 0; background: #1a1a2e;
+      border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+      max-height: 200px; overflow-y: auto; z-index: 10; display: none;
+    }
+    .user-search-wrap .results.show { display: block; }
+    .user-search-wrap .results .item {
+      padding: 10px 14px; cursor: pointer; font-size: 0.85rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between;
+    }
+    .user-search-wrap .results .item:hover { background: rgba(212,160,23,0.1); }
+    .user-search-wrap .results .item .name { color: #fff; font-weight: 600; }
+    .user-search-wrap .results .item .meta { color: rgba(255,255,255,0.4); font-size: 0.78rem; }
+    .btn-row { display: flex; gap: 10px; margin-top: 1rem; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 0.7rem 1.4rem; border: none; border-radius: 8px;
+      font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-gold { background: linear-gradient(135deg, #d4a017, #b8860b); color: #0f0f1a; }
+    .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(212,160,23,0.3); }
+    .btn-outline { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; }
+    .btn-outline:hover { border-color: rgba(212,160,23,0.4); background: rgba(212,160,23,0.08); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .poster-preview { display: none; margin-top: 1.5rem; }
+    .poster-preview.show { display: block; }
+    .poster-frame {
+      width: 100%; max-width: 600px; margin: 0 auto;
+      background: linear-gradient(145deg, #09090b, #16161a);
+      border-radius: 20px; overflow: hidden;
+      border: 2px solid rgba(212,160,23,0.3);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .poster-inner { padding: 2.5rem 2rem; text-align: center; position: relative; }
+    .poster-inner::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+      background: linear-gradient(90deg, #d4a017, #f0c040, #d4a017);
+    }
+    .poster-logo { width: 80px; height: 80px; margin: 0 auto 1rem; border-radius: 16px; }
+    .poster-brand { font-size: 1.6rem; font-weight: 800; color: #d4a017; margin-bottom: 0.2rem; letter-spacing: -0.02em; }
+    .poster-tagline { font-size: 0.85rem; color: rgba(255,255,255,0.5); margin-bottom: 1.5rem; }
+    .poster-divider { width: 60px; height: 3px; background: #d4a017; margin: 0 auto 1.5rem; border-radius: 2px; }
+    .poster-heading { font-size: 1.3rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+    .poster-sub { font-size: 0.85rem; color: rgba(255,255,255,0.5); margin-bottom: 1.5rem; }
+    .poster-qr-wrap {
+      width: 160px; height: 160px; margin: 0 auto 1rem;
+      background: #fff; border-radius: 12px; padding: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .poster-qr-wrap canvas { width: 100% !important; height: 100% !important; }
+    .poster-ref-code {
+      display: inline-block; background: rgba(212,160,23,0.12); border: 1px solid rgba(212,160,23,0.3);
+      border-radius: 8px; padding: 0.5rem 1.5rem; font-size: 1.1rem; font-weight: 700;
+      color: #d4a017; letter-spacing: 2px; margin-bottom: 1.5rem;
+    }
+    .poster-contact { margin-top: 1rem; }
+    .poster-contact-item {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 6px 0; font-size: 0.88rem; color: rgba(255,255,255,0.7);
+    }
+    .poster-contact-item i { color: #d4a017; width: 18px; text-align: center; }
+    .poster-footer {
+      margin-top: 1.5rem; padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.75rem; color: rgba(255,255,255,0.3);
+    }
+    .poster-footer a { color: #d4a017; text-decoration: none; }
+
+    .toast { position: fixed; bottom: 2rem; right: 2rem; background: #1a1a2e; border: 1px solid rgba(212,160,23,0.3); color: #fff; padding: 0.8rem 1.5rem; border-radius: 10px; font-size: 0.88rem; transform: translateY(100px); opacity: 0; transition: transform 0.3s, opacity 0.3s; z-index: 999; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    @media print {
+      body { background: #fff; }
+      .topbar, .form-section, .btn-row, .toast { display: none !important; }
+      .container { padding: 0; max-width: none; }
+      .poster-preview { display: block !important; }
+      .poster-frame { max-width: 100%; border: none; box-shadow: none; border-radius: 0; }
+    }
+    @media (max-width: 600px) {
+      .container { padding: 1rem; }
+      .form-grid { grid-template-columns: 1fr; }
+      .topbar { padding: 0.8rem 1rem; }
+      .topbar h1 { font-size: 1.1rem; }
+      .poster-inner { padding: 1.5rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <h1 data-testid="text-page-title"><i class="fas fa-image"></i> Poster Generator</h1>
+    <a href="/admin-panel" data-testid="link-back"><i class="fas fa-arrow-left"></i> Back to Panel</a>
+  </div>
+
+  <div class="container">
+    <div class="form-section">
+      <h3><i class="fas fa-user-search"></i> Select User or Enter Details</h3>
+      <div class="form-grid">
+        <div class="form-group full user-search-wrap">
+          <label>Search User</label>
+          <input type="text" id="userSearch" placeholder="Type name, email or phone to search..." data-testid="input-user-search" oninput="searchUsers(this.value)">
+          <div class="results" id="searchResults"></div>
+        </div>
+        <div class="form-group">
+          <label>Name <span class="optional">(optional)</span></label>
+          <input type="text" id="posterName" placeholder="e.g. John Doe" data-testid="input-poster-name">
+        </div>
+        <div class="form-group">
+          <label>WhatsApp Number <span class="required">*</span></label>
+          <input type="text" id="posterWhatsapp" placeholder="e.g. 0712345678" data-testid="input-poster-whatsapp">
+        </div>
+        <div class="form-group">
+          <label>Phone Number <span class="optional">(optional)</span></label>
+          <input type="text" id="posterPhone" placeholder="e.g. 0712345678" data-testid="input-poster-phone">
+        </div>
+        <div class="form-group">
+          <label>Email <span class="optional">(optional)</span></label>
+          <input type="text" id="posterEmail" placeholder="e.g. john@example.com" data-testid="input-poster-email">
+        </div>
+        <div class="form-group">
+          <label>Referral Code</label>
+          <input type="text" id="posterRefCode" placeholder="Auto-filled from user" data-testid="input-poster-refcode">
+        </div>
+        <div class="form-group">
+          <label>Referral Link</label>
+          <input type="text" id="posterRefLink" placeholder="Auto-generated" data-testid="input-poster-reflink" readonly style="color:rgba(255,255,255,0.4);">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-gold" onclick="generatePoster()" data-testid="button-generate-poster">
+          <i class="fas fa-magic"></i> Generate Poster
+        </button>
+        <button class="btn btn-outline" onclick="window.print()" data-testid="button-print-poster" id="printBtn" disabled>
+          <i class="fas fa-print"></i> Print
+        </button>
+        <button class="btn btn-outline" onclick="downloadPoster()" data-testid="button-download-poster" id="downloadBtn" disabled>
+          <i class="fas fa-download"></i> Download Image
+        </button>
+        <button class="btn btn-outline" onclick="clearForm()" data-testid="button-clear-form">
+          <i class="fas fa-eraser"></i> Clear
+        </button>
+      </div>
+    </div>
+
+    <div class="poster-preview" id="posterPreview">
+      <div class="poster-frame" id="posterFrame">
+        <div class="poster-inner" id="posterInner">
+          <img src="/public/logo-transparent.png" alt="AfricaBased" class="poster-logo" crossorigin="anonymous">
+          <div class="poster-brand">AfricaBased</div>
+          <div class="poster-tagline">Building Wealth Across Africa</div>
+          <div class="poster-divider"></div>
+          <div class="poster-heading">Join & Start Investing Today!</div>
+          <div class="poster-sub">Scan the QR code or use the referral code below to sign up</div>
+          <div class="poster-qr-wrap" id="posterQR"></div>
+          <div class="poster-ref-code" id="posterRefDisplay"></div>
+          <div class="poster-contact" id="posterContact"></div>
+          <div class="poster-footer">
+            <a href="https://africabasedtech.com">africabasedtech.com</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const ADMIN_KEY = localStorage.getItem('_abAdminKey') || '1540568e';
+    const authHeaders = { 'x-admin-key': ADMIN_KEY };
+    let allUsers = [];
+    let searchTimeout = null;
+
+    async function loadUsers() {
+      try {
+        const res = await fetch('/api/admin/users', { headers: authHeaders });
+        if (!res.ok) return;
+        const data = await res.json();
+        allUsers = data.users || [];
+      } catch (e) { console.error(e); }
+    }
+
+    function searchUsers(query) {
+      clearTimeout(searchTimeout);
+      const box = document.getElementById('searchResults');
+      if (!query || query.length < 2) { box.classList.remove('show'); return; }
+      searchTimeout = setTimeout(() => {
+        const q = query.toLowerCase();
+        const matches = allUsers.filter(u =>
+          (u.username || '').toLowerCase().includes(q) ||
+          (u.email || '').toLowerCase().includes(q) ||
+          (u.phone || '').includes(q)
+        ).slice(0, 8);
+        if (!matches.length) { box.innerHTML = '<div class="item"><span class="meta">No users found</span></div>'; box.classList.add('show'); return; }
+        box.innerHTML = matches.map(u => `
+          <div class="item" onclick="selectUser(${JSON.stringify(u).replace(/"/g,'&quot;')})">
+            <span class="name">${u.username || 'Unknown'}</span>
+            <span class="meta">${u.email || ''} ${u.phone ? '· ' + u.phone : ''}</span>
+          </div>
+        `).join('');
+        box.classList.add('show');
+      }, 200);
+    }
+
+    function selectUser(user) {
+      document.getElementById('posterName').value = user.username || '';
+      document.getElementById('posterWhatsapp').value = user.phone || '';
+      document.getElementById('posterPhone').value = user.phone || '';
+      document.getElementById('posterEmail').value = user.email || '';
+      document.getElementById('posterRefCode').value = user.referral_code || '';
+      updateRefLink();
+      document.getElementById('searchResults').classList.remove('show');
+      document.getElementById('userSearch').value = user.username || '';
+      showToast('User details loaded: ' + (user.username || user.email));
+    }
+
+    function updateRefLink() {
+      const code = document.getElementById('posterRefCode').value.trim();
+      const host = window.location.origin;
+      document.getElementById('posterRefLink').value = code ? host + '/register?ref=' + code : '';
+    }
+
+    document.getElementById('posterRefCode').addEventListener('input', updateRefLink);
+
+    function generatePoster() {
+      const whatsapp = document.getElementById('posterWhatsapp').value.trim();
+      if (!whatsapp) { showToast('WhatsApp number is required!'); return; }
+
+      const name = document.getElementById('posterName').value.trim();
+      const phone = document.getElementById('posterPhone').value.trim();
+      const email = document.getElementById('posterEmail').value.trim();
+      const refCode = document.getElementById('posterRefCode').value.trim();
+      const refLink = document.getElementById('posterRefLink').value.trim();
+
+      document.getElementById('posterRefDisplay').textContent = refCode || 'N/A';
+
+      const contactHtml = [];
+      if (name) contactHtml.push(`<div class="poster-contact-item"><i class="fas fa-user"></i> ${name}</div>`);
+      contactHtml.push(`<div class="poster-contact-item"><i class="fab fa-whatsapp"></i> ${whatsapp}</div>`);
+      if (phone && phone !== whatsapp) contactHtml.push(`<div class="poster-contact-item"><i class="fas fa-phone"></i> ${phone}</div>`);
+      if (email) contactHtml.push(`<div class="poster-contact-item"><i class="fas fa-envelope"></i> ${email}</div>`);
+      document.getElementById('posterContact').innerHTML = contactHtml.join('');
+
+      const qrWrap = document.getElementById('posterQR');
+      qrWrap.innerHTML = '';
+      const qrData = refLink || window.location.origin + '/register';
+      QRCode.toCanvas(qrData, { width: 140, margin: 0, color: { dark: '#09090b', light: '#ffffff' } }, (err, canvas) => {
+        if (!err) qrWrap.appendChild(canvas);
+      });
+
+      document.getElementById('posterPreview').classList.add('show');
+      document.getElementById('printBtn').disabled = false;
+      document.getElementById('downloadBtn').disabled = false;
+      showToast('Poster generated!');
+    }
+
+    async function downloadPoster() {
+      const btn = document.getElementById('downloadBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rendering...';
+      try {
+        const { default: html2canvas } = await import('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/+esm');
+        const frame = document.getElementById('posterFrame');
+        const canvas = await html2canvas(frame, { backgroundColor: '#09090b', scale: 2, useCORS: true });
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = 'AfricaBased_Poster.png';
+        document.body.appendChild(a); a.click(); a.remove();
+        showToast('Poster downloaded as image!');
+      } catch (e) {
+        console.error(e);
+        showToast('Download failed — try Print instead');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-download"></i> Download Image';
+      }
+    }
+
+    function clearForm() {
+      document.getElementById('userSearch').value = '';
+      document.getElementById('posterName').value = '';
+      document.getElementById('posterWhatsapp').value = '';
+      document.getElementById('posterPhone').value = '';
+      document.getElementById('posterEmail').value = '';
+      document.getElementById('posterRefCode').value = '';
+      document.getElementById('posterRefLink').value = '';
+      document.getElementById('posterPreview').classList.remove('show');
+      document.getElementById('printBtn').disabled = true;
+      document.getElementById('downloadBtn').disabled = true;
+      document.getElementById('searchResults').classList.remove('show');
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.user-search-wrap')) {
+        document.getElementById('searchResults').classList.remove('show');
+      }
+    });
+
+    loadUsers();
+  </script>
+</body>
+</html>

@@ -330,7 +330,7 @@ const PROTECTED_ADMIN_PAGES = [
   'Admin-panel','admin-settings','admin-management','admin-product',
   'admin-approve','admin-deposit','admin-exchange','admin-pending-applications',
   'admin-referrals','admin-service','admin-user','admin-withdraw',
-  'admin-withdraw-new','admin-payment-channels','admin-manuals','sub-admin-panel','impersonate'
+  'admin-withdraw-new','admin-payment-channels','admin-manuals','admin-poster','sub-admin-panel','impersonate'
 ];
 
 app.use((req, res, next) => {
