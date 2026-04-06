@@ -8,206 +8,294 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', 'Segoe UI', sans-serif; background: #0a0a12; color: #fff; min-height: 100vh; }
+    body { font-family: 'Inter', 'Segoe UI', sans-serif; background: #0d0d1a; color: #fff; min-height: 100vh; }
 
+    /* ── Topbar ── */
     .topbar {
-      background: #121220; border-bottom: 1px solid rgba(212,160,23,0.25);
+      background: #13132a; border-bottom: 1px solid rgba(212,160,23,0.2);
       padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between;
-      position: sticky; top: 0; z-index: 100;
+      position: sticky; top: 0; z-index: 200;
     }
-    .topbar h1 { font-size: 1.15rem; color: #d4a017; display: flex; align-items: center; gap: 10px; font-weight: 700; }
-    .topbar a { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
+    .topbar h1 { font-size: 1.1rem; color: #d4a017; display: flex; align-items: center; gap: 8px; font-weight: 700; }
+    .topbar a { color: rgba(255,255,255,0.45); text-decoration: none; font-size: 0.82rem; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
     .topbar a:hover { color: #d4a017; }
 
+    /* ── Page layout ── */
     .page-wrap {
-      max-width: 1160px; margin: 0 auto; padding: 2rem;
-      display: grid; grid-template-columns: 400px 1fr; gap: 2.5rem; align-items: start;
+      max-width: 1200px; margin: 0 auto; padding: 2rem;
+      display: grid; grid-template-columns: 380px 1fr; gap: 2.5rem; align-items: start;
     }
     @media (max-width: 860px) { .page-wrap { grid-template-columns: 1fr; padding: 1rem; } }
 
     /* ── Form panel ── */
-    .panel { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 1.5rem; }
-    .panel-title { font-size: 0.75rem; font-weight: 700; color: #d4a017; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px; }
+    .panel {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 1.4rem; position: sticky; top: 72px;
+    }
+    .panel-title {
+      font-size: 0.72rem; font-weight: 700; color: #d4a017;
+      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1.2rem;
+      display: flex; align-items: center; gap: 8px;
+    }
 
-    .search-wrap { position: relative; margin-bottom: 1.25rem; }
+    .search-wrap { position: relative; margin-bottom: 1.2rem; }
     .search-wrap input {
-      width: 100%; padding: 0.75rem 1rem 0.75rem 2.7rem;
+      width: 100%; padding: 0.72rem 1rem 0.72rem 2.6rem;
       background: rgba(255,255,255,0.06); color: #fff;
-      border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
-      font-family: inherit; font-size: 0.88rem; outline: none; transition: border-color 0.2s;
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+      font-family: inherit; font-size: 0.86rem; outline: none; transition: border-color 0.2s;
     }
     .search-wrap input:focus { border-color: rgba(212,160,23,0.5); }
-    .search-wrap input::placeholder { color: rgba(255,255,255,0.25); }
-    .search-icon { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.3); font-size: 0.8rem; pointer-events: none; }
-    .search-results {
-      position: absolute; top: calc(100% + 6px); left: 0; right: 0;
-      background: #16162a; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
-      max-height: 230px; overflow-y: auto; z-index: 50; display: none;
+    .search-wrap input::placeholder { color: rgba(255,255,255,0.22); }
+    .si { position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.28); font-size: 0.78rem; pointer-events: none; }
+    .sr-box {
+      position: absolute; top: calc(100% + 5px); left: 0; right: 0;
+      background: #1b1b30; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+      max-height: 220px; overflow-y: auto; z-index: 100; display: none;
       box-shadow: 0 16px 40px rgba(0,0,0,0.6);
     }
-    .search-results.show { display: block; }
+    .sr-box.show { display: block; }
     .sr-item {
-      padding: 10px 14px; cursor: pointer; font-size: 0.82rem;
+      padding: 9px 13px; cursor: pointer; font-size: 0.8rem;
       border-bottom: 1px solid rgba(255,255,255,0.05);
-      display: flex; justify-content: space-between; align-items: center;
-      transition: background 0.15s;
+      display: flex; justify-content: space-between; align-items: center; transition: background 0.15s;
     }
     .sr-item:last-child { border-bottom: none; }
-    .sr-item:hover { background: rgba(212,160,23,0.1); }
+    .sr-item:hover { background: rgba(212,160,23,0.08); }
     .sr-name { color: #fff; font-weight: 600; }
-    .sr-meta { color: rgba(255,255,255,0.35); font-size: 0.73rem; margin-top: 1px; }
-    .sr-badge { background: rgba(212,160,23,0.15); color: #d4a017; font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 100px; }
+    .sr-meta { color: rgba(255,255,255,0.32); font-size: 0.71rem; margin-top: 1px; }
+    .sr-tag { background: rgba(212,160,23,0.15); color: #d4a017; font-size: 0.66rem; font-weight: 700; padding: 2px 7px; border-radius: 100px; }
 
-    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-    .field { display: flex; flex-direction: column; gap: 5px; }
-    .field.full { grid-column: 1 / -1; }
-    .field label { font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.06em; }
-    .field label .req { color: #f87171; }
-    .field input {
-      padding: 0.65rem 0.9rem; background: rgba(255,255,255,0.05); color: #fff;
-      border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
-      font-family: inherit; font-size: 0.88rem; outline: none; transition: border-color 0.2s;
+    .fg { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+    .f { display: flex; flex-direction: column; gap: 4px; }
+    .f.full { grid-column: 1 / -1; }
+    .f label { font-size: 0.69rem; font-weight: 600; color: rgba(255,255,255,0.38); text-transform: uppercase; letter-spacing: 0.06em; }
+    .f label .req { color: #f87171; }
+    .f input {
+      padding: 0.6rem 0.85rem; background: rgba(255,255,255,0.05); color: #fff;
+      border: 1px solid rgba(255,255,255,0.09); border-radius: 8px;
+      font-family: inherit; font-size: 0.85rem; outline: none; transition: border-color 0.2s;
     }
-    .field input:focus { border-color: rgba(212,160,23,0.5); background: rgba(255,255,255,0.07); }
-    .field input::placeholder { color: rgba(255,255,255,0.2); }
-    .field input[readonly] { color: rgba(255,255,255,0.3); cursor: default; }
+    .f input:focus { border-color: rgba(212,160,23,0.45); background: rgba(255,255,255,0.07); }
+    .f input::placeholder { color: rgba(255,255,255,0.18); }
+    .f input[readonly] { color: rgba(255,255,255,0.28); cursor: default; }
 
-    .qr-preview-note {
-      margin-top: 0.6rem; padding: 0.5rem 0.8rem;
-      background: rgba(212,160,23,0.07); border: 1px solid rgba(212,160,23,0.18);
-      border-radius: 8px; font-size: 0.73rem; color: rgba(212,160,23,0.75);
+    .qr-note {
+      margin-top: 0.5rem; padding: 0.45rem 0.75rem;
+      background: rgba(212,160,23,0.06); border: 1px solid rgba(212,160,23,0.16);
+      border-radius: 7px; font-size: 0.7rem; color: rgba(212,160,23,0.7);
       word-break: break-all; line-height: 1.5; display: none;
     }
-    .qr-preview-note.show { display: block; }
+    .qr-note.show { display: block; }
 
-    .btn-row { display: flex; gap: 8px; margin-top: 1.2rem; flex-wrap: wrap; }
+    .btn-row { display: flex; gap: 7px; margin-top: 1.1rem; }
     .btn {
-      display: inline-flex; align-items: center; gap: 7px;
-      padding: 0.68rem 1.2rem; border: none; border-radius: 9px;
-      font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 0.65rem 1.1rem; border: none; border-radius: 9px;
+      font-size: 0.83rem; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit;
     }
-    .btn-gold { background: linear-gradient(135deg, #d4a017, #c08c0c); color: #0a0a12; flex: 1; justify-content: center; }
-    .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(212,160,23,0.4); }
-    .btn-ghost { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
-    .btn-ghost:hover { border-color: rgba(212,160,23,0.4); color: #fff; }
-    .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+    .btn-gold { background: linear-gradient(135deg, #d4a017, #b8860b); color: #0d0d1a; flex: 1; justify-content: center; }
+    .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(212,160,23,0.38); }
+    .btn-dim { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09); color: rgba(255,255,255,0.65); }
+    .btn-dim:hover { border-color: rgba(212,160,23,0.35); color: #fff; }
+    .btn:disabled { opacity: 0.32; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
-    /* ── Poster ── */
+    /* ══════════════════════════════════
+       POSTER
+    ══════════════════════════════════ */
     .poster-wrap { display: none; }
     .poster-wrap.show { display: block; }
 
     .poster-frame {
-      width: 100%; max-width: 580px; margin: 0 auto;
-      background: #09090e;
-      border-radius: 24px; overflow: hidden;
-      border: 1.5px solid rgba(212,160,23,0.3);
-      box-shadow: 0 0 0 1px rgba(212,160,23,0.07), 0 32px 80px rgba(0,0,0,0.75);
+      width: 100%; max-width: 600px; margin: 0 auto;
+      border-radius: 28px; overflow: hidden;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.8), 0 0 0 1px rgba(212,160,23,0.2);
+      /* Rich layered background */
+      background:
+        radial-gradient(ellipse 110% 60% at 50% 0%, rgba(212,160,23,0.22) 0%, transparent 55%),
+        radial-gradient(ellipse 80% 50% at 20% 100%, rgba(180,100,0,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse 70% 50% at 80% 80%, rgba(30,60,120,0.25) 0%, transparent 60%),
+        linear-gradient(160deg, #0e0c22 0%, #130e1a 40%, #0a1020 100%);
     }
 
-    .p-stripe {
-      height: 5px;
-      background: linear-gradient(90deg, #a06008, #e8b800, #f5d060, #e8b800, #a06008);
+    /* ── Top accent bar ── */
+    .p-top-bar {
+      height: 6px;
+      background: linear-gradient(90deg, #8B6000, #d4a017, #FFD700, #FFF3A0, #FFD700, #d4a017, #8B6000);
     }
 
-    .p-header {
-      padding: 2.2rem 2rem 1.8rem; text-align: center;
-      background: radial-gradient(ellipse 90% 70% at 50% 0%, rgba(212,160,23,0.13) 0%, transparent 65%);
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      position: relative;
+    /* ── Decorative top corner lines ── */
+    .p-deco {
+      position: relative; height: 0; overflow: visible;
     }
-    .p-logo { width: 76px; height: 76px; margin: 0 auto 0.9rem; border-radius: 20px; display: block; object-fit: contain; }
-    .p-brand { font-size: 2rem; font-weight: 900; color: #d4a017; letter-spacing: -0.04em; line-height: 1; }
-    .p-tagline { font-size: 0.72rem; color: rgba(255,255,255,0.35); margin-top: 0.3rem; letter-spacing: 0.18em; text-transform: uppercase; }
+    .p-deco::before, .p-deco::after {
+      content: ''; position: absolute; top: 0;
+      width: 120px; height: 120px; border: 1px solid rgba(212,160,23,0.18);
+    }
+    .p-deco::before { left: 16px; border-right: none; border-bottom: none; border-radius: 20px 0 0 0; }
+    .p-deco::after  { right: 16px; border-left: none; border-bottom: none; border-radius: 0 20px 0 0; }
 
-    .p-hero { padding: 1.8rem 2rem 1.4rem; text-align: center; }
-    .p-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(212,160,23,0.1); border: 1px solid rgba(212,160,23,0.22);
-      border-radius: 100px; padding: 5px 16px;
-      font-size: 0.68rem; font-weight: 700; color: #d4a017;
-      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1.1rem;
-    }
-    .p-headline { font-size: 1.75rem; font-weight: 900; color: #fff; line-height: 1.18; margin-bottom: 0.75rem; letter-spacing: -0.025em; }
-    .p-headline em { color: #d4a017; font-style: normal; }
-    .p-body { font-size: 0.88rem; color: rgba(255,255,255,0.55); line-height: 1.7; margin-bottom: 1.6rem; }
-
-    .p-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.7rem; margin-bottom: 0; }
-    .p-stat {
-      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 12px; padding: 0.85rem 0.5rem; text-align: center;
-    }
-    .p-stat-val { font-size: 1.2rem; font-weight: 900; color: #d4a017; line-height: 1; }
-    .p-stat-lbl { font-size: 0.62rem; color: rgba(255,255,255,0.38); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
-
-    .p-qr-section {
-      padding: 2rem 2rem 1.8rem; text-align: center;
-      border-top: 1px solid rgba(255,255,255,0.05);
-      background: radial-gradient(ellipse 80% 100% at 50% 100%, rgba(212,160,23,0.06) 0%, transparent 70%);
-    }
-    .p-qr-eyebrow { font-size: 0.68rem; font-weight: 700; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 1.1rem; }
-    .p-qr-frame {
-      width: 230px; height: 230px; margin: 0 auto 1.4rem;
-      background: #fff; border-radius: 20px; padding: 12px;
+    /* ── Header ── */
+    .p-header { padding: 2.4rem 2rem 1.6rem; text-align: center; }
+    .p-logo-wrap {
+      width: 86px; height: 86px; margin: 0 auto 1rem;
+      border-radius: 22px; overflow: hidden;
+      background: rgba(212,160,23,0.12);
+      border: 2px solid rgba(212,160,23,0.3);
+      box-shadow: 0 0 30px rgba(212,160,23,0.25), 0 8px 24px rgba(0,0,0,0.4);
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 0 6px rgba(212,160,23,0.15), 0 12px 40px rgba(0,0,0,0.5);
     }
-    .p-qr-frame img { width: 100%; height: 100%; display: block; object-fit: contain; border-radius: 4px; }
-    .p-qr-frame .qr-placeholder { color: #aaa; font-size: 0.75rem; text-align: center; padding: 8px; }
-
-    .p-cta-line {
-      font-size: 0.82rem; color: rgba(255,255,255,0.4); line-height: 1.6; margin-bottom: 0;
+    .p-logo { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .p-brand {
+      font-size: 2.2rem; font-weight: 900; letter-spacing: -0.04em; line-height: 1;
+      background: linear-gradient(135deg, #FFD700, #FFA500, #d4a017);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
-    .p-cta-line strong { color: rgba(255,255,255,0.7); }
+    .p-tagline {
+      font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 0.35rem;
+      letter-spacing: 0.22em; text-transform: uppercase;
+    }
 
+    /* ── Hero ── */
+    .p-hero { padding: 0.5rem 2rem 1.8rem; text-align: center; }
+    .p-divider {
+      width: 60px; height: 2px; margin: 0 auto 1.4rem;
+      background: linear-gradient(90deg, transparent, #d4a017, transparent);
+    }
+    .p-headline {
+      font-size: 1.9rem; font-weight: 900; color: #fff;
+      line-height: 1.15; margin-bottom: 0.8rem; letter-spacing: -0.03em;
+    }
+    .p-headline em { color: #FFD700; font-style: normal; }
+    .p-sub {
+      font-size: 0.87rem; color: rgba(255,255,255,0.58); line-height: 1.72; margin-bottom: 1.6rem;
+    }
+
+    /* ── Stats ── */
+    .p-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.6rem; margin-bottom: 1.8rem; }
+    .p-stat {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(212,160,23,0.18);
+      border-radius: 14px; padding: 0.9rem 0.4rem; text-align: center;
+      backdrop-filter: blur(4px);
+    }
+    .p-stat-v { font-size: 1.25rem; font-weight: 900; color: #FFD700; line-height: 1; }
+    .p-stat-l { font-size: 0.6rem; color: rgba(255,255,255,0.38); margin-top: 5px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* ── QR section ── */
+    .p-qr-zone {
+      margin: 0 1.6rem 1.8rem;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(212,160,23,0.2);
+      border-radius: 20px; padding: 1.6rem 1.4rem;
+      text-align: center;
+    }
+    .p-qr-label {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.16em;
+      text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 1.2rem;
+    }
+    .p-qr-box {
+      width: 240px; height: 240px; margin: 0 auto 1.2rem;
+      background: #fff; border-radius: 18px; padding: 10px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow:
+        0 0 0 4px rgba(212,160,23,0.3),
+        0 0 0 8px rgba(212,160,23,0.1),
+        0 16px 48px rgba(0,0,0,0.5);
+    }
+    .p-qr-box img { width: 100%; height: 100%; display: block; object-fit: contain; border-radius: 6px; }
+    .p-qr-box .qr-ph { color: #bbb; font-size: 0.72rem; text-align: center; line-height: 1.6; padding: 10px; }
+    .p-qr-cta {
+      font-size: 0.78rem; color: rgba(255,255,255,0.45); line-height: 1.65;
+    }
+    .p-qr-cta strong { color: rgba(255,255,255,0.75); }
+
+    /* ── Benefits ── */
     .p-benefits { padding: 0 1.6rem 1.6rem; }
     .p-benefit {
       display: flex; align-items: flex-start; gap: 12px;
-      padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+      padding: 0.8rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);
     }
     .p-benefit:last-child { border-bottom: none; }
-    .p-bicon {
-      width: 32px; height: 32px; background: rgba(212,160,23,0.1);
-      border: 1px solid rgba(212,160,23,0.18); border-radius: 9px;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+    .p-bico {
+      width: 36px; height: 36px; flex-shrink: 0; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; margin-top: 1px;
     }
-    .p-bicon i { color: #d4a017; font-size: 0.78rem; }
-    .p-btitle { font-size: 0.85rem; font-weight: 700; color: #fff; line-height: 1.3; }
-    .p-bdesc { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 3px; line-height: 1.5; }
+    .p-bico i { font-size: 0.88rem; }
+    .p-bico.gold   { background: rgba(212,160,23,0.15); border: 1px solid rgba(212,160,23,0.25); }
+    .p-bico.gold i { color: #FFD700; }
+    .p-bico.blue   { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.25); }
+    .p-bico.blue i { color: #60a5fa; }
+    .p-bico.green  { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.25); }
+    .p-bico.green i{ color: #4ade80; }
+    .p-bt { font-size: 0.86rem; font-weight: 700; color: #fff; line-height: 1.3; }
+    .p-bd { font-size: 0.74rem; color: rgba(255,255,255,0.42); margin-top: 3px; line-height: 1.5; }
 
-    .p-contact-section {
-      margin: 0 1.6rem 1.6rem; padding: 1rem 1.2rem;
-      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 13px;
+    /* ── WhatsApp contact (green) ── */
+    .p-contact-zone {
+      margin: 0 1.6rem 1.6rem;
+      background: linear-gradient(135deg, rgba(37,211,102,0.12), rgba(18,140,126,0.08));
+      border: 1px solid rgba(37,211,102,0.3); border-radius: 16px; padding: 1.1rem 1.2rem;
     }
-    .p-contact-title { font-size: 0.67rem; font-weight: 700; color: rgba(255,255,255,0.28); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.8rem; }
-    .p-contact-item { display: flex; align-items: center; gap: 10px; padding: 5px 0; }
-    .p-cicon { width: 30px; height: 30px; background: rgba(212,160,23,0.09); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .p-cicon i { color: #d4a017; font-size: 0.75rem; }
-    .p-contact-item span { font-size: 0.84rem; color: rgba(255,255,255,0.72); }
+    .p-wa-header {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 0.8rem;
+    }
+    .p-wa-icon {
+      width: 32px; height: 32px; background: #25D366; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 12px rgba(37,211,102,0.4);
+    }
+    .p-wa-icon i { color: #fff; font-size: 1rem; }
+    .p-wa-title { font-size: 0.72rem; font-weight: 700; color: #4ade80; text-transform: uppercase; letter-spacing: 0.1em; }
+    .p-contact-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+    .p-ci {
+      width: 28px; height: 28px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .p-ci.wa  { background: rgba(37,211,102,0.2); }
+    .p-ci.wa i{ color: #4ade80; font-size: 0.82rem; }
+    .p-ci.ph  { background: rgba(255,255,255,0.08); }
+    .p-ci.ph i{ color: rgba(255,255,255,0.5); font-size: 0.75rem; }
+    .p-ci.em  { background: rgba(255,255,255,0.08); }
+    .p-ci.em i{ color: rgba(255,255,255,0.5); font-size: 0.75rem; }
+    .p-ci.nm  { background: rgba(212,160,23,0.15); }
+    .p-ci.nm i{ color: #d4a017; font-size: 0.75rem; }
+    .p-contact-row span { font-size: 0.85rem; color: rgba(255,255,255,0.8); font-weight: 500; }
 
+    /* ── Footer ── */
     .p-footer {
-      padding: 1rem 2rem; text-align: center;
-      border-top: 1px solid rgba(255,255,255,0.05);
-      background: rgba(212,160,23,0.03);
+      padding: 1.1rem 2rem; text-align: center;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.25);
     }
-    .p-footer-url { font-size: 0.78rem; font-weight: 700; color: #d4a017; letter-spacing: 0.04em; }
-    .p-footer-sub { font-size: 0.63rem; color: rgba(255,255,255,0.2); margin-top: 3px; }
+    .p-footer-url {
+      font-size: 0.8rem; font-weight: 800; letter-spacing: 0.05em;
+      background: linear-gradient(90deg, #d4a017, #FFD700, #d4a017);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .p-footer-sub { font-size: 0.62rem; color: rgba(255,255,255,0.22); margin-top: 4px; letter-spacing: 0.04em; }
 
+    /* ── Bottom bar ── */
+    .p-bot-bar {
+      height: 4px;
+      background: linear-gradient(90deg, #8B6000, #d4a017, #FFD700, #d4a017, #8B6000);
+    }
+
+    /* ── Toast ── */
     .toast {
       position: fixed; bottom: 2rem; right: 2rem;
-      background: #16162a; border: 1px solid rgba(212,160,23,0.3); color: #fff;
-      padding: 0.75rem 1.4rem; border-radius: 10px; font-size: 0.85rem;
+      background: #1a1a30; border: 1px solid rgba(212,160,23,0.3); color: #fff;
+      padding: 0.72rem 1.3rem; border-radius: 10px; font-size: 0.84rem;
       transform: translateY(120px); opacity: 0; transition: transform 0.3s, opacity 0.3s; z-index: 9999;
       display: flex; align-items: center; gap: 8px;
     }
     .toast.show { transform: translateY(0); opacity: 1; }
-    .toast i { color: #d4a017; }
+    .toast i { color: #4ade80; }
 
     @media print {
       body { background: #fff !important; }
       .topbar, .panel, .toast { display: none !important; }
-      .page-wrap { display: block; padding: 0; }
+      .page-wrap { display: block; padding: 0; max-width: none; }
       .poster-wrap { display: block !important; }
-      .poster-frame { max-width: 100%; border: none; box-shadow: none; border-radius: 0; }
+      .poster-frame { max-width: 100%; border-radius: 0; box-shadow: none; }
     }
   </style>
 </head>
@@ -220,147 +308,133 @@
 
 <div class="page-wrap">
 
-  <!-- ── Left: Form ── -->
+  <!-- ── Form ── -->
   <div class="panel">
     <div class="panel-title"><i class="fas fa-user-circle"></i> Agent Details</div>
 
     <div class="search-wrap">
-      <i class="fas fa-search search-icon"></i>
-      <input type="text" id="userSearch" placeholder="Search user by name, email or phone..." oninput="searchUsers(this.value)" autocomplete="off">
-      <div class="search-results" id="searchResults"></div>
+      <i class="fas fa-search si"></i>
+      <input type="text" id="userSearch" placeholder="Search by name, email or phone..." oninput="searchUsers(this.value)" autocomplete="off">
+      <div class="sr-box" id="searchResults"></div>
     </div>
 
-    <div class="field-grid">
-      <div class="field">
-        <label>Agent Name</label>
-        <input type="text" id="posterName" placeholder="e.g. Jane Mwangi">
-      </div>
-      <div class="field">
-        <label>WhatsApp <span class="req">*</span></label>
-        <input type="text" id="posterWhatsapp" placeholder="e.g. 0712 345 678">
-      </div>
-      <div class="field">
-        <label>Phone</label>
-        <input type="text" id="posterPhone" placeholder="e.g. 0712 345 678">
-      </div>
-      <div class="field">
-        <label>Email</label>
-        <input type="text" id="posterEmail" placeholder="e.g. jane@email.com">
-      </div>
-      <div class="field full">
-        <label>Referral Code <span style="color:rgba(255,255,255,0.25);font-weight:400;">(determines QR link)</span></label>
-        <input type="text" id="posterRefCode" placeholder="e.g. JANE2024" oninput="updateRefLink()">
-      </div>
-      <div class="field full">
-        <label>QR Signup Link (auto-generated)</label>
-        <input type="text" id="posterRefLink" readonly placeholder="Auto-generated from referral code">
-      </div>
+    <div class="fg">
+      <div class="f"><label>Agent Name</label><input type="text" id="posterName" placeholder="e.g. Jane Mwangi"></div>
+      <div class="f"><label>WhatsApp <span class="req">*</span></label><input type="text" id="posterWhatsapp" placeholder="e.g. 0712 345 678"></div>
+      <div class="f"><label>Phone</label><input type="text" id="posterPhone" placeholder="e.g. 0712 345 678"></div>
+      <div class="f"><label>Email</label><input type="text" id="posterEmail" placeholder="e.g. jane@email.com"></div>
+      <div class="f full"><label>Referral Code <span style="color:rgba(255,255,255,0.2);font-weight:400;text-transform:none;">(encodes into QR)</span></label><input type="text" id="posterRefCode" placeholder="e.g. JANE2024" oninput="updateRefLink()"></div>
+      <div class="f full"><label>QR Link (auto)</label><input type="text" id="posterRefLink" readonly placeholder="Auto-generated"></div>
     </div>
 
-    <div class="qr-preview-note" id="qrNote">
-      <i class="fas fa-qrcode"></i> QR will direct to: <span id="qrNoteUrl"></span>
-    </div>
+    <div class="qr-note" id="qrNote"><i class="fas fa-qrcode"></i> QR → <span id="qrNoteUrl"></span></div>
 
     <div class="btn-row">
-      <button class="btn btn-gold" onclick="generatePoster()">
-        <i class="fas fa-magic"></i> Generate Poster
-      </button>
-      <button class="btn btn-ghost" onclick="clearForm()" title="Clear">
-        <i class="fas fa-eraser"></i>
-      </button>
+      <button class="btn btn-gold" onclick="generatePoster()"><i class="fas fa-magic"></i> Generate Poster</button>
+      <button class="btn btn-dim" onclick="clearForm()" title="Clear"><i class="fas fa-eraser"></i></button>
     </div>
-    <div class="btn-row">
-      <button class="btn btn-ghost" id="downloadBtn" onclick="downloadPoster()" disabled style="flex:1;justify-content:center;">
-        <i class="fas fa-download"></i> Download
-      </button>
-      <button class="btn btn-ghost" id="printBtn" onclick="window.print()" disabled style="flex:1;justify-content:center;">
-        <i class="fas fa-print"></i> Print
-      </button>
+    <div class="btn-row" style="margin-top:0.5rem;">
+      <button class="btn btn-dim" id="downloadBtn" onclick="downloadPoster()" disabled style="flex:1;justify-content:center;"><i class="fas fa-download"></i> Download</button>
+      <button class="btn btn-dim" id="printBtn" onclick="window.print()" disabled style="flex:1;justify-content:center;"><i class="fas fa-print"></i> Print</button>
     </div>
   </div>
 
-  <!-- ── Right: Poster ── -->
+  <!-- ── Poster Preview ── -->
   <div class="poster-wrap" id="posterWrap">
     <div class="poster-frame" id="posterFrame">
 
-      <div class="p-stripe"></div>
+      <div class="p-top-bar"></div>
+      <div class="p-deco"></div>
 
+      <!-- Header -->
       <div class="p-header">
-        <img src="/public/logo-transparent.png" alt="AfricaBased" class="p-logo" crossorigin="anonymous"
-             onerror="this.style.display='none'">
+        <div class="p-logo-wrap">
+          <img src="/public/logo-transparent.png" alt="AfricaBased" class="p-logo" crossorigin="anonymous" onerror="this.parentElement.innerHTML='<i class=\'fas fa-globe\' style=\'font-size:2.2rem;color:#d4a017;\'></i>'">
+        </div>
         <div class="p-brand">AfricaBased</div>
         <div class="p-tagline">Africa's Trusted Investment Platform</div>
       </div>
 
+      <!-- Hero -->
       <div class="p-hero">
-        <div class="p-badge"><i class="fas fa-chart-line"></i> Verified Daily Returns</div>
+        <div class="p-divider"></div>
         <div class="p-headline">
-          Grow Your Wealth.<br><em>Earn Every Single Day.</em>
+          Grow Your Wealth.<br><em>Earn Returns Every Day.</em>
         </div>
-        <div class="p-body">
-          AfricaBased gives you access to high-yield investment plans designed for everyday Africans.
-          Start with as little as KES 500, earn daily returns, and withdraw directly to M-Pesa — with full transparency at every step.
+        <div class="p-sub">
+          Thousands of Africans are building financial freedom through AfricaBased's
+          smart, transparent investment plans — starting from as little as KES 500.
         </div>
+
         <div class="p-stats">
           <div class="p-stat">
-            <div class="p-stat-val">10,000+</div>
-            <div class="p-stat-lbl">Active Investors</div>
+            <div class="p-stat-v">10,000+</div>
+            <div class="p-stat-l">Active Investors</div>
           </div>
           <div class="p-stat">
-            <div class="p-stat-val">Daily</div>
-            <div class="p-stat-lbl">Profit Payouts</div>
+            <div class="p-stat-v">Daily</div>
+            <div class="p-stat-l">Profit Payouts</div>
           </div>
           <div class="p-stat">
-            <div class="p-stat-val">KES 500</div>
-            <div class="p-stat-lbl">Minimum Entry</div>
+            <div class="p-stat-v">KES 500</div>
+            <div class="p-stat-l">Minimum Entry</div>
           </div>
         </div>
       </div>
 
+      <!-- Benefits -->
       <div class="p-benefits">
         <div class="p-benefit">
-          <div class="p-bicon"><i class="fas fa-mobile-alt"></i></div>
+          <div class="p-bico gold"><i class="fas fa-bolt"></i></div>
           <div>
-            <div class="p-btitle">Instant M-Pesa Deposits & Withdrawals</div>
-            <div class="p-bdesc">Fund your account and access your earnings in seconds — no bank queues, no delays.</div>
+            <div class="p-bt">Instant M-Pesa Deposits & Withdrawals</div>
+            <div class="p-bd">Fund your account and access your profits in seconds — no delays, no queues.</div>
           </div>
         </div>
         <div class="p-benefit">
-          <div class="p-bicon"><i class="fas fa-shield-alt"></i></div>
+          <div class="p-bico blue"><i class="fas fa-shield-alt"></i></div>
           <div>
-            <div class="p-btitle">Capital Protection Guarantee</div>
-            <div class="p-bdesc">Your principal investment is secured. Withdraw your full capital at the end of any plan cycle.</div>
+            <div class="p-bt">Your Capital is Fully Protected</div>
+            <div class="p-bd">Withdraw your full principal at the end of any plan cycle with complete peace of mind.</div>
           </div>
         </div>
         <div class="p-benefit">
-          <div class="p-bicon"><i class="fas fa-users"></i></div>
+          <div class="p-bico green"><i class="fas fa-users"></i></div>
           <div>
-            <div class="p-btitle">Referral Rewards Programme</div>
-            <div class="p-bdesc">Earn a bonus commission every time a referred member makes their first investment.</div>
+            <div class="p-bt">Earn Commission on Every Referral</div>
+            <div class="p-bd">Invite friends and earn a bonus every time they make their first investment.</div>
           </div>
         </div>
       </div>
 
-      <div class="p-qr-section">
-        <div class="p-qr-eyebrow"><i class="fas fa-qrcode"></i> &nbsp; Scan to Open a Free Account Instantly</div>
-        <div class="p-qr-frame" id="posterQRFrame">
-          <div class="qr-placeholder"><i class="fas fa-qrcode" style="font-size:3rem;color:#ccc;display:block;margin-bottom:8px;"></i>Generate poster<br>to see QR code</div>
+      <!-- QR Code -->
+      <div class="p-qr-zone">
+        <div class="p-qr-label"><i class="fas fa-qrcode"></i> &nbsp; Scan to Open a Free Account Instantly</div>
+        <div class="p-qr-box" id="posterQRBox">
+          <div class="qr-ph"><i class="fas fa-qrcode" style="font-size:3rem;color:#ccc;display:block;margin-bottom:8px;"></i>Generate poster<br>to see QR code</div>
         </div>
-        <div class="p-cta-line">
-          Point your camera at the QR code above to register and start earning.<br>
-          <strong>No fees. No experience required. Start in under 2 minutes.</strong>
+        <div class="p-qr-cta">
+          Point your phone camera at the QR code to register in under 2 minutes.<br>
+          <strong>Free to join. No hidden fees. Start earning from day one.</strong>
         </div>
       </div>
 
-      <div class="p-contact-section" id="posterContactSection" style="display:none;">
-        <div class="p-contact-title"><i class="fas fa-headset"></i> &nbsp; Speak to Your Agent</div>
+      <!-- WhatsApp Contact -->
+      <div class="p-contact-zone" id="posterContactZone" style="display:none;">
+        <div class="p-wa-header">
+          <div class="p-wa-icon"><i class="fab fa-whatsapp"></i></div>
+          <div class="p-wa-title">Contact Your Agent</div>
+        </div>
         <div id="posterContact"></div>
       </div>
 
+      <!-- Footer -->
       <div class="p-footer">
         <div class="p-footer-url">www.africabasedtech.com</div>
         <div class="p-footer-sub">Financial freedom through smart, consistent investing.</div>
       </div>
+
+      <div class="p-bot-bar"></div>
 
     </div>
   </div>
@@ -396,9 +470,8 @@
         (u.phone || '').includes(q)
       ).slice(0, 10);
       if (!matches.length) {
-        box.innerHTML = '<div class="sr-item"><span class="sr-meta">No matching users found</span></div>';
-        box.classList.add('show');
-        return;
+        box.innerHTML = '<div class="sr-item"><div><div class="sr-name" style="color:rgba(255,255,255,0.4);">No users found</div></div></div>';
+        box.classList.add('show'); return;
       }
       box.innerHTML = matches.map(u => `
         <div class="sr-item" onclick="selectUser(${JSON.stringify(u).replace(/"/g,'&quot;')})">
@@ -406,31 +479,29 @@
             <div class="sr-name">${u.username || 'Unknown'}</div>
             <div class="sr-meta">${u.email || ''}${u.phone ? ' · ' + u.phone : ''}</div>
           </div>
-          ${u.referral_code ? `<span class="sr-badge">${u.referral_code}</span>` : ''}
+          ${u.referral_code ? `<span class="sr-tag">${u.referral_code}</span>` : ''}
         </div>
       `).join('');
       box.classList.add('show');
     }, 200);
   }
 
-  function selectUser(user) {
-    document.getElementById('posterName').value       = user.username || '';
-    document.getElementById('posterWhatsapp').value   = user.phone || '';
-    document.getElementById('posterPhone').value      = user.phone || '';
-    document.getElementById('posterEmail').value      = user.email || '';
-    document.getElementById('posterRefCode').value    = user.referral_code || '';
+  function selectUser(u) {
+    document.getElementById('posterName').value     = u.username || '';
+    document.getElementById('posterWhatsapp').value = u.phone || '';
+    document.getElementById('posterPhone').value    = u.phone || '';
+    document.getElementById('posterEmail').value    = u.email || '';
+    document.getElementById('posterRefCode').value  = u.referral_code || '';
     updateRefLink();
     document.getElementById('searchResults').classList.remove('show');
-    document.getElementById('userSearch').value = user.username || user.email || '';
-    showToast('Loaded: ' + (user.username || user.email || 'user'));
+    document.getElementById('userSearch').value = u.username || u.email || '';
+    showToast('Loaded: ' + (u.username || u.email || 'user'));
   }
 
   function updateRefLink() {
     const code = document.getElementById('posterRefCode').value.trim();
     const host = window.location.origin;
-    const link = code
-      ? host + '/register?ref=' + encodeURIComponent(code)
-      : host + '/register';
+    const link = code ? host + '/register?ref=' + encodeURIComponent(code) : host + '/register';
     document.getElementById('posterRefLink').value = link;
     const note = document.getElementById('qrNote');
     document.getElementById('qrNoteUrl').textContent = link;
@@ -452,38 +523,47 @@
 
     document.getElementById('posterRefLink').value = refLink;
 
+    /* Build contact rows */
     const contactEl  = document.getElementById('posterContact');
-    const contactSec = document.getElementById('posterContactSection');
-    const items = [];
-    if (name)  items.push(`<div class="p-contact-item"><div class="p-cicon"><i class="fas fa-user"></i></div><span>${name}</span></div>`);
-    items.push(`<div class="p-contact-item"><div class="p-cicon"><i class="fab fa-whatsapp"></i></div><span>${whatsapp}</span></div>`);
-    if (phone && phone !== whatsapp) items.push(`<div class="p-contact-item"><div class="p-cicon"><i class="fas fa-phone"></i></div><span>${phone}</span></div>`);
-    if (email) items.push(`<div class="p-contact-item"><div class="p-cicon"><i class="fas fa-envelope"></i></div><span>${email}</span></div>`);
-    contactEl.innerHTML  = items.join('');
-    contactSec.style.display = items.length ? 'block' : 'none';
+    const contactZone = document.getElementById('posterContactZone');
+    const rows = [];
 
+    if (name)
+      rows.push(`<div class="p-contact-row"><div class="p-ci nm"><i class="fas fa-user"></i></div><span>${name}</span></div>`);
+
+    rows.push(`<div class="p-contact-row"><div class="p-ci wa"><i class="fab fa-whatsapp"></i></div><span>${whatsapp}</span></div>`);
+
+    if (phone && phone !== whatsapp)
+      rows.push(`<div class="p-contact-row"><div class="p-ci ph"><i class="fas fa-phone"></i></div><span>${phone}</span></div>`);
+
+    if (email)
+      rows.push(`<div class="p-contact-row"><div class="p-ci em"><i class="fas fa-envelope"></i></div><span>${email}</span></div>`);
+
+    contactEl.innerHTML  = rows.join('');
+    contactZone.style.display = 'block';
+
+    /* Show poster */
     document.getElementById('posterWrap').classList.add('show');
-    document.getElementById('printBtn').disabled   = false;
+    document.getElementById('printBtn').disabled    = false;
     document.getElementById('downloadBtn').disabled = false;
 
-    const qrFrame = document.getElementById('posterQRFrame');
-    qrFrame.innerHTML = '<div class="qr-placeholder"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#d4a017;"></i></div>';
+    /* Load QR from server */
+    const qrBox = document.getElementById('posterQRBox');
+    qrBox.innerHTML = '<div class="qr-ph"><i class="fas fa-spinner fa-spin" style="font-size:2.2rem;color:#d4a017;"></i></div>';
 
-    const encodedUrl = encodeURIComponent(refLink);
-    const qrSrc = `/api/qr?url=${encodedUrl}`;
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.onload = () => {
-      qrFrame.innerHTML = '';
-      qrFrame.appendChild(img);
+      qrBox.innerHTML = '';
+      img.style.cssText = 'width:100%;height:100%;display:block;object-fit:contain;border-radius:6px;';
+      qrBox.appendChild(img);
       showToast('Poster generated!');
     };
     img.onerror = () => {
-      qrFrame.innerHTML = '<div class="qr-placeholder" style="color:#f87171;">QR code unavailable.<br>Check server connection.</div>';
-      showToast('Poster ready (QR failed to load)');
+      qrBox.innerHTML = '<div class="qr-ph" style="color:#f87171;">QR unavailable.<br>Check server.</div>';
+      showToast('Poster ready (QR failed)');
     };
-    img.src = qrSrc;
-    img.alt = 'Scan to register';
-    img.style.cssText = 'width:100%;height:100%;display:block;object-fit:contain;border-radius:4px;';
+    img.src = '/api/qr?url=' + encodeURIComponent(refLink);
   }
 
   async function downloadPoster() {
@@ -492,10 +572,13 @@
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rendering...';
     try {
       const { default: html2canvas } = await import('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/+esm');
-      const frame = document.getElementById('posterFrame');
-      const canvas = await html2canvas(frame, { backgroundColor: '#09090e', scale: 2.5, useCORS: true, allowTaint: false });
+      const canvas = await html2canvas(document.getElementById('posterFrame'), {
+        scale: 3, useCORS: true, allowTaint: false,
+        backgroundColor: null,
+        logging: false
+      });
       const a = document.createElement('a');
-      a.href = canvas.toDataURL('image/png');
+      a.href  = canvas.toDataURL('image/png');
       a.download = 'AfricaBased_Poster.png';
       document.body.appendChild(a); a.click(); a.remove();
       showToast('Poster downloaded!');
@@ -509,12 +592,11 @@
   }
 
   function clearForm() {
-    ['userSearch','posterName','posterWhatsapp','posterPhone','posterEmail','posterRefCode','posterRefLink'].forEach(id => {
-      document.getElementById(id).value = '';
-    });
+    ['userSearch','posterName','posterWhatsapp','posterPhone','posterEmail','posterRefCode','posterRefLink']
+      .forEach(id => { document.getElementById(id).value = ''; });
     document.getElementById('qrNote').classList.remove('show');
     document.getElementById('posterWrap').classList.remove('show');
-    document.getElementById('printBtn').disabled   = true;
+    document.getElementById('printBtn').disabled    = true;
     document.getElementById('downloadBtn').disabled = true;
     document.getElementById('searchResults').classList.remove('show');
   }
