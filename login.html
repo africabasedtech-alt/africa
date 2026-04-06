@@ -548,7 +548,7 @@
     </div>
 
     <script type="module">
-    import { signIn, getSession, getDeviceFingerprint } from './js/api-auth.js';
+    import { signIn, getSession } from './js/api-auth.js';
     import { isBiometricAvailable } from './js/biometric.js';
 
     const SIMPLEWEBAUTHN_CDN = 'https://unpkg.com/@simplewebauthn/browser@13/dist/bundle/index.es5.umd.min.js';
@@ -736,9 +736,8 @@
         btnText.innerHTML = '<span class="spinner"></span> Signing in...';
 
         try {
-            const fp = await getDeviceFingerprint().catch(() => null);
             const remember = document.getElementById('remember30')?.checked || false;
-            const { data, error } = await signIn(identifier, password, fp, remember);
+            const { data, error } = await signIn(identifier, password, remember);
             if (error) {
                 errorAlert.textContent = error.message || 'Incorrect credentials. Please try again.';
                 errorAlert.style.display = 'block';

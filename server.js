@@ -465,7 +465,6 @@ app.post('/api/auth/send-otp', otpLimiter, async (req, res) => {
       otp, expires, attempts: 0,
       username, password_hash,
       referral_code: sanitizeString(req.body.referral_code || ''),
-      fingerprint: typeof req.body.fingerprint === 'string' ? req.body.fingerprint.slice(0, 128) : null,
     });
 
     await sendMail({
@@ -515,8 +514,6 @@ app.post('/api/auth/register', registerLimiter, async (req, res) => {
   const phone         = sanitizeString(req.body.phone || '');
   const phoneVal      = phone || null;
   const referral_code = sanitizeString(req.body.referral_code || '') || stored.referral_code || '';
-  const fingerprint   = (typeof req.body.fingerprint === 'string' ? req.body.fingerprint.slice(0, 128) : null) || stored.fingerprint || null;
-
   if (!username) {
     return res.status(400).json({ error: 'Username is required. Please go back and fill in the registration form.' });
   }
@@ -542,8 +539,8 @@ app.post('/api/auth/register', registerLimiter, async (req, res) => {
 
     const referred_by   = referral_code ? referral_code.toUpperCase() : null;
     const result = await pool.query(
-      'INSERT INTO users (username, phone, email, password_hash, referred_by, device_fingerprint) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, username, phone, email, created_at',
-      [username, phoneVal, email, password_hash, referred_by, fingerprint]
+      'INSERT INTO users (username, phone, email, password_hash, referred_by) VALUES ($1,$2,$3,$4,$5) RETURNING id, username, phone, email, created_at',
+      [username, phoneVal, email, password_hash, referred_by]
     );
     const user = result.rows[0];
 
@@ -582,8 +579,6 @@ const LOCKOUT_MINUTES = 15;
 app.post('/api/auth/login', authLimiter, async (req, res) => {
   const identifier  = sanitizeString(req.body.identifier || '');
   const password    = req.body.password || '';
-  const fingerprint = typeof req.body.fingerprint === 'string' ? req.body.fingerprint.slice(0, 128) : null;
-
   if (!identifier || !password) {
     return res.status(400).json({ error: 'Please enter your credentials' });
   }
@@ -630,11 +625,6 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 
     // Reset failed attempts on success
     await pool.query('UPDATE users SET failed_login_attempts=0, locked_until=NULL WHERE id=$1', [user.id]);
-
-    // Optionally update fingerprint if provided and none stored
-    if (fingerprint && !user.device_fingerprint) {
-      await pool.query('UPDATE users SET device_fingerprint=$1 WHERE id=$2', [fingerprint, user.id]);
-    }
 
     const token   = jwt.sign({ userId: user.id, jti: crypto.randomBytes(16).toString('hex') }, JWT_SECRET, { expiresIn: '7d' });
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);

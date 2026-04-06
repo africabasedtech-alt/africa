@@ -983,14 +983,6 @@
                     </div>
 
                     <div class="check-row">
-                        <input type="checkbox" id="fingerprintOpt">
-                        <label for="fingerprintOpt">
-                            <i class="fas fa-fingerprint" style="color:#d4a017;margin-right:5px;"></i>
-                            Enable device fingerprinting for added security <span class="opt-badge">OPTIONAL</span>
-                        </label>
-                    </div>
-
-                    <div class="check-row">
                         <input type="checkbox" id="terms">
                         <label for="terms">I agree to the <a href="/terms" target="_blank">Terms &amp; Conditions</a> and <a href="/terms" target="_blank">Privacy Policy</a></label>
                     </div>
@@ -1010,7 +1002,7 @@
     </div>
 
     <script type="module">
-    import { signUp, sendRegistrationOtp, getSession, getDeviceFingerprint } from './js/api-auth.js';
+    import { signUp, sendRegistrationOtp, getSession } from './js/api-auth.js';
 
     (async () => {
         const { session } = await getSession();
@@ -1138,7 +1130,6 @@
         const confirm          = document.getElementById('confirmPassword').value;
         const referral         = document.getElementById('referral').value.trim();
         const terms            = document.getElementById('terms').checked;
-        const fingerprintOpted = document.getElementById('fingerprintOpt').checked;
 
         let valid = true;
         if (!username || username.length < 3)              { showErr('usernameErr', 'Username must be at least 3 characters'); valid = false; }
@@ -1158,7 +1149,6 @@
         btnText.innerHTML = '<span class="spinner"></span> Sending code...';
 
         try {
-            const fp = fingerprintOpted ? await getDeviceFingerprint() : null;
             const { data, error } = await sendRegistrationOtp(username, email, password);
             if (error) {
                 errorAlert.textContent  = error.message || 'Failed to send code. Please try again.';
@@ -1167,7 +1157,7 @@
                 btnText.textContent = 'Create Account';
                 return;
             }
-            _pendingReg = { username, email, password, referral: referral || undefined, fp };
+            _pendingReg = { username, email, password, referral: referral || undefined };
             try { sessionStorage.setItem('_abPendingReg', JSON.stringify(_pendingReg)); } catch(e) {}
             showOtpModal(email);
             btn.disabled  = false;
@@ -1251,8 +1241,7 @@
         const email = _pendingReg.email || '';
         const password = _pendingReg.password || '';
         const referral = _pendingReg.referral || '';
-        const fp = _pendingReg.fp || null;
-        const { data, error } = await signUp(username, null, email, password, otp, referral, fp);
+        const { data, error } = await signUp(username, null, email, password, otp, referral);
         if (error) {
             document.getElementById('otpErr').textContent = error.message || 'Verification failed.';
             document.getElementById('otpErr').style.display = 'block';

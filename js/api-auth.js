@@ -72,42 +72,6 @@ export function stopIdleGuard() {
   _IDLE_EVENTS.forEach(e => window.removeEventListener(e, _resetIdleTimer));
 }
 
-// ─── Device Fingerprint ───────────────────────────────────────────────────────
-export async function getDeviceFingerprint() {
-  try {
-    const parts = [
-      navigator.userAgent,
-      screen.width + 'x' + screen.height + 'x' + screen.colorDepth,
-      Intl.DateTimeFormat().resolvedOptions().timeZone,
-      navigator.language,
-      navigator.hardwareConcurrency || 0,
-      navigator.platform || '',
-    ];
-    try {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      ctx.textBaseline = 'top';
-      ctx.font = '14px Arial';
-      ctx.fillStyle = '#f60';
-      ctx.fillRect(125, 1, 62, 20);
-      ctx.fillStyle = '#069';
-      ctx.fillText('AfricaBased🌍', 2, 15);
-      ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
-      ctx.fillText('AfricaBased🌍', 4, 17);
-      parts.push(canvas.toDataURL().slice(-50));
-    } catch (_) {}
-    const raw = parts.join('|');
-    let h = 0x811c9dc5;
-    for (let i = 0; i < raw.length; i++) {
-      h ^= raw.charCodeAt(i);
-      h = (h * 0x01000193) >>> 0;
-    }
-    return h.toString(16).padStart(8, '0');
-  } catch (_) {
-    return null;
-  }
-}
-
 // ─── Sign Up ─────────────────────────────────────────────────────────────────
 export async function sendRegistrationOtp(username, email, password) {
   const res = await apiFetch('/api/auth/send-otp', {
@@ -119,10 +83,9 @@ export async function sendRegistrationOtp(username, email, password) {
   return { data };
 }
 
-export async function signUp(username, phone, email, password, otp, referral_code, fingerprint) {
+export async function signUp(username, phone, email, password, otp, referral_code) {
   const body = { username, phone, email, password, otp };
   if (referral_code) body.referral_code = referral_code;
-  if (fingerprint)   body.fingerprint   = fingerprint;
   const res = await apiFetch('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify(body)
@@ -136,9 +99,8 @@ export async function signUp(username, phone, email, password, otp, referral_cod
 }
 
 // ─── Sign In ─────────────────────────────────────────────────────────────────
-export async function signIn(identifier, password, fingerprint, remember) {
+export async function signIn(identifier, password, remember) {
   const body = { identifier, password };
-  if (fingerprint) body.fingerprint = fingerprint;
   const res = await apiFetch('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify(body)
@@ -230,6 +192,6 @@ export async function updateProfile(fields) {
 // ─── Expose on window for non-module scripts ─────────────────────────────────
 if (typeof window !== 'undefined') {
   window.apiAuth = { signUp, signIn, signOut, getCurrentUser, getSession, checkAuthState,
-    getProfile, updateProfile, getToken, getDeviceFingerprint, startIdleGuard, stopIdleGuard,
+    getProfile, updateProfile, getToken, startIdleGuard, stopIdleGuard,
     sendRegistrationOtp };
 }
