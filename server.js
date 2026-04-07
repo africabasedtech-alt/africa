@@ -1263,6 +1263,16 @@ app.post('/api/invest', requireAuth, rejectIfImpersonated, async (req, res) => {
     const totalUnits = parseInt(product.total_units) || 0;
     const maxPerUser = parseInt(product.max_units_per_user) || 1;
 
+    if (parseFloat(product.price) === 0) {
+      const { rows: freeCheck } = await pool.query(
+        "SELECT COUNT(*)::int AS cnt FROM investments WHERE user_id=$1::uuid AND product_name=$2 AND status='active'",
+        [userId, product_name]
+      );
+      if (freeCheck[0].cnt > 0) {
+        return res.status(400).json({ error: 'You have already activated this free plan. Each free plan can only be used once.' });
+      }
+    }
+
     const { rows: userInvRows } = await pool.query(
       "SELECT COALESCE(SUM(units),0)::int AS user_units FROM investments WHERE user_id=$1::uuid AND product_name=$2 AND status='active'",
       [userId, product_name]
@@ -2799,6 +2809,20 @@ app.get('/api/admin/referrals', requireSuperAdmin, async (req, res) => {
         expires_at TIMESTAMPTZ NOT NULL
       )`,
       `ALTER TABLE products ADD COLUMN IF NOT EXISTS used_units INTEGER NOT NULL DEFAULT 0`,
+      `ALTER TABLE investments ALTER COLUMN start_date TYPE TIMESTAMPTZ USING start_date::TIMESTAMPTZ`,
+      `ALTER TABLE investments ALTER COLUMN end_date TYPE TIMESTAMPTZ USING end_date::TIMESTAMPTZ`,
+      `DELETE FROM investments
+       WHERE id IN (
+         SELECT i.id FROM investments i
+         JOIN products p ON p.name = i.product_name
+         WHERE p.price = 0 AND i.status = 'active'
+       )
+       AND id NOT IN (
+         SELECT MIN(i2.id) FROM investments i2
+         JOIN products p2 ON p2.name = i2.product_name
+         WHERE p2.price = 0 AND i2.status = 'active'
+         GROUP BY i2.user_id, i2.product_name
+       )`,
       `INSERT INTO products (name, description, price, daily_return, duration_days, category, invest_limit, total_units, max_units_per_user, used_units, disabled)
        SELECT 'Starter Growth Plan',
               'Begin your investment journey with as little as KES 1,200. Earn consistent daily returns and grow your wealth with AfricaBased.',
