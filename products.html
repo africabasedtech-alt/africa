@@ -101,10 +101,21 @@
                     const totalCost = pricePerUnit * currentUnits;
                     priceEl.textContent = `KES ${totalCost.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}`;
                     if (hasUnits && totalEl) totalEl.textContent = `${currentUnits} unit${currentUnits > 1 ? 's' : ''} × KES ${pricePerUnit.toLocaleString()} = KES ${totalCost.toLocaleString()}`;
-                    walletInfo.textContent = `Available: KES ${fmt(wallet)}`;
-                    incomeInfo.textContent = `Available: KES ${fmt(income)}`;
-                    walletBtn.disabled = wallet < totalCost;
-                    incomeBtn.disabled = income < totalCost;
+
+                    const walletOk = wallet >= totalCost;
+                    const incomeOk = income >= totalCost;
+
+                    walletInfo.textContent = walletOk
+                        ? `Available: KES ${fmt(wallet)}`
+                        : `Short by KES ${fmt(totalCost - wallet)} — top up your deposit`;
+                    walletInfo.style.color = walletOk ? '' : 'rgba(248,113,113,0.9)';
+                    walletBtn.disabled = !walletOk;
+
+                    incomeInfo.textContent = incomeOk
+                        ? `Available: KES ${fmt(income)}`
+                        : `Short by KES ${fmt(totalCost - income)} — collect more earnings`;
+                    incomeInfo.style.color = incomeOk ? '' : 'rgba(248,113,113,0.9)';
+                    incomeBtn.disabled = !incomeOk;
                 }
                 updateTotals();
                 unitInput.oninput = updateTotals;
@@ -195,7 +206,12 @@
             const maxUnits = maxPerUser;
 
             if (_walletBalance < productData.price && _incomeBalance < productData.price) {
-                showMessage(`Insufficient balance.\n\nYou need at least KES ${productData.price.toLocaleString()} for 1 unit.\n\nDeposit Balance: KES ${fmt(_walletBalance)}\nEarnings Balance: KES ${fmt(_incomeBalance)}\n\nPlease deposit funds or earn more income first.`, 'error');
+                await showABModal({
+                    type: 'error',
+                    title: 'Insufficient Balance',
+                    message: `You need at least KES ${productData.price.toLocaleString()} to invest in this plan.\n\nDeposit Balance: KES ${fmt(_walletBalance)}\nEarnings Balance: KES ${fmt(_incomeBalance)}\n\nPlease top up your deposit wallet or collect more earnings first.`,
+                    confirmText: 'Got It'
+                });
                 return;
             }
 
@@ -830,6 +846,22 @@
             transition: all 0.2s; text-align: center;
         }
         .bsm-cancel-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.2); }
+        .bsm-rule-note {
+            display: flex; align-items: center; gap: 0.45rem; justify-content: center;
+            padding: 0.55rem 1.5rem;
+            font-size: 0.73rem; color: rgba(255,255,255,0.32);
+            background: rgba(255,255,255,0.015);
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            letter-spacing: 0.01em;
+        }
+        .bsm-rule-note i { color: rgba(212,160,23,0.45); font-size: 0.68rem; }
+        .bsm-source-btn:disabled .bsm-source-arrow { display: none; }
+        .bsm-insuf-badge {
+            display: none; font-size: 0.68rem; font-weight: 700; color: rgba(248,113,113,0.9);
+            background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25);
+            border-radius: 6px; padding: 1px 7px; margin-left: auto; white-space: nowrap;
+        }
+        .bsm-source-btn:disabled .bsm-insuf-badge { display: inline-block; }
 
         .product-limit-badge {
             position: absolute;
@@ -1111,6 +1143,10 @@
                     <span class="bsm-cost-label">Total Cost</span>
                     <span class="bsm-cost-value" id="bsm-price">KES 0</span>
                 </div>
+                <div class="bsm-rule-note">
+                    <i class="fas fa-shield-halved"></i>
+                    Select one funding source — balances cannot be combined
+                </div>
                 <div class="bsm-buttons">
                     <button id="bsm-wallet-btn" class="bsm-source-btn bsm-wallet">
                         <div class="bsm-source-icon"><i class="fas fa-piggy-bank"></i></div>
@@ -1118,6 +1154,7 @@
                             <div class="bsm-source-title">Deposit Balance</div>
                             <div class="bsm-source-info" id="bsm-wallet-info">Available: KES 0.00</div>
                         </div>
+                        <span class="bsm-insuf-badge">Insufficient</span>
                         <i class="fas fa-chevron-right bsm-source-arrow"></i>
                     </button>
                     <button id="bsm-income-btn" class="bsm-source-btn bsm-income">
@@ -1126,6 +1163,7 @@
                             <div class="bsm-source-title">Earnings Balance</div>
                             <div class="bsm-source-info" id="bsm-income-info">Available: KES 0.00</div>
                         </div>
+                        <span class="bsm-insuf-badge">Insufficient</span>
                         <i class="fas fa-chevron-right bsm-source-arrow"></i>
                     </button>
                 </div>
