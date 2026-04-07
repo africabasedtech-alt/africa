@@ -206,17 +206,10 @@
     <div class="login-container">
         <div class="login-header">
             <h1>Super Admin Login</h1>
-            <p>Two-factor authentication (fingerprint optional)</p>
+            <p>Enter your credentials to access the admin panel</p>
         </div>
         
         <form id="adminLoginForm" onsubmit="return validateForm(event)">
-            <div class="form-group" style="text-align:center;">
-                <button type="button" id="fingerprintBtn" disabled class="btn" style="width:auto;display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:1rem;opacity:0.45;cursor:not-allowed;position:relative;">
-                    <i class="fas fa-fingerprint"></i> Use Fingerprint
-                    <span style="background:rgba(78,205,196,0.15);border:1px solid rgba(78,205,196,0.4);color:#4ecdc4;font-size:0.62rem;font-weight:700;padding:1px 7px;border-radius:10px;letter-spacing:0.05em;">COMING SOON</span>
-                </button>
-                <div id="fingerprintStatus" style="color:var(--secondary-color);font-size:0.95em;margin-top:0.5em;"></div>
-            </div>
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" required autocomplete="off">
@@ -260,36 +253,6 @@
     </div>
 
     <script>
-        // --- Fingerprint (WebAuthn/Biometric) Authentication ---
-        let fingerprintVerified = false;
-        document.getElementById('fingerprintBtn').addEventListener('click', async function() { return; // coming soon
-            const status = document.getElementById('fingerprintStatus');
-            status.textContent = 'Waiting for fingerprint...';
-            fingerprintVerified = false;
-            if (!window.PublicKeyCredential) {
-                status.textContent = 'Fingerprint/biometric authentication not supported on this device.';
-                return;
-            }
-            try {
-                // Use WebAuthn get() for biometric auth (platform authenticator)
-                const assertion = await navigator.credentials.get({
-                    publicKey: {
-                        challenge: new Uint8Array(32),
-                        timeout: 60000,
-                        userVerification: 'required',
-                        allowCredentials: [] // Let browser pick
-                    }
-                });
-                if (assertion) {
-                    fingerprintVerified = true;
-                    status.textContent = 'Fingerprint verified! You can now login.';
-                } else {
-                    status.textContent = 'Fingerprint authentication failed.';
-                }
-            } catch (err) {
-                status.textContent = 'Fingerprint authentication failed or cancelled.';
-            }
-        });
         // Security settings
         const MAX_ATTEMPTS = 3;
         let attempts = MAX_ATTEMPTS;
@@ -338,7 +301,6 @@
 
         async function validateForm(event) {
             event.preventDefault();
-            // Fingerprint/biometric is optional. If used, fingerprintVerified will be true.
             if (isLocked) {
                 const remainingTime = Math.ceil((lockoutEndTime - Date.now()) / 1000 / 60);
                 showError(`Account is locked. Please try again in ${remainingTime} minutes.`);
