@@ -3649,32 +3649,139 @@ app.post('/api/admin/users', requireAnyAdmin, requirePrivilege('user', 'user_edi
   }
 });
 
-// Credit or debit a user's account balance
+// Credit or debit a user's balance (wallet_balance or account_balance)
 app.put('/api/admin/users/:id/balance', requireAnyAdmin, requirePrivilege('user', 'user_balance'), async (req, res) => {
-  const { amount, operation } = req.body; // operation: 'credit' | 'debit'
+  const { amount, operation, balance_type } = req.body; // balance_type: 'wallet' | 'income'
   if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
     return res.status(400).json({ error: 'Valid positive amount required' });
   }
+  const col = balance_type === 'wallet' ? 'wallet_balance' : 'account_balance';
   const delta = operation === 'debit' ? -Math.abs(Number(amount)) : Math.abs(Number(amount));
   try {
-    const result = await pool.query(
-      `UPDATE profiles SET account_balance = GREATEST(0, COALESCE(account_balance, 0) + $1), updated_at = NOW()
-       WHERE user_id = $2 RETURNING account_balance`,
+    await pool.query(
+      `INSERT INTO profiles (user_id, ${col}, updated_at) VALUES ($2::uuid, GREATEST(0,$1), NOW())
+       ON CONFLICT (user_id) DO UPDATE SET ${col} = GREATEST(0, COALESCE(profiles.${col},0) + $1), updated_at = NOW()`,
       [delta, req.params.id]
     );
-    if (!result.rows.length) {
-      // Profile row may not exist yet — insert it
-      await pool.query(
-        `INSERT INTO profiles (user_id, account_balance, updated_at) VALUES ($1::uuid, GREATEST(0,$2), NOW())
-         ON CONFLICT (user_id) DO UPDATE SET account_balance = GREATEST(0, profiles.account_balance + $2), updated_at = NOW()`,
-        [req.params.id, delta]
-      );
-    }
-    const final = await pool.query('SELECT account_balance FROM profiles WHERE user_id=$1', [req.params.id]);
-    res.json({ success: true, account_balance: final.rows[0]?.account_balance || 0 });
+    const final = await pool.query('SELECT account_balance, COALESCE(wallet_balance,0) AS wallet_balance FROM profiles WHERE user_id=$1', [req.params.id]);
+    res.json({ success: true, account_balance: final.rows[0]?.account_balance || 0, wallet_balance: final.rows[0]?.wallet_balance || 0 });
   } catch (e) {
     console.error('Balance update error:', e);
     res.status(500).json({ error: 'Failed to update balance' });
+  }
+});
+
+// Transfer balance from one user to another
+app.post('/api/admin/users/transfer', requireAnyAdmin, requirePrivilege('user', 'user_balance'), async (req, res) => {
+  const { from_user_id, to_user_id, amount, from_type, to_type } = req.body;
+  // from_type / to_type: 'wallet' | 'income'
+  if (!from_user_id || !to_user_id || !amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+    return res.status(400).json({ error: 'from_user_id, to_user_id and a valid amount are required' });
+  }
+  if (from_user_id === to_user_id) {
+    return res.status(400).json({ error: 'Source and destination users must be different' });
+  }
+  const fromCol = from_type === 'wallet' ? 'wallet_balance' : 'account_balance';
+  const toCol   = to_type   === 'wallet' ? 'wallet_balance' : 'account_balance';
+  const amt = Math.abs(Number(amount));
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const fromProf = await client.query(`SELECT COALESCE(${fromCol},0) AS bal FROM profiles WHERE user_id=$1::uuid`, [from_user_id]);
+    if (!fromProf.rows.length || parseFloat(fromProf.rows[0].bal) < amt) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: `Insufficient ${fromCol === 'wallet_balance' ? 'deposit' : 'earnings'} balance on source account` });
+    }
+    // Debit source
+    await client.query(
+      `UPDATE profiles SET ${fromCol} = GREATEST(0, COALESCE(${fromCol},0) - $1), updated_at=NOW() WHERE user_id=$2::uuid`,
+      [amt, from_user_id]
+    );
+    // Credit destination (upsert)
+    await client.query(
+      `INSERT INTO profiles (user_id, ${toCol}, updated_at) VALUES ($2::uuid, $1, NOW())
+       ON CONFLICT (user_id) DO UPDATE SET ${toCol} = COALESCE(profiles.${toCol},0) + $1, updated_at=NOW()`,
+      [amt, to_user_id]
+    );
+    await client.query('COMMIT');
+    res.json({ success: true, transferred: amt });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    console.error('Transfer error:', e);
+    res.status(500).json({ error: 'Transfer failed' });
+  } finally {
+    client.release();
+  }
+});
+
+// Get active investments for a user (admin)
+app.get('/api/admin/users/:id/investments', requireAnyAdmin, requirePrivilege('user', 'user_view'), async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT i.id, i.product_name, i.amount, i.daily_earnings, i.start_date, i.end_date,
+              i.balance_source, i.total_collected, i.units, i.status
+       FROM investments i
+       WHERE i.user_id = $1::uuid AND i.status = 'active'
+       ORDER BY i.start_date DESC`,
+      [req.params.id]
+    );
+    res.json({ investments: result.rows });
+  } catch (e) {
+    console.error('Get user investments error:', e);
+    res.status(500).json({ error: 'Failed to fetch investments' });
+  }
+});
+
+// Cancel (uninvest) an active investment — refunds original amount to balance source
+app.post('/api/admin/investments/:id/cancel', requireAnyAdmin, requirePrivilege('user', 'user_balance'), async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const invRes = await client.query(
+      `SELECT * FROM investments WHERE id=$1 AND status='active'`,
+      [req.params.id]
+    );
+    if (!invRes.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Active investment not found' });
+    }
+    const inv = invRes.rows[0];
+    const refundCol = inv.balance_source === 'wallet' ? 'wallet_balance' : 'account_balance';
+    const refundAmt = parseFloat(inv.amount) || 0;
+    // Mark investment cancelled
+    await client.query(`UPDATE investments SET status='cancelled', updated_at=NOW() WHERE id=$1`, [inv.id]);
+    // Restore units on product
+    if (inv.units) {
+      await client.query(
+        `UPDATE products SET used_units = GREATEST(0, used_units - $1) WHERE name=$2`,
+        [inv.units, inv.product_name]
+      );
+    }
+    // Refund original capital (not earnings) to balance source
+    if (refundAmt > 0) {
+      await client.query(
+        `UPDATE profiles SET ${refundCol} = COALESCE(${refundCol},0) + $1, updated_at=NOW() WHERE user_id=$2::uuid`,
+        [refundAmt, inv.user_id]
+      );
+    }
+    await client.query('COMMIT');
+    const profRes = await client.query(
+      'SELECT account_balance, COALESCE(wallet_balance,0) AS wallet_balance FROM profiles WHERE user_id=$1',
+      [inv.user_id]
+    );
+    res.json({
+      success: true,
+      refunded: refundAmt,
+      refund_to: refundCol,
+      account_balance: profRes.rows[0]?.account_balance || 0,
+      wallet_balance: profRes.rows[0]?.wallet_balance || 0
+    });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    console.error('Cancel investment error:', e);
+    res.status(500).json({ error: 'Failed to cancel investment' });
+  } finally {
+    client.release();
   }
 });
 

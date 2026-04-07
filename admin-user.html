@@ -140,11 +140,13 @@
             display: none; position: fixed; inset: 0;
             background: rgba(0,0,0,0.7); z-index: 999;
             align-items: center; justify-content: center; padding: 16px;
+            overflow-y: auto;
         }
         .modal-overlay.active { display: flex; }
         .modal {
             background: #1a2238; border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px; padding: 28px; width: 100%; max-width: 420px;
+            border-radius: 16px; padding: 28px; width: 100%; max-width: 480px;
+            margin: auto;
         }
         .modal-title { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 16px; }
         .modal-body { color: rgba(255,255,255,0.55); font-size: 0.88rem; line-height: 1.6; margin-bottom: 16px; }
@@ -167,6 +169,29 @@
             color: #e0e6ed; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
         }
         .modal-error { color: #ff6b6b; font-size: 0.82rem; margin-bottom: 8px; display: none; }
+
+        /* Balance type radio toggle */
+        .bal-type-row { display: flex; gap: 8px; margin-bottom: 12px; }
+        .bal-type-btn {
+            flex: 1; padding: 9px 10px; border-radius: 8px; cursor: pointer; font-size: 0.83rem;
+            font-weight: 600; text-align: center; border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.45);
+            font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.18s;
+        }
+        .bal-type-btn.active { background: rgba(78,205,196,0.15); border-color: rgba(78,205,196,0.4); color: #4ecdc4; }
+        .modal-label { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-bottom: 5px; display: block; text-transform: uppercase; letter-spacing: 0.04em; }
+        .inv-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; margin-bottom: 12px; }
+        .inv-item {
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px; padding: 12px 14px; cursor: pointer; transition: all 0.15s;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .inv-item:hover { border-color: rgba(255,107,107,0.4); background: rgba(255,107,107,0.06); }
+        .inv-item.selected { border-color: #ff6b6b; background: rgba(255,107,107,0.1); }
+        .inv-item-info { flex: 1; }
+        .inv-item-name { font-weight: 700; font-size: 0.88rem; color: #fff; }
+        .inv-item-meta { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 2px; }
+        .inv-item-amt { font-weight: 700; color: #ffc107; font-size: 0.88rem; white-space: nowrap; }
 
         /* Toast */
         .toast {
@@ -403,6 +428,10 @@
                             <optgroup label="Balance">
                                 <option value="credit">Credit Balance</option>
                                 <option value="debit">Debit Balance</option>
+                                <option value="transfer">Transfer to Another User</option>
+                            </optgroup>
+                            <optgroup label="Investments">
+                                <option value="uninvest">Cancel an Investment</option>
                             </optgroup>
                             <optgroup label="Account">
                                 <option value="${u.locked ? 'unlock' : 'lock'}">${u.locked ? 'Unlock' : 'Lock'} Account</option>
@@ -432,6 +461,7 @@
         if (!user || !action) return;
 
         const closeBtn = `<button class="btn-cancel-modal" onclick="closeModal()">Cancel</button>`;
+        _balType = 'wallet'; _fromType = 'wallet'; _toType = 'wallet';
 
         if (action === 'impersonate') {
             showModal('Impersonate User',
@@ -441,17 +471,51 @@
                  <button class="btn-confirm warning" onclick="doImpersonate('${userId}')">Open as ${esc(user.username)}</button>`
             );
         } else if (action === 'credit') {
-            showModal('Credit Account Balance',
-                `Credit KES to <strong>${esc(user.username)}</strong>'s balance.`,
-                `<input type="number" class="modal-input" id="balAmount" placeholder="Amount (KES)" min="1">`,
+            showModal('Credit Balance',
+                `Add KES to <strong>${esc(user.username)}</strong>'s balance. Choose which wallet to credit.`,
+                `<span class="modal-label">Balance to credit</span>
+                 <div class="bal-type-row">
+                   <button class="bal-type-btn active" id="bt-wallet" onclick="setBalType('wallet')"><i class="fas fa-piggy-bank"></i> Deposit Wallet</button>
+                   <button class="bal-type-btn" id="bt-income" onclick="setBalType('income')"><i class="fas fa-chart-line"></i> Earnings</button>
+                 </div>
+                 <input type="number" class="modal-input" id="balAmount" placeholder="Amount (KES)" min="1">`,
                 `${closeBtn}<button class="btn-confirm primary" onclick="doBalance('${userId}','credit')">Credit</button>`
             );
         } else if (action === 'debit') {
-            showModal('Debit Account Balance',
-                `Deduct KES from <strong>${esc(user.username)}</strong>'s balance (current: KES ${fmt(user.account_balance)}).`,
-                `<input type="number" class="modal-input" id="balAmount" placeholder="Amount (KES)" min="1" max="${user.account_balance}">`,
+            showModal('Debit Balance',
+                `Deduct KES from <strong>${esc(user.username)}</strong>'s balance. Choose which wallet to debit.`,
+                `<span class="modal-label">Balance to debit</span>
+                 <div class="bal-type-row">
+                   <button class="bal-type-btn active" id="bt-wallet" onclick="setBalType('wallet')"><i class="fas fa-piggy-bank"></i> Deposit Wallet</button>
+                   <button class="bal-type-btn" id="bt-income" onclick="setBalType('income')"><i class="fas fa-chart-line"></i> Earnings</button>
+                 </div>
+                 <input type="number" class="modal-input" id="balAmount" placeholder="Amount (KES)" min="1">`,
                 `${closeBtn}<button class="btn-confirm warning" onclick="doBalance('${userId}','debit')">Debit</button>`
             );
+        } else if (action === 'transfer') {
+            const otherUsers = allUsers.filter(u2 => u2.id !== userId);
+            const userOpts = otherUsers.map(u2 => `<option value="${u2.id}">${esc(u2.username)} — ${esc(u2.email)}</option>`).join('');
+            showModal('Transfer Balance',
+                `Move funds from <strong>${esc(user.username)}</strong>'s account to another user. The amount is taken from the selected source wallet and credited to the destination wallet.`,
+                `<span class="modal-label">From (${esc(user.username)})</span>
+                 <div class="bal-type-row" style="margin-bottom:14px;">
+                   <button class="bal-type-btn active" id="from-wallet" onclick="setFromType('wallet')"><i class="fas fa-piggy-bank"></i> Deposit Wallet</button>
+                   <button class="bal-type-btn" id="from-income" onclick="setFromType('income')"><i class="fas fa-chart-line"></i> Earnings</button>
+                 </div>
+                 <span class="modal-label">Destination user</span>
+                 <select class="modal-input" id="toUserId" style="margin-bottom:14px;">${userOpts}</select>
+                 <span class="modal-label">Credit into</span>
+                 <div class="bal-type-row" style="margin-bottom:14px;">
+                   <button class="bal-type-btn active" id="to-wallet" onclick="setToType('wallet')"><i class="fas fa-piggy-bank"></i> Deposit Wallet</button>
+                   <button class="bal-type-btn" id="to-income" onclick="setToType('income')"><i class="fas fa-chart-line"></i> Earnings</button>
+                 </div>
+                 <span class="modal-label">Amount (KES)</span>
+                 <input type="number" class="modal-input" id="transferAmount" placeholder="e.g. 500" min="1">`,
+                `${closeBtn}<button class="btn-confirm primary" onclick="doTransfer('${userId}')">Transfer</button>`
+            );
+        } else if (action === 'uninvest') {
+            doLoadInvestments(userId, user.username);
+            return;
         } else if (action === 'lock') {
             showModal('Lock Account',
                 `Are you sure you want to <strong>lock</strong> <strong>${esc(user.username)}</strong>? They will not be able to log in.`,
@@ -514,23 +578,125 @@
         }
     }
 
+    /* ── Balance type toggle state ── */
+    let _balType   = 'wallet'; // credit/debit
+    let _fromType  = 'wallet'; // transfer source
+    let _toType    = 'wallet'; // transfer destination
+
+    function setBalType(t) {
+        _balType = t;
+        document.getElementById('bt-wallet').classList.toggle('active', t === 'wallet');
+        document.getElementById('bt-income').classList.toggle('active', t === 'income');
+    }
+    function setFromType(t) {
+        _fromType = t;
+        document.getElementById('from-wallet').classList.toggle('active', t === 'wallet');
+        document.getElementById('from-income').classList.toggle('active', t === 'income');
+    }
+    function setToType(t) {
+        _toType = t;
+        document.getElementById('to-wallet').classList.toggle('active', t === 'wallet');
+        document.getElementById('to-income').classList.toggle('active', t === 'income');
+    }
+
     async function doBalance(userId, operation) {
         const amount = parseFloat(document.getElementById('balAmount').value);
         if (!amount || amount <= 0) { setModalError('Enter a valid positive amount.'); return; }
+        const balance_type = _balType;
         try {
             const res = await fetch(`/api/admin/users/${userId}/balance`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
-                body: JSON.stringify({ amount, operation })
+                body: JSON.stringify({ amount, operation, balance_type })
             });
             const data = await res.json();
             if (!res.ok) { setModalError(data.error || 'Failed'); return; }
             closeModal();
-            showToast(`Balance ${operation}ed by KES ${fmt(amount)}. New balance: KES ${fmt(data.account_balance)}`);
-            // Update local data
+            const balLabel = balance_type === 'wallet' ? 'Deposit' : 'Earnings';
+            showToast(`${balLabel} balance ${operation}ed by KES ${fmt(amount)}.`, 'success');
             const u = allUsers.find(u => u.id === userId);
-            if (u) u.account_balance = data.account_balance;
+            if (u) { u.account_balance = data.account_balance; u.wallet_balance = data.wallet_balance; }
             renderStats(); applyFilter();
+        } catch(e) { setModalError('Connection error.'); }
+    }
+
+    async function doTransfer(fromUserId) {
+        const toUserId = document.getElementById('toUserId').value;
+        const amount = parseFloat(document.getElementById('transferAmount').value);
+        if (!toUserId) { setModalError('Select a destination user.'); return; }
+        if (!amount || amount <= 0) { setModalError('Enter a valid positive amount.'); return; }
+        try {
+            const res = await fetch('/api/admin/users/transfer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+                body: JSON.stringify({ from_user_id: fromUserId, to_user_id: toUserId, amount, from_type: _fromType, to_type: _toType })
+            });
+            const data = await res.json();
+            if (!res.ok) { setModalError(data.error || 'Transfer failed.'); return; }
+            closeModal();
+            const toUser = allUsers.find(u => u.id === toUserId);
+            showToast(`KES ${fmt(amount)} transferred to ${toUser?.username || 'user'} successfully.`, 'success');
+            loadUsers();
+        } catch(e) { setModalError('Connection error.'); }
+    }
+
+    async function doLoadInvestments(userId, username) {
+        showModal(`Cancel Investment — ${esc(username)}`,
+            'Loading active investments...',
+            '<div class="inv-list" id="invList"><div style="text-align:center;padding:20px;color:rgba(255,255,255,0.3);"><i class="fas fa-spinner fa-spin"></i></div></div>',
+            `<button class="btn-cancel-modal" onclick="closeModal()">Cancel</button>
+             <button class="btn-confirm danger" id="uninvestConfirmBtn" disabled onclick="doUninvest()">Cancel Investment</button>`
+        );
+        let selectedInvId = null;
+        try {
+            const res = await fetch(`/api/admin/users/${userId}/investments`, { headers: { 'x-admin-key': ADMIN_KEY } });
+            const data = await res.json();
+            const invList = document.getElementById('invList');
+            if (!res.ok || !data.investments?.length) {
+                invList.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.3);">No active investments found.</div>';
+                return;
+            }
+            invList.innerHTML = data.investments.map(inv => {
+                const days = inv.duration_days || Math.round((new Date(inv.end_date) - new Date(inv.start_date)) / 86400000) || 30;
+                const src = inv.balance_source === 'wallet' ? 'Deposit Wallet' : 'Earnings';
+                return `<div class="inv-item" onclick="selectInv(this,'${inv.id}','${esc(inv.product_name)}',${inv.amount})">
+                    <div class="inv-item-info">
+                        <div class="inv-item-name">${esc(inv.product_name)}</div>
+                        <div class="inv-item-meta">Source: ${src} · Daily: KES ${fmt(inv.daily_earnings)} · Units: ${inv.units||1}</div>
+                    </div>
+                    <div class="inv-item-amt">KES ${fmt(inv.amount)}</div>
+                </div>`;
+            }).join('');
+        } catch(e) {
+            const invList = document.getElementById('invList');
+            if (invList) invList.innerHTML = '<div style="text-align:center;padding:16px;color:#ff6b6b;">Failed to load investments.</div>';
+        }
+        window._uninvestUserId = userId;
+    }
+
+    window.selectInv = function(el, invId, productName, amount) {
+        document.querySelectorAll('.inv-item').forEach(i => i.classList.remove('selected'));
+        el.classList.add('selected');
+        window._selectedInvId = invId;
+        window._selectedInvName = productName;
+        window._selectedInvAmt = amount;
+        const btn = document.getElementById('uninvestConfirmBtn');
+        if (btn) { btn.disabled = false; btn.textContent = `Cancel — Refund KES ${fmt(amount)}`; }
+    };
+
+    async function doUninvest() {
+        const invId = window._selectedInvId;
+        if (!invId) { setModalError('Select an investment first.'); return; }
+        try {
+            const res = await fetch(`/api/admin/investments/${invId}/cancel`, {
+                method: 'POST',
+                headers: { 'x-admin-key': ADMIN_KEY }
+            });
+            const data = await res.json();
+            if (!res.ok) { setModalError(data.error || 'Failed to cancel investment.'); return; }
+            closeModal();
+            showToast(`Investment in "${window._selectedInvName}" cancelled. KES ${fmt(data.refunded)} refunded.`, 'success');
+            loadUsers();
         } catch(e) { setModalError('Connection error.'); }
     }
 
