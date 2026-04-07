@@ -2809,6 +2809,7 @@ app.get('/api/admin/referrals', requireSuperAdmin, async (req, res) => {
         expires_at TIMESTAMPTZ NOT NULL
       )`,
       `ALTER TABLE products ADD COLUMN IF NOT EXISTS used_units INTEGER NOT NULL DEFAULT 0`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_investments_free_one_per_user ON investments (user_id, product_name) WHERE amount = 0 AND status = 'active'`,
       `ALTER TABLE investments ALTER COLUMN start_date TYPE TIMESTAMPTZ USING start_date::TIMESTAMPTZ`,
       `ALTER TABLE investments ALTER COLUMN end_date TYPE TIMESTAMPTZ USING end_date::TIMESTAMPTZ`,
       `DELETE FROM investments

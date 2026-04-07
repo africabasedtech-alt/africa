@@ -151,6 +151,44 @@
             return true;
         }
 
+        // Mark a free product button as already activated (permanent lock)
+        function markFreeButtonActivated(btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-check-circle"></i> Already Activated';
+            btn.style.background = 'rgba(46,204,113,0.15)';
+            btn.style.border = '1px solid rgba(46,204,113,0.4)';
+            btn.style.color = '#2ecc71';
+            btn.style.cursor = 'not-allowed';
+            btn.style.opacity = '1';
+        }
+
+        // Fetch user's active investments and grey-out free plans already taken
+        async function markActivatedFreeProducts() {
+            if (!AB_TOKEN) return;
+            try {
+                const res = await fetch('/api/investments', {
+                    headers: { 'Authorization': 'Bearer ' + AB_TOKEN }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                const activeNames = new Set(
+                    (data.investments || [])
+                        .filter(i => i.status === 'active' && parseFloat(i.amount) === 0)
+                        .map(i => i.product_name)
+                );
+                if (!activeNames.size) return;
+                document.querySelectorAll('.product-card').forEach(card => {
+                    const titleEl = card.querySelector('.product-title');
+                    const btn = card.querySelector('.invest-btn');
+                    if (!titleEl || !btn) return;
+                    const name = (titleEl.textContent || '').trim();
+                    if (activeNames.has(name)) {
+                        markFreeButtonActivated(btn);
+                    }
+                });
+            } catch(e) {}
+        }
+
         // UI Functions
         function setupInvestButtons() {
             document.querySelectorAll('.invest-btn').forEach(btn => {
@@ -171,7 +209,7 @@
 
             if (productData.price === 0) {
                 btn.disabled = true;
-                btn.textContent = 'Activating...';
+                btn.innerHTML = 'Activating...';
                 try {
                     const res = await fetch('/api/invest', {
                         method: 'POST',
@@ -187,15 +225,17 @@
                     const data = await res.json();
                     if (!res.ok) {
                         showMessage(data.error || 'Failed to activate free product.', 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-gift"></i> Get Free';
                     } else {
                         addProductToMyProducts(productData);
+                        markFreeButtonActivated(btn);
                         showMessage('Free product activated! Go to My Products page to collect income.', 'success');
                     }
                 } catch(e) {
                     showMessage('Connection error. Please try again.', 'error');
-                } finally {
                     btn.disabled = false;
-                    btn.textContent = 'Get Free';
+                    btn.innerHTML = '<i class="fas fa-gift"></i> Get Free';
                 }
                 return;
             }
@@ -480,6 +520,7 @@
                 updateSectorFilter('all');
 
                 await loadProductsFromDB();
+                await markActivatedFreeProducts();
             } catch (error) {
                 console.error('Error during page initialization:', error);
                 showMessage('Error initializing the page. Please refresh and try again.', 'error');
