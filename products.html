@@ -173,7 +173,7 @@
                 const data = await res.json();
                 const activeNames = new Set(
                     (data.investments || [])
-                        .filter(i => i.status === 'active' && parseFloat(i.amount) === 0)
+                        .filter(i => (i.status === 'active' || i.status === 'matured') && parseFloat(i.amount) === 0)
                         .map(i => i.product_name)
                 );
                 if (!activeNames.size) return;

@@ -1265,7 +1265,7 @@ app.post('/api/invest', requireAuth, rejectIfImpersonated, async (req, res) => {
 
     if (parseFloat(product.price) === 0) {
       const { rows: freeCheck } = await pool.query(
-        "SELECT COUNT(*)::int AS cnt FROM investments WHERE user_id=$1::uuid AND product_name=$2 AND status='active'",
+        "SELECT COUNT(*)::int AS cnt FROM investments WHERE user_id=$1::uuid AND product_name=$2 AND status IN ('active','matured')",
         [userId, product_name]
       );
       if (freeCheck[0].cnt > 0) {
@@ -2829,7 +2829,8 @@ app.get('/api/admin/referrals', requireSuperAdmin, async (req, res) => {
       `ALTER TABLE products ADD COLUMN IF NOT EXISTS used_units INTEGER NOT NULL DEFAULT 0`,
       `ALTER TABLE investments ADD COLUMN IF NOT EXISTS cancel_reason TEXT`,
       `ALTER TABLE investments ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`,
-      `CREATE UNIQUE INDEX IF NOT EXISTS idx_investments_free_one_per_user ON investments (user_id, product_name) WHERE amount = 0 AND status = 'active'`,
+      `DROP INDEX IF EXISTS idx_investments_free_one_per_user`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_investments_free_one_per_user ON investments (user_id, product_name) WHERE amount = 0 AND status IN ('active','matured')`,
       `ALTER TABLE investments ALTER COLUMN start_date TYPE TIMESTAMPTZ USING start_date::TIMESTAMPTZ`,
       `ALTER TABLE investments ALTER COLUMN end_date TYPE TIMESTAMPTZ USING end_date::TIMESTAMPTZ`,
       `DELETE FROM investments
