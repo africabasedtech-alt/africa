@@ -3809,8 +3809,8 @@ app.post('/api/admin/investments/:id/cancel', requireAnyAdmin, requirePrivilege(
     const refundAmt = parseFloat(inv.amount) || 0;
     const refundLabel = refundCol === 'wallet_balance' ? 'Deposit Wallet' : 'Earnings balance';
     const cancelReason = refundAmt > 0
-      ? `Cancelled by admin — your original capital of KES ${refundAmt.toLocaleString()} has been refunded to your ${refundLabel}.`
-      : `Cancelled by admin — this investment has been removed from your account.`;
+      ? `This investment was cancelled. Your original capital of KES ${refundAmt.toLocaleString()} has been refunded to your ${refundLabel}.`
+      : `This investment has been cancelled and removed from your account.`;
     await client.query(
       `UPDATE investments SET status='cancelled', cancel_reason=$1, updated_at=NOW() WHERE id=$2`,
       [cancelReason, inv.id]
@@ -3868,13 +3868,13 @@ app.post('/api/admin/investments/:id/delete', requireAnyAdmin, requirePrivilege(
     const refundAmt   = parseFloat(inv.amount) || 0;
     const refundCol   = inv.balance_source === 'wallet' ? 'wallet_balance' : 'account_balance';
     const refundLabel = refundCol === 'wallet_balance' ? 'Deposit Wallet' : 'Earnings balance';
-    let deleteReason = `Removed by admin — this investment was deleted from your account.`;
+    let deleteReason = `This investment has been removed from your account.`;
     if (clawbackAmt > 0 && refundAmt > 0) {
-      deleteReason = `Removed by admin — KES ${clawbackAmt.toLocaleString()} in collected earnings has been reversed from your Earnings balance, and your original capital of KES ${refundAmt.toLocaleString()} has been returned to your ${refundLabel}.`;
+      deleteReason = `This investment was removed. KES ${clawbackAmt.toLocaleString()} in collected earnings has been reversed from your Earnings balance, and your original capital of KES ${refundAmt.toLocaleString()} has been returned to your ${refundLabel}.`;
     } else if (clawbackAmt > 0) {
-      deleteReason = `Removed by admin — KES ${clawbackAmt.toLocaleString()} in collected earnings has been reversed from your Earnings balance.`;
+      deleteReason = `This investment was removed. KES ${clawbackAmt.toLocaleString()} in collected earnings has been reversed from your Earnings balance.`;
     } else if (refundAmt > 0) {
-      deleteReason = `Removed by admin — your original capital of KES ${refundAmt.toLocaleString()} has been returned to your ${refundLabel}.`;
+      deleteReason = `This investment was removed. Your original capital of KES ${refundAmt.toLocaleString()} has been returned to your ${refundLabel}.`;
     }
     await client.query(
       `UPDATE investments SET status='cancelled', cancel_reason=$1, updated_at=NOW() WHERE id=$2`,
