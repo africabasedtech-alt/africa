@@ -1168,7 +1168,7 @@ app.get('/api/investments', requireAuth, async (req, res) => {
          SELECT investment_id, COUNT(*)::int as collection_count
          FROM collection_logs WHERE user_id = $1::text GROUP BY investment_id
        ) cl ON cl.investment_id = i.id
-       WHERE i.user_id = $1::uuid AND i.status IN ('active', 'matured') ORDER BY i.start_date DESC`,
+       WHERE i.user_id = $1::uuid AND i.status IN ('active', 'matured', 'cancelled') ORDER BY i.start_date DESC`,
       [req.user.id]
     );
     res.json({ investments: result.rows });
@@ -2790,6 +2790,24 @@ app.get('/api/admin/referrals', requireSuperAdmin, async (req, res) => {
         id SERIAL PRIMARY KEY, investment_id INTEGER NOT NULL, user_id VARCHAR(255) NOT NULL,
         product_name VARCHAR(255), amount NUMERIC(14,2) NOT NULL, collected_at TIMESTAMPTZ DEFAULT NOW()
       )`,
+      `CREATE TABLE IF NOT EXISTS investments (
+        id SERIAL PRIMARY KEY,
+        user_id UUID NOT NULL,
+        product_id UUID,
+        product_name VARCHAR(255),
+        amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+        daily_earnings NUMERIC(14,2) NOT NULL DEFAULT 0,
+        start_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        end_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        status VARCHAR(50) NOT NULL DEFAULT 'active',
+        balance_source VARCHAR(50) DEFAULT 'wallet',
+        units INTEGER DEFAULT 1,
+        total_collected NUMERIC(14,2) DEFAULT 0,
+        last_collected_at TIMESTAMPTZ,
+        cancel_reason TEXT,
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
       `ALTER TABLE investments ADD COLUMN IF NOT EXISTS total_collected NUMERIC(14,2) DEFAULT 0`,
       `ALTER TABLE profiles ADD COLUMN IF NOT EXISTS last_commission_collected_at TIMESTAMPTZ`,
       `ALTER TABLE profiles ADD COLUMN IF NOT EXISTS total_commission_earned NUMERIC(14,2) NOT NULL DEFAULT 0`,
@@ -2809,6 +2827,7 @@ app.get('/api/admin/referrals', requireSuperAdmin, async (req, res) => {
         expires_at TIMESTAMPTZ NOT NULL
       )`,
       `ALTER TABLE products ADD COLUMN IF NOT EXISTS used_units INTEGER NOT NULL DEFAULT 0`,
+      `ALTER TABLE investments ADD COLUMN IF NOT EXISTS cancel_reason TEXT`,
       `CREATE UNIQUE INDEX IF NOT EXISTS idx_investments_free_one_per_user ON investments (user_id, product_name) WHERE amount = 0 AND status = 'active'`,
       `ALTER TABLE investments ALTER COLUMN start_date TYPE TIMESTAMPTZ USING start_date::TIMESTAMPTZ`,
       `ALTER TABLE investments ALTER COLUMN end_date TYPE TIMESTAMPTZ USING end_date::TIMESTAMPTZ`,
@@ -3788,8 +3807,14 @@ app.post('/api/admin/investments/:id/cancel', requireAnyAdmin, requirePrivilege(
     const inv = invRes.rows[0];
     const refundCol = inv.balance_source === 'wallet' ? 'wallet_balance' : 'account_balance';
     const refundAmt = parseFloat(inv.amount) || 0;
-    // Mark investment cancelled
-    await client.query(`UPDATE investments SET status='cancelled', updated_at=NOW() WHERE id=$1`, [inv.id]);
+    const refundLabel = refundCol === 'wallet_balance' ? 'Deposit Wallet' : 'Earnings balance';
+    const cancelReason = refundAmt > 0
+      ? `Cancelled by admin — your original capital of KES ${refundAmt.toLocaleString()} has been refunded to your ${refundLabel}.`
+      : `Cancelled by admin — this investment has been removed from your account.`;
+    await client.query(
+      `UPDATE investments SET status='cancelled', cancel_reason=$1, updated_at=NOW() WHERE id=$2`,
+      [cancelReason, inv.id]
+    );
     // Restore units on product
     if (inv.units) {
       await client.query(
@@ -3842,7 +3867,19 @@ app.post('/api/admin/investments/:id/delete', requireAnyAdmin, requirePrivilege(
     const clawbackAmt = parseFloat(inv.total_collected) || 0;
     const refundAmt   = parseFloat(inv.amount) || 0;
     const refundCol   = inv.balance_source === 'wallet' ? 'wallet_balance' : 'account_balance';
-    await client.query(`UPDATE investments SET status='cancelled', updated_at=NOW() WHERE id=$1`, [inv.id]);
+    const refundLabel = refundCol === 'wallet_balance' ? 'Deposit Wallet' : 'Earnings balance';
+    let deleteReason = `Removed by admin — this investment was deleted from your account.`;
+    if (clawbackAmt > 0 && refundAmt > 0) {
+      deleteReason = `Removed by admin — KES ${clawbackAmt.toLocaleString()} in collected earnings has been reversed from your Earnings balance, and your original capital of KES ${refundAmt.toLocaleString()} has been returned to your ${refundLabel}.`;
+    } else if (clawbackAmt > 0) {
+      deleteReason = `Removed by admin — KES ${clawbackAmt.toLocaleString()} in collected earnings has been reversed from your Earnings balance.`;
+    } else if (refundAmt > 0) {
+      deleteReason = `Removed by admin — your original capital of KES ${refundAmt.toLocaleString()} has been returned to your ${refundLabel}.`;
+    }
+    await client.query(
+      `UPDATE investments SET status='cancelled', cancel_reason=$1, updated_at=NOW() WHERE id=$2`,
+      [deleteReason, inv.id]
+    );
     if (inv.units) {
       await client.query(
         `UPDATE products SET used_units = GREATEST(0, used_units - $1) WHERE name=$2`,

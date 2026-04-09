@@ -406,7 +406,7 @@
                 });
                 if (res.status === 401) { window.location.href = 'login.html'; return; }
                 const data = await res.json();
-                const investments = (data.investments || []).filter(i => i.status === 'active' || i.status === 'matured');
+                const investments = (data.investments || []).filter(i => i.status === 'active' || i.status === 'matured' || i.status === 'cancelled');
 
                 if (!investments.length) {
                     container.innerHTML = '';
@@ -424,6 +424,43 @@
                 let totalInvested = 0, totalDaily = 0, grandTotalCollected = 0;
 
                 const cards = investments.map(inv => {
+                    if (inv.status === 'cancelled') {
+                        const amount = parseFloat(inv.amount) || 0;
+                        const startDate = new Date(inv.start_date);
+                        const collected = parseFloat(inv.total_collected) || 0;
+                        const reason = inv.cancel_reason || 'This investment was cancelled by an administrator.';
+                        return `
+                            <div class="col-md-6 col-lg-4">
+                                <div class="investment-card" style="opacity:0.82;border:1px solid rgba(220,53,69,0.35);background:rgba(220,53,69,0.06);">
+                                    <div class="investment-details">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div class="investment-title" style="color:#e57373;">${inv.product_name || 'Investment'}</div>
+                                            <span style="color:#e57373;font-size:0.8rem;font-weight:700;letter-spacing:.05em;">CANCELLED</span>
+                                        </div>
+                                        <div class="investment-sector" style="color:#999;">
+                                            <i class="fas fa-calendar-alt me-2"></i>Started ${startDate.toLocaleDateString('en-KE')}
+                                        </div>
+                                        <div class="info-grid" style="margin:12px 0;">
+                                            <div class="info-box">
+                                                <div class="info-label">Capital</div>
+                                                <div class="info-value inv-card-val">KSH ${formatCurrency(amount)}</div>
+                                            </div>
+                                            <div class="info-box">
+                                                <div class="info-label">Collected</div>
+                                                <div class="info-value inv-card-val">KSH ${formatCurrency(collected)}</div>
+                                            </div>
+                                        </div>
+                                        <div style="background:rgba(220,53,69,0.1);border:1px solid rgba(220,53,69,0.3);border-radius:8px;padding:12px;margin-top:8px;">
+                                            <div style="color:#e57373;font-size:0.75rem;font-weight:700;letter-spacing:.06em;margin-bottom:5px;">
+                                                <i class="fas fa-info-circle me-1"></i>ADMIN NOTICE
+                                            </div>
+                                            <div style="color:#ccc;font-size:0.85rem;line-height:1.5;">${reason}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>`;
+                    }
+
                     const amount = parseFloat(inv.amount) || 0;
                     const daily = parseFloat(inv.daily_earnings) || 0;
                     const totalCollected = parseFloat(inv.total_collected) || 0;
@@ -532,7 +569,7 @@
 
                 document.getElementById('total-invested').textContent = 'KSH ' + formatCurrency(totalInvested);
                 document.getElementById('total-daily-returns').textContent = 'KSH ' + formatCurrency(totalDaily);
-                document.getElementById('active-investments').textContent = investments.length.toString();
+                document.getElementById('active-investments').textContent = investments.filter(i => i.status === 'active').length.toString();
                 document.getElementById('total-collected').textContent = 'KSH ' + formatCurrency(grandTotalCollected);
 
                 applyHoldingsVisibility();
