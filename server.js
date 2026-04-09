@@ -3744,13 +3744,28 @@ app.get('/api/admin/users/:id/investments', requireAnyAdmin, requirePrivilege('u
   try {
     const result = await pool.query(
       `SELECT i.id, i.product_name, i.amount, i.daily_earnings, i.start_date, i.end_date,
-              i.balance_source, i.total_collected, i.units, i.status
+              i.balance_source, i.total_collected, i.units, i.status,
+              COALESCE(p.price, i.amount) AS product_price
        FROM investments i
-       WHERE i.user_id = $1::uuid AND i.status = 'active'
+       LEFT JOIN products p ON p.name = i.product_name
+       WHERE i.user_id = $1::uuid AND i.status IN ('active','matured')
        ORDER BY i.start_date DESC`,
       [req.params.id]
     );
-    res.json({ investments: result.rows });
+    const activeByProduct = {};
+    result.rows.forEach(inv => {
+      if (inv.status === 'active') {
+        if (!activeByProduct[inv.product_name]) activeByProduct[inv.product_name] = [];
+        activeByProduct[inv.product_name].push(inv.id);
+      }
+    });
+    const investments = result.rows.map(inv => ({
+      ...inv,
+      is_duplicate: (activeByProduct[inv.product_name]?.length || 0) > 1,
+      is_free: parseFloat(inv.product_price) === 0 || parseFloat(inv.amount) === 0
+    }));
+    const duplicateProducts = Object.values(activeByProduct).filter(ids => ids.length > 1).length;
+    res.json({ investments, duplicate_count: duplicateProducts });
   } catch (e) {
     console.error('Get user investments error:', e);
     res.status(500).json({ error: 'Failed to fetch investments' });
@@ -3805,6 +3820,64 @@ app.post('/api/admin/investments/:id/cancel', requireAnyAdmin, requirePrivilege(
     await client.query('ROLLBACK');
     console.error('Cancel investment error:', e);
     res.status(500).json({ error: 'Failed to cancel investment' });
+  } finally {
+    client.release();
+  }
+});
+
+// Delete (force-remove) an investment — claws back collected earnings + restores capital
+app.post('/api/admin/investments/:id/delete', requireAnyAdmin, requirePrivilege('user', 'user_balance'), async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const invRes = await client.query(
+      `SELECT * FROM investments WHERE id=$1 AND status='active'`,
+      [req.params.id]
+    );
+    if (!invRes.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Active investment not found' });
+    }
+    const inv = invRes.rows[0];
+    const clawbackAmt = parseFloat(inv.total_collected) || 0;
+    const refundAmt   = parseFloat(inv.amount) || 0;
+    const refundCol   = inv.balance_source === 'wallet' ? 'wallet_balance' : 'account_balance';
+    await client.query(`UPDATE investments SET status='cancelled', updated_at=NOW() WHERE id=$1`, [inv.id]);
+    if (inv.units) {
+      await client.query(
+        `UPDATE products SET used_units = GREATEST(0, used_units - $1) WHERE name=$2`,
+        [inv.units, inv.product_name]
+      );
+    }
+    if (clawbackAmt > 0) {
+      await client.query(
+        `UPDATE profiles SET account_balance = GREATEST(0, COALESCE(account_balance,0) - $1), updated_at=NOW() WHERE user_id=$2::uuid`,
+        [clawbackAmt, inv.user_id]
+      );
+    }
+    if (refundAmt > 0) {
+      await client.query(
+        `UPDATE profiles SET ${refundCol} = COALESCE(${refundCol},0) + $1, updated_at=NOW() WHERE user_id=$2::uuid`,
+        [refundAmt, inv.user_id]
+      );
+    }
+    await client.query('COMMIT');
+    const profRes = await client.query(
+      'SELECT account_balance, COALESCE(wallet_balance,0) AS wallet_balance FROM profiles WHERE user_id=$1',
+      [inv.user_id]
+    );
+    res.json({
+      success: true,
+      clawback: clawbackAmt,
+      refunded: refundAmt,
+      refund_to: refundCol,
+      account_balance: profRes.rows[0]?.account_balance || 0,
+      wallet_balance:  profRes.rows[0]?.wallet_balance  || 0
+    });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    console.error('Delete investment error:', e);
+    res.status(500).json({ error: 'Failed to delete investment' });
   } finally {
     client.release();
   }
