@@ -2828,6 +2828,7 @@ app.get('/api/admin/referrals', requireSuperAdmin, async (req, res) => {
       )`,
       `ALTER TABLE products ADD COLUMN IF NOT EXISTS used_units INTEGER NOT NULL DEFAULT 0`,
       `ALTER TABLE investments ADD COLUMN IF NOT EXISTS cancel_reason TEXT`,
+      `ALTER TABLE investments ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`,
       `CREATE UNIQUE INDEX IF NOT EXISTS idx_investments_free_one_per_user ON investments (user_id, product_name) WHERE amount = 0 AND status = 'active'`,
       `ALTER TABLE investments ALTER COLUMN start_date TYPE TIMESTAMPTZ USING start_date::TIMESTAMPTZ`,
       `ALTER TABLE investments ALTER COLUMN end_date TYPE TIMESTAMPTZ USING end_date::TIMESTAMPTZ`,
@@ -3812,7 +3813,7 @@ app.post('/api/admin/investments/:id/cancel', requireAnyAdmin, requirePrivilege(
       ? `This investment was cancelled. Your original capital of KES ${refundAmt.toLocaleString()} has been refunded to your ${refundLabel}.`
       : `This investment has been cancelled and removed from your account.`;
     await client.query(
-      `UPDATE investments SET status='cancelled', cancel_reason=$1, updated_at=NOW() WHERE id=$2`,
+      `UPDATE investments SET status='cancelled', cancel_reason=$1 WHERE id=$2`,
       [cancelReason, inv.id]
     );
     // Restore units on product
@@ -3877,7 +3878,7 @@ app.post('/api/admin/investments/:id/delete', requireAnyAdmin, requirePrivilege(
       deleteReason = `This investment was removed. Your original capital of KES ${refundAmt.toLocaleString()} has been returned to your ${refundLabel}.`;
     }
     await client.query(
-      `UPDATE investments SET status='cancelled', cancel_reason=$1, updated_at=NOW() WHERE id=$2`,
+      `UPDATE investments SET status='cancelled', cancel_reason=$1 WHERE id=$2`,
       [deleteReason, inv.id]
     );
     if (inv.units) {
