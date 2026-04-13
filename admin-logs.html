@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Logs - AfricaBased Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: rgba(26,34,56,0.98);
+            --accent: #6c5ce7;
+            --accent2: #a29bfe;
+            --text: #fff;
+            --muted: rgba(255,255,255,0.5);
+            --border: rgba(255,255,255,0.08);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+        .top-bar {
+            display: flex; align-items: center; gap: 16px;
+            padding: 20px 28px; border-bottom: 1px solid var(--border);
+            background: rgba(15,23,42,0.95);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .top-bar a {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: #fff; border: none; padding: 8px 16px; border-radius: 7px;
+            cursor: pointer; font-weight: 600; font-size: 0.85rem; text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .top-bar a:hover { opacity: 0.85; }
+        .top-bar h1 { font-size: 1.2rem; font-weight: 700; color: var(--accent2); margin-left: 4px; }
+
+        .page { max-width: 1300px; margin: 0 auto; padding: 28px 20px; }
+
+        .filters {
+            display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+            background: var(--surface); border-radius: 10px; padding: 16px 20px;
+            margin-bottom: 24px; border: 1px solid var(--border);
+        }
+        .filters select, .filters input[type=text] {
+            background: rgba(15,23,42,0.7); border: 1px solid var(--border);
+            color: var(--text); padding: 7px 12px; border-radius: 7px; font-size: 0.88rem;
+        }
+        .filters label { color: var(--muted); font-size: 0.83rem; }
+        .filter-group { display: flex; flex-direction: column; gap: 4px; }
+        .filter-btn {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: #fff; border: none; padding: 8px 18px; border-radius: 7px;
+            cursor: pointer; font-weight: 600; font-size: 0.88rem; align-self: flex-end;
+        }
+        .clear-btn {
+            background: rgba(255,255,255,0.07); color: var(--muted);
+            border: 1px solid var(--border); padding: 8px 14px; border-radius: 7px;
+            cursor: pointer; font-size: 0.85rem; align-self: flex-end;
+        }
+
+        .stats-row {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px; margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--surface); border-radius: 10px; padding: 18px;
+            border: 1px solid var(--border); text-align: center;
+        }
+        .stat-num { font-size: 1.8rem; font-weight: 800; color: var(--accent2); }
+        .stat-label { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
+
+        .log-table-wrap {
+            background: var(--surface); border-radius: 12px;
+            border: 1px solid var(--border); overflow: hidden;
+        }
+        .log-table-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 20px; border-bottom: 1px solid var(--border);
+        }
+        .log-table-header h2 { font-size: 1rem; font-weight: 700; color: var(--accent2); }
+        .total-label { color: var(--muted); font-size: 0.85rem; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { background: rgba(108,92,231,0.12); color: var(--accent2); font-weight: 700;
+             padding: 12px 14px; text-align: left; font-size: 0.78rem; letter-spacing: 0.05em;
+             text-transform: uppercase; white-space: nowrap; }
+        td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(108,92,231,0.05); }
+
+        .badge {
+            display: inline-block; padding: 2px 10px; border-radius: 20px;
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;
+            text-transform: uppercase; white-space: nowrap;
+        }
+        .badge-super { background: rgba(108,92,231,0.2); color: #a29bfe; }
+        .badge-sub   { background: rgba(0,184,148,0.15); color: #55efc4; }
+
+        .action-badge {
+            display: inline-block; padding: 2px 9px; border-radius: 5px;
+            font-size: 0.72rem; font-weight: 700; white-space: nowrap;
+        }
+        .action-login       { background: rgba(255,255,255,0.1); color: #dfe6e9; }
+        .action-settings_change { background: rgba(253,203,110,0.15); color: #fdcb6e; }
+        .action-deposit_action  { background: rgba(0,184,148,0.15); color: #55efc4; }
+        .action-withdrawal_action { background: rgba(116,185,255,0.15); color: #74b9ff; }
+        .action-investment_action { background: rgba(255,118,117,0.15); color: #ff7675; }
+        .action-product_action    { background: rgba(253,203,110,0.15); color: #fdcb6e; }
+        .action-user_action       { background: rgba(162,155,254,0.15); color: #a29bfe; }
+
+        .desc-cell { max-width: 360px; word-break: break-word; line-height: 1.45; color: rgba(255,255,255,0.85); }
+        .time-cell { color: var(--muted); white-space: nowrap; font-size: 0.78rem; }
+        .ip-cell   { color: var(--muted); font-size: 0.78rem; font-family: monospace; }
+
+        .empty-state {
+            text-align: center; padding: 60px 20px; color: var(--muted);
+        }
+        .empty-state i { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.4; }
+
+        .pagination {
+            display: flex; justify-content: center; gap: 8px;
+            padding: 18px 0; align-items: center;
+        }
+        .page-btn {
+            background: rgba(255,255,255,0.07); border: 1px solid var(--border);
+            color: var(--text); padding: 7px 14px; border-radius: 7px;
+            cursor: pointer; font-size: 0.85rem;
+        }
+        .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .page-btn.active { background: var(--accent); border-color: var(--accent); }
+
+        #loadingRow td { text-align: center; padding: 40px; color: var(--muted); }
+
+        @media (max-width: 768px) {
+            .filters { flex-direction: column; }
+            th, td { padding: 8px 10px; font-size: 0.78rem; }
+            .desc-cell { max-width: 200px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <a href="/Admin-panel"><i class="fas fa-arrow-left" style="margin-right:6px;"></i>Admin Panel</a>
+    <h1><i class="fas fa-history" style="margin-right:8px;"></i>Activity Logs</h1>
+</div>
+
+<div class="page">
+
+    <div class="stats-row" id="statsRow">
+        <div class="stat-card"><div class="stat-num" id="statTotal">—</div><div class="stat-label">Total Events</div></div>
+        <div class="stat-card"><div class="stat-num" id="statLogins">—</div><div class="stat-label">Logins</div></div>
+        <div class="stat-card"><div class="stat-num" id="statDeposits">—</div><div class="stat-label">Deposit Actions</div></div>
+        <div class="stat-card"><div class="stat-num" id="statWithdrawals">—</div><div class="stat-label">Withdrawal Actions</div></div>
+        <div class="stat-card"><div class="stat-num" id="statInvestments">—</div><div class="stat-label">Investment Actions</div></div>
+        <div class="stat-card"><div class="stat-num" id="statSettings">—</div><div class="stat-label">Settings Changes</div></div>
+    </div>
+
+    <div class="filters">
+        <div class="filter-group">
+            <label>Admin Type</label>
+            <select id="filterAdminType">
+                <option value="">All Admins</option>
+                <option value="super">Super Admin</option>
+                <option value="sub">Sub-Admin</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Action Type</label>
+            <select id="filterActionType">
+                <option value="">All Actions</option>
+                <option value="login">Logins</option>
+                <option value="settings_change">Settings Changes</option>
+                <option value="deposit_action">Deposit Actions</option>
+                <option value="withdrawal_action">Withdrawal Actions</option>
+                <option value="investment_action">Investment Actions</option>
+                <option value="product_action">Product Actions</option>
+                <option value="user_action">User Actions</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Search Admin / Description</label>
+            <input type="text" id="filterSearch" placeholder="e.g. email, username…" style="min-width:200px;">
+        </div>
+        <button class="filter-btn" onclick="applyFilters()"><i class="fas fa-search" style="margin-right:5px;"></i>Filter</button>
+        <button class="clear-btn" onclick="clearFilters()">Clear</button>
+    </div>
+
+    <div class="log-table-wrap">
+        <div class="log-table-header">
+            <h2>Event Log</h2>
+            <span class="total-label" id="totalLabel">Loading…</span>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Admin</th>
+                    <th>Type</th>
+                    <th>Action</th>
+                    <th>Description</th>
+                    <th>IP</th>
+                </tr>
+            </thead>
+            <tbody id="logBody">
+                <tr id="loadingRow"><td colspan="6"><i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i>Loading activity logs…</td></tr>
+            </tbody>
+        </table>
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+</div>
+
+<script>
+(function() {
+    const ADMIN_KEY = '1540568e';
+    const PAGE_SIZE = 50;
+    let currentOffset = 0;
+    let totalCount = 0;
+    let allLogs = [];
+    let activeFilters = {};
+
+    function fmt(dt) {
+        if (!dt) return '—';
+        const d = new Date(dt);
+        return d.toLocaleDateString('en-KE', { day:'2-digit', month:'short', year:'numeric' })
+             + ' ' + d.toLocaleTimeString('en-KE', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    }
+
+    function actionBadge(type) {
+        const labels = {
+            login: 'Login', settings_change: 'Settings', deposit_action: 'Deposit',
+            withdrawal_action: 'Withdrawal', investment_action: 'Investment',
+            product_action: 'Product', user_action: 'User'
+        };
+        return `<span class="action-badge action-${type}">${labels[type] || type}</span>`;
+    }
+
+    function adminBadge(type, name, email) {
+        const badge = type === 'super'
+            ? `<span class="badge badge-super">Super</span>`
+            : `<span class="badge badge-sub">Sub</span>`;
+        return `${badge}<br><span style="font-size:0.78rem;color:rgba(255,255,255,0.7);">${esc(name)}</span>`
+            + (email ? `<br><span style="font-size:0.72rem;color:rgba(255,255,255,0.4);">${esc(email)}</span>` : '');
+    }
+
+    function esc(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function renderLogs(logs) {
+        const tbody = document.getElementById('logBody');
+        if (!logs.length) {
+            tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-history"></i><br>No activity logs found.</div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = logs.map(log => `
+            <tr>
+                <td class="time-cell">${fmt(log.created_at)}</td>
+                <td>${adminBadge(log.admin_type, log.admin_name, log.admin_email)}</td>
+                <td><span class="badge ${log.admin_type === 'super' ? 'badge-super' : 'badge-sub'}" style="opacity:0.6;">${esc(log.admin_type)}</span></td>
+                <td>${actionBadge(log.action_type)}</td>
+                <td class="desc-cell">${esc(log.description)}</td>
+                <td class="ip-cell">${esc(log.ip_address) || '—'}</td>
+            </tr>
+        `).join('');
+    }
+
+    function renderPagination() {
+        const pages = Math.ceil(totalCount / PAGE_SIZE);
+        const current = Math.floor(currentOffset / PAGE_SIZE);
+        const pg = document.getElementById('pagination');
+        if (pages <= 1) { pg.innerHTML = ''; return; }
+        let html = `<button class="page-btn" onclick="goPage(${current - 1})" ${current === 0 ? 'disabled' : ''}>
+            <i class="fas fa-chevron-left"></i>
+        </button>`;
+        const start = Math.max(0, current - 2);
+        const end   = Math.min(pages - 1, current + 2);
+        for (let i = start; i <= end; i++) {
+            html += `<button class="page-btn ${i === current ? 'active' : ''}" onclick="goPage(${i})">${i + 1}</button>`;
+        }
+        html += `<button class="page-btn" onclick="goPage(${current + 1})" ${current >= pages - 1 ? 'disabled' : ''}>
+            <i class="fas fa-chevron-right"></i>
+        </button>`;
+        html += `<span style="color:var(--muted);font-size:0.82rem;margin-left:8px;">Page ${current+1} of ${pages} (${totalCount} events)</span>`;
+        pg.innerHTML = html;
+    }
+
+    window.goPage = function(page) {
+        const pages = Math.ceil(totalCount / PAGE_SIZE);
+        if (page < 0 || page >= pages) return;
+        currentOffset = page * PAGE_SIZE;
+        loadLogs();
+    };
+
+    function buildUrl() {
+        const params = new URLSearchParams();
+        if (activeFilters.admin_type) params.set('admin_type', activeFilters.admin_type);
+        if (activeFilters.action_type) params.set('action_type', activeFilters.action_type);
+        params.set('limit', PAGE_SIZE);
+        params.set('offset', currentOffset);
+        return '/api/admin/activity-logs?' + params.toString();
+    }
+
+    function applySearch(logs) {
+        const q = (activeFilters.search || '').toLowerCase().trim();
+        if (!q) return logs;
+        return logs.filter(l =>
+            (l.admin_name || '').toLowerCase().includes(q) ||
+            (l.admin_email || '').toLowerCase().includes(q) ||
+            (l.description || '').toLowerCase().includes(q) ||
+            (l.ip_address || '').toLowerCase().includes(q)
+        );
+    }
+
+    async function loadLogs() {
+        document.getElementById('logBody').innerHTML = '<tr id="loadingRow"><td colspan="6" style="text-align:center;padding:40px;color:var(--muted);"><i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i>Loading…</td></tr>';
+        document.getElementById('totalLabel').textContent = 'Loading…';
+        try {
+            const res = await fetch(buildUrl(), { headers: { 'x-admin-key': ADMIN_KEY } });
+            const data = await res.json();
+            if (!res.ok) { throw new Error(data.error || 'Failed'); }
+            allLogs = data.logs || [];
+            totalCount = data.total || 0;
+            const filtered = applySearch(allLogs);
+            document.getElementById('totalLabel').textContent = `${totalCount} events total`;
+            renderLogs(filtered);
+            renderPagination();
+        } catch (e) {
+            document.getElementById('logBody').innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:#ff7675;">${e.message}</td></tr>`;
+        }
+    }
+
+    async function loadStats() {
+        try {
+            const res = await fetch('/api/admin/activity-logs?limit=10000&offset=0', { headers: { 'x-admin-key': ADMIN_KEY } });
+            const data = await res.json();
+            const logs = data.logs || [];
+            document.getElementById('statTotal').textContent = data.total || 0;
+            document.getElementById('statLogins').textContent = logs.filter(l => l.action_type === 'login').length;
+            document.getElementById('statDeposits').textContent = logs.filter(l => l.action_type === 'deposit_action').length;
+            document.getElementById('statWithdrawals').textContent = logs.filter(l => l.action_type === 'withdrawal_action').length;
+            document.getElementById('statInvestments').textContent = logs.filter(l => l.action_type === 'investment_action').length;
+            document.getElementById('statSettings').textContent = logs.filter(l => l.action_type === 'settings_change').length;
+        } catch (e) {}
+    }
+
+    window.applyFilters = function() {
+        activeFilters = {
+            admin_type: document.getElementById('filterAdminType').value,
+            action_type: document.getElementById('filterActionType').value,
+            search: document.getElementById('filterSearch').value
+        };
+        currentOffset = 0;
+        loadLogs();
+    };
+
+    window.clearFilters = function() {
+        document.getElementById('filterAdminType').value = '';
+        document.getElementById('filterActionType').value = '';
+        document.getElementById('filterSearch').value = '';
+        activeFilters = {};
+        currentOffset = 0;
+        loadLogs();
+    };
+
+    document.getElementById('filterSearch').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') applyFilters();
+    });
+
+    loadLogs();
+    loadStats();
+})();
+</script>
+<script src="/js/admin-pin.js"></script>
+</body>
+</html>

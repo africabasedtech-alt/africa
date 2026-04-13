@@ -157,6 +157,38 @@
         </div>
 
     
+        <!-- Deposit & Withdrawal Limits — super admin only -->
+        <div class="section" id="limitsSection" style="display:none;">
+            <h3><i class="fas fa-sliders-h" style="margin-right:8px;"></i>Deposit &amp; Withdrawal Limits</h3>
+            <p style="color:rgba(255,255,255,0.5);font-size:0.88rem;margin-top:0;">
+                Set the minimum and maximum amounts users can deposit or withdraw. Changes take effect immediately.
+            </p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                <div>
+                    <label>Minimum Deposit (KES)</label>
+                    <input type="number" id="minDepositInput" min="1" placeholder="e.g. 100">
+                </div>
+                <div>
+                    <label>Maximum Deposit (KES)</label>
+                    <input type="number" id="maxDepositInput" min="1" placeholder="e.g. 500000">
+                </div>
+                <div>
+                    <label>Minimum Withdrawal (KES)</label>
+                    <input type="number" id="minWithdrawInput" min="1" placeholder="e.g. 150">
+                </div>
+                <div>
+                    <label>Maximum Withdrawal (KES)</label>
+                    <input type="number" id="maxWithdrawInput" min="1" placeholder="e.g. 200000">
+                </div>
+            </div>
+            <div style="margin-top:16px;display:flex;align-items:center;gap:14px;">
+                <button id="saveLimitsBtn" class="settings-action-btn">
+                    <i class="fas fa-save" style="margin-right:6px;"></i>Save Limits
+                </button>
+                <span id="limitsMsg" style="font-size:0.85rem;"></span>
+            </div>
+        </div>
+
         <!-- Admin PIN Management — super admin only -->
         <div class="section" id="pinSection" style="display:none;">
             <h3><i class="fas fa-lock" style="margin-right:8px;"></i>Admin PIN Management</h3>
@@ -192,15 +224,54 @@
 
 <script>
 (function() {
+  var ADMIN_KEY = '1540568e';
   fetch('/api/admin/me').then(function(r){return r.json();}).then(function(data){
     if (!data.isSuper) return;
+    loadLimitsSection();
     loadPinSection();
   }).catch(function(){});
+
+  function loadLimitsSection() {
+    var sec = document.getElementById('limitsSection');
+    if (sec) sec.style.display = 'block';
+    fetch('/api/admin/settings/limits', { headers: { 'x-admin-key': ADMIN_KEY } })
+      .then(function(r){ return r.json(); })
+      .then(function(d) {
+        document.getElementById('minDepositInput').value  = d.min_deposit  || '';
+        document.getElementById('maxDepositInput').value  = d.max_deposit  || '';
+        document.getElementById('minWithdrawInput').value = d.min_withdrawal || '';
+        document.getElementById('maxWithdrawInput').value = d.max_withdrawal || '';
+      }).catch(function(){});
+    document.getElementById('saveLimitsBtn').addEventListener('click', function() {
+      var msg = document.getElementById('limitsMsg');
+      var body = {
+        min_deposit:    parseFloat(document.getElementById('minDepositInput').value),
+        max_deposit:    parseFloat(document.getElementById('maxDepositInput').value),
+        min_withdrawal: parseFloat(document.getElementById('minWithdrawInput').value),
+        max_withdrawal: parseFloat(document.getElementById('maxWithdrawInput').value)
+      };
+      for (var k in body) {
+        if (isNaN(body[k]) || body[k] < 0) {
+          msg.style.color = '#ff6b6b'; msg.textContent = 'All fields must be valid positive numbers.'; return;
+        }
+      }
+      msg.style.color = 'rgba(255,255,255,0.4)'; msg.textContent = 'Saving…';
+      fetch('/api/admin/settings/limits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+        body: JSON.stringify(body)
+      }).then(function(r){ return r.json(); })
+        .then(function(d) {
+          if (d.success) { msg.style.color = '#4ecdc4'; msg.textContent = 'Limits saved successfully.'; }
+          else { msg.style.color = '#ff6b6b'; msg.textContent = d.error || 'Failed to save limits.'; }
+        }).catch(function(){ msg.style.color = '#ff6b6b'; msg.textContent = 'Network error.'; });
+    });
+  }
+
   function loadPinSection() {
-  var sec = document.getElementById('pinSection');
-  if (sec) sec.style.display = 'block';
-  var ADMIN_KEY = '1540568e';
-  fetch('/api/admin/pins', { headers: { 'x-admin-key': ADMIN_KEY } })
+    var sec = document.getElementById('pinSection');
+    if (sec) sec.style.display = 'block';
+    fetch('/api/admin/pins', { headers: { 'x-admin-key': ADMIN_KEY } })
     .then(function(r) { return r.json(); })
     .then(function(d) {
       if (d.superPin) document.getElementById('superPinInput').value = d.superPin;

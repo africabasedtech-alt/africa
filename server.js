@@ -330,7 +330,7 @@ const PROTECTED_ADMIN_PAGES = [
   'Admin-panel','admin-settings','admin-management','admin-product',
   'admin-approve','admin-deposit','admin-exchange','admin-pending-applications',
   'admin-referrals','admin-service','admin-user','admin-withdraw',
-  'admin-withdraw-new','admin-payment-channels','admin-manuals','admin-poster','sub-admin-panel','impersonate'
+  'admin-withdraw-new','admin-payment-channels','admin-manuals','admin-poster','sub-admin-panel','impersonate','admin-logs'
 ];
 
 app.use((req, res, next) => {
@@ -1536,6 +1536,12 @@ async function requireAnyAdmin(req, res, next) {
   }
 }
 
+function getAdminIdentity(req) {
+  if (req.isSuperAdmin) return { adminType: 'super', adminName: 'Super Admin', adminEmail: '' };
+  if (req.subAdmin) return { adminType: 'sub', adminName: req.subAdmin.name || '', adminEmail: req.subAdmin.email || '' };
+  return { adminType: 'unknown', adminName: '', adminEmail: '' };
+}
+
 function requireProductPermission(permission) {
   return requirePrivilege('product', permission);
 }
@@ -2132,6 +2138,7 @@ app.post('/api/admin/super-login', async (req, res) => {
       [sessionToken, JSON.stringify(adminData), expiresAt]
     );
     setAdminSessionCookie(res, sessionToken);
+    logAdminActivity({ adminType: 'super', adminName: 'Super Admin', adminEmail: email || 'admin', actionType: 'login', description: 'Super admin logged in', ip: req.ip });
     res.json({ ok: true });
   } catch (e) {
     console.error('Super login session error:', e.message);
@@ -2250,6 +2257,66 @@ app.post('/api/admin/pins', requireAnyAdmin, requirePrivilege('settings', 'setti
   }
 });
 
+// ─── DEPOSIT / WITHDRAWAL LIMITS (Super Admin only) ──────────────────────────
+app.get('/api/admin/settings/limits', requireAnyAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT key, value FROM system_settings WHERE key IN ('min_deposit','max_deposit','min_withdrawal','max_withdrawal')"
+    );
+    const m = {};
+    rows.forEach(r => { m[r.key] = parseFloat(r.value) || 0; });
+    res.json({
+      min_deposit:    m.min_deposit    ?? 100,
+      max_deposit:    m.max_deposit    ?? 500000,
+      min_withdrawal: m.min_withdrawal ?? 150,
+      max_withdrawal: m.max_withdrawal ?? 200000
+    });
+  } catch (e) { res.status(500).json({ error: 'Failed to load limits' }); }
+});
+
+app.post('/api/admin/settings/limits', requireSuperAdmin, async (req, res) => {
+  const { min_deposit, max_deposit, min_withdrawal, max_withdrawal } = req.body;
+  const fields = { min_deposit, max_deposit, min_withdrawal, max_withdrawal };
+  for (const [k, v] of Object.entries(fields)) {
+    const n = parseFloat(v);
+    if (isNaN(n) || n < 0) return res.status(400).json({ error: `Invalid value for ${k}` });
+  }
+  if (parseFloat(min_deposit) > parseFloat(max_deposit))
+    return res.status(400).json({ error: 'Min deposit cannot exceed max deposit' });
+  if (parseFloat(min_withdrawal) > parseFloat(max_withdrawal))
+    return res.status(400).json({ error: 'Min withdrawal cannot exceed max withdrawal' });
+  try {
+    const up = (k, v) => pool.query(
+      'INSERT INTO system_settings (key,value,updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (key) DO UPDATE SET value=$2,updated_at=NOW()',
+      [k, String(v)]
+    );
+    await Promise.all(Object.entries(fields).map(([k, v]) => up(k, v)));
+    const adminInfo = req.adminSession || {};
+    logAdminActivity({ adminType: 'super', adminName: adminInfo.name || 'Super Admin', adminEmail: adminInfo.email || '', actionType: 'settings_change', description: `Limits updated — Deposit: KES ${min_deposit}–${max_deposit}, Withdrawal: KES ${min_withdrawal}–${max_withdrawal}`, ip: req.ip });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Failed to save limits' }); }
+});
+
+// ─── ACTIVITY LOGS (Super Admin only) ────────────────────────────────────────
+app.get('/api/admin/activity-logs', requireSuperAdmin, async (req, res) => {
+  try {
+    const { action_type, admin_type, limit = 200, offset = 0 } = req.query;
+    const conditions = [];
+    const params = [];
+    if (action_type) { params.push(action_type); conditions.push(`action_type=$${params.length}`); }
+    if (admin_type)  { params.push(admin_type);  conditions.push(`admin_type=$${params.length}`); }
+    const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
+    params.push(parseInt(limit) || 200);
+    params.push(parseInt(offset) || 0);
+    const { rows } = await pool.query(
+      `SELECT * FROM admin_activity_logs ${where} ORDER BY created_at DESC LIMIT $${params.length-1} OFFSET $${params.length}`,
+      params
+    );
+    const countRes = await pool.query(`SELECT COUNT(*)::int AS total FROM admin_activity_logs ${where}`, params.slice(0,-2));
+    res.json({ logs: rows, total: countRes.rows[0]?.total || 0 });
+  } catch (e) { res.status(500).json({ error: 'Failed to load activity logs' }); }
+});
+
 // Validate admin login via token
 app.post('/api/admin/login', async (req, res) => {
   const { token, email, password, api_key, security_code, expected_code } = req.body;
@@ -2299,6 +2366,7 @@ app.post('/api/admin/login', async (req, res) => {
       [sessionToken, admin.id, JSON.stringify(adminData), expiresAt]
     );
     setAdminSessionCookie(res, sessionToken);
+    logAdminActivity({ adminType: 'sub', adminName: admin.name, adminEmail: admin.email, actionType: 'login', description: `Sub-admin "${admin.name}" logged in`, ip: req.ip });
     res.json({
       success: true,
       admin: {
@@ -2369,12 +2437,33 @@ async function getSystemSetting(key) {
   return rows[0]?.value || 'auto';
 }
 
+async function getNumericSetting(key, fallback) {
+  const { rows } = await pool.query('SELECT value FROM system_settings WHERE key=$1', [key]);
+  const v = parseFloat(rows[0]?.value);
+  return isNaN(v) ? fallback : v;
+}
+
+async function logAdminActivity({ adminType = 'super', adminName = '', adminEmail = '', actionType, description, ip = '', targetUserId = '' } = {}) {
+  try {
+    await pool.query(
+      `INSERT INTO admin_activity_logs (admin_type, admin_name, admin_email, action_type, description, ip_address, target_user_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [adminType, adminName || '', adminEmail || '', actionType, description, ip || '', targetUserId || '']
+    );
+  } catch (e) {
+    console.warn('logAdminActivity error:', e.message);
+  }
+}
+
 // ─── MANUAL DEPOSIT SUBMISSION (user submits M-Pesa message for admin review) ─
 app.post('/api/deposits/manual', requireAuth, rejectIfImpersonated, async (req, res) => {
   const { amount, mpesa_message, phone_or_account } = req.body;
   const userId = req.user.id;
   const amt = parseFloat(amount);
-  if (isNaN(amt) || amt < 10) return res.status(400).json({ error: 'Minimum deposit amount is KES 10' });
+  const minDep = await getNumericSetting('min_deposit', 100);
+  const maxDep = await getNumericSetting('max_deposit', 500000);
+  if (isNaN(amt) || amt < minDep) return res.status(400).json({ error: `Minimum deposit amount is KES ${minDep.toLocaleString()}` });
+  if (amt > maxDep) return res.status(400).json({ error: `Maximum deposit amount is KES ${maxDep.toLocaleString()}` });
   const reference = (mpesa_message || '').trim() || (phone_or_account || '').trim();
   if (!reference) return res.status(400).json({ error: 'M-Pesa message is required' });
 
@@ -2829,6 +2918,21 @@ app.get('/api/admin/referrals', requireSuperAdmin, async (req, res) => {
       `ALTER TABLE products ADD COLUMN IF NOT EXISTS used_units INTEGER NOT NULL DEFAULT 0`,
       `ALTER TABLE investments ADD COLUMN IF NOT EXISTS cancel_reason TEXT`,
       `ALTER TABLE investments ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`,
+      `CREATE TABLE IF NOT EXISTS admin_activity_logs (
+        id SERIAL PRIMARY KEY,
+        admin_type VARCHAR(20) NOT NULL DEFAULT 'super',
+        admin_name VARCHAR(255),
+        admin_email VARCHAR(255),
+        action_type VARCHAR(80) NOT NULL,
+        description TEXT NOT NULL,
+        ip_address VARCHAR(60),
+        target_user_id VARCHAR(255),
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `INSERT INTO system_settings (key,value,updated_at) VALUES ('min_deposit','100',NOW()) ON CONFLICT (key) DO NOTHING`,
+      `INSERT INTO system_settings (key,value,updated_at) VALUES ('max_deposit','500000',NOW()) ON CONFLICT (key) DO NOTHING`,
+      `INSERT INTO system_settings (key,value,updated_at) VALUES ('min_withdrawal','150',NOW()) ON CONFLICT (key) DO NOTHING`,
+      `INSERT INTO system_settings (key,value,updated_at) VALUES ('max_withdrawal','200000',NOW()) ON CONFLICT (key) DO NOTHING`,
       `DROP INDEX IF EXISTS idx_investments_free_one_per_user`,
       `CREATE UNIQUE INDEX IF NOT EXISTS idx_investments_free_one_per_user ON investments (user_id, product_name) WHERE amount = 0 AND status IN ('active','matured')`,
       `ALTER TABLE investments ALTER COLUMN start_date TYPE TIMESTAMPTZ USING start_date::TIMESTAMPTZ`,
@@ -2932,8 +3036,10 @@ app.post('/api/withdraw/mpesa', requireAuth, rejectIfImpersonated, async (req, r
 
   if (!amount || !phone) return res.status(400).json({ error: 'amount and phone are required' });
   const amt = parseFloat(amount);
-  if (isNaN(amt) || amt < 150) return res.status(400).json({ error: 'Minimum withdrawal is KES 150' });
-  if (amt > 200000) return res.status(400).json({ error: 'Maximum withdrawal is KES 200,000' });
+  const minWith = await getNumericSetting('min_withdrawal', 150);
+  const maxWith = await getNumericSetting('max_withdrawal', 200000);
+  if (isNaN(amt) || amt < minWith) return res.status(400).json({ error: `Minimum withdrawal is KES ${minWith.toLocaleString()}` });
+  if (amt > maxWith) return res.status(400).json({ error: `Maximum withdrawal is KES ${maxWith.toLocaleString()}` });
 
   // Normalise phone to 254XXXXXXXXX
   let normalised = String(phone).replace(/\s+/g, '');
@@ -3049,8 +3155,10 @@ app.post('/api/withdraw/bank', requireAuth, rejectIfImpersonated, async (req, re
     return res.status(400).json({ error: 'amount, bank_name, account_number and account_name are required' });
   }
   const amt = parseFloat(amount);
-  if (isNaN(amt) || amt < 500) return res.status(400).json({ error: 'Minimum bank withdrawal is KES 500' });
-  if (amt > 500000) return res.status(400).json({ error: 'Maximum bank withdrawal is KES 500,000' });
+  const minWithB = await getNumericSetting('min_withdrawal', 150);
+  const maxWithB = await getNumericSetting('max_withdrawal', 200000);
+  if (isNaN(amt) || amt < minWithB) return res.status(400).json({ error: `Minimum bank withdrawal is KES ${minWithB.toLocaleString()}` });
+  if (amt > maxWithB) return res.status(400).json({ error: `Maximum bank withdrawal is KES ${maxWithB.toLocaleString()}` });
 
   const fee = parseFloat((amt * 0.095).toFixed(2));
   const totalDeducted = parseFloat((amt + fee).toFixed(2));
@@ -3392,6 +3500,8 @@ app.post('/api/admin/deposits/:id/approve', requireAnyAdmin, requirePrivilege('d
     await pool.query('UPDATE profiles SET wallet_balance = COALESCE(wallet_balance,0) + $1 WHERE user_id = $2', [amount, user_id]);
     refreshProfileStats(user_id);
     res.json({ success: true });
+    const ai = getAdminIdentity(req);
+    logAdminActivity({ ...ai, actionType: 'deposit_action', description: `Deposit of KES ${amount} approved for user ${user_id}`, ip: req.ip, targetUserId: user_id });
     const u = await pool.query('SELECT username, email FROM users WHERE id=$1', [user_id]);
     if (u.rows.length && u.rows[0].email) {
       sendMail({ to: u.rows[0].email, subject: 'Deposit Confirmed – Balance Updated', html: depositConfirmedEmailHtml(u.rows[0].username, amount) });
@@ -3410,6 +3520,8 @@ app.post('/api/admin/deposits/:id/reject', requireAnyAdmin, requirePrivilege('de
     await pool.query('UPDATE deposits SET status=$1 WHERE id=$2', ['rejected', req.params.id]);
     refreshProfileStats(user_id);
     res.json({ success: true });
+    const ai = getAdminIdentity(req);
+    logAdminActivity({ ...ai, actionType: 'deposit_action', description: `Deposit of KES ${amount} rejected for user ${user_id}${reason ? ` — Reason: ${reason}` : ''}`, ip: req.ip, targetUserId: user_id });
     const u = await pool.query('SELECT username, email FROM users WHERE id=$1', [user_id]);
     if (u.rows.length && u.rows[0].email) {
       sendMail({ to: u.rows[0].email, subject: 'Deposit Not Approved', html: depositRejectedEmailHtml(u.rows[0].username, amount, reason) });
@@ -3428,6 +3540,8 @@ app.post('/api/admin/withdrawals/:id/approve', requireAnyAdmin, requirePrivilege
     await pool.query('UPDATE withdrawals SET status=$1, processed_at=NOW() WHERE id=$2', ['completed', req.params.id]);
     refreshProfileStats(user_id);
     res.json({ success: true });
+    const ai = getAdminIdentity(req);
+    logAdminActivity({ ...ai, actionType: 'withdrawal_action', description: `Withdrawal of KES ${amount} approved for user ${user_id} via ${method || 'mpesa'}`, ip: req.ip, targetUserId: user_id });
     const u = await pool.query('SELECT username, email FROM users WHERE id=$1', [user_id]);
     if (u.rows.length && u.rows[0].email) {
       sendMail({ to: u.rows[0].email, subject: 'Payment Sent – Withdrawal Successful', html: withdrawalPaidEmailHtml(u.rows[0].username, amount, method || 'mpesa') });
@@ -3449,6 +3563,8 @@ app.post('/api/admin/withdrawals/:id/reject', requireAnyAdmin, requirePrivilege(
     await pool.query('UPDATE profiles SET account_balance = account_balance + $1 WHERE user_id = $2', [total, user_id]);
     refreshProfileStats(user_id);
     res.json({ success: true });
+    const ai = getAdminIdentity(req);
+    logAdminActivity({ ...ai, actionType: 'withdrawal_action', description: `Withdrawal of KES ${amount} rejected for user ${user_id}${reason ? ` — Reason: ${reason}` : ''}`, ip: req.ip, targetUserId: user_id });
     const u = await pool.query('SELECT username, email FROM users WHERE id=$1', [user_id]);
     if (u.rows.length && u.rows[0].email) {
       sendMail({ to: u.rows[0].email, subject: 'Withdrawal Rejected', html: withdrawalRejectedEmailHtml(u.rows[0].username, amount, reason) });
@@ -3836,6 +3952,8 @@ app.post('/api/admin/investments/:id/cancel', requireAnyAdmin, requirePrivilege(
       'SELECT account_balance, COALESCE(wallet_balance,0) AS wallet_balance FROM profiles WHERE user_id=$1',
       [inv.user_id]
     );
+    const aiC = getAdminIdentity(req);
+    logAdminActivity({ ...aiC, actionType: 'investment_action', description: `Investment "${inv.product_name}" cancelled for user ${inv.user_id} — KES ${refundAmt} refunded to ${refundCol}`, ip: req.ip, targetUserId: inv.user_id });
     res.json({
       success: true,
       refunded: refundAmt,
@@ -3905,6 +4023,8 @@ app.post('/api/admin/investments/:id/delete', requireAnyAdmin, requirePrivilege(
       'SELECT account_balance, COALESCE(wallet_balance,0) AS wallet_balance FROM profiles WHERE user_id=$1',
       [inv.user_id]
     );
+    const aiD = getAdminIdentity(req);
+    logAdminActivity({ ...aiD, actionType: 'investment_action', description: `Investment "${inv.product_name}" deleted for user ${inv.user_id} — KES ${clawbackAmt} clawed back, KES ${refundAmt} refunded`, ip: req.ip, targetUserId: inv.user_id });
     res.json({
       success: true,
       clawback: clawbackAmt,
