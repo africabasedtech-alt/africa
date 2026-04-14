@@ -200,6 +200,12 @@
         .vi-card { border-radius: 10px; padding: 12px 14px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); }
         .vi-card.dup { border-color: rgba(255,107,107,0.4); background: rgba(255,107,107,0.06); }
         .vi-card.matured { opacity: 0.6; }
+        .vi-card.cancelled { opacity: 0.5; border-color: rgba(255,107,107,0.25); background: rgba(255,107,107,0.04); }
+        .vi-badge.cancelled-badge { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+        .vi-badge.email-sent { background: rgba(78,205,196,0.15); color: #4ecdc4; }
+        .vi-badge.email-pending { background: rgba(255,193,7,0.15); color: #ffc107; }
+        .vi-btn.email-btn { background: rgba(52,152,219,0.15); color: #3498db; border: 1px solid rgba(52,152,219,0.3); }
+        .vi-btn.email-btn.sent { background: rgba(78,205,196,0.1); color: rgba(78,205,196,0.6); border-color: rgba(78,205,196,0.2); cursor: default; }
         .vi-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
         .vi-card-name { font-weight: 700; font-size: 0.9rem; color: #fff; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .vi-badge { font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.04em; white-space: nowrap; }
@@ -760,27 +766,49 @@
             if (dupCount > 0) {
                 html += `<div class="vi-dup-alert"><i class="fas fa-exclamation-triangle"></i> ${dupCount} duplicate investment${dupCount > 1 ? 's' : ''} detected — review and remove extras below.</div>`;
             }
-            html += `<div style="color:rgba(255,255,255,0.35);font-size:0.78rem;margin-bottom:8px;">${invs.length} total investment${invs.length !== 1 ? 's' : ''} (active + matured)</div>`;
+            const activeInvs = invs.filter(i => i.status !== 'cancelled');
+            const cancelledInvs = invs.filter(i => i.status === 'cancelled');
+            html += `<div style="color:rgba(255,255,255,0.35);font-size:0.78rem;margin-bottom:8px;">${activeInvs.length} active/matured, ${cancelledInvs.length} cancelled</div>`;
             html += `<div class="vi-list">` + invs.map(inv => {
                 const isDup = inv.is_duplicate;
                 const isFree = inv.is_free;
                 const isMatured = inv.status === 'matured';
                 const isActive = inv.status === 'active';
+                const isCancelled = inv.status === 'cancelled';
                 const startFmt = inv.start_date ? new Date(inv.start_date).toLocaleString('en-KE', { timeZone: 'Africa/Nairobi', day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
                 const src = inv.balance_source === 'wallet' ? 'Deposit Wallet' : 'Earnings';
                 const collected = parseFloat(inv.total_collected) || 0;
                 const capital = parseFloat(inv.amount) || 0;
                 let badges = '';
-                badges += `<span class="vi-badge ${isActive ? 'active' : 'matured'}">${isActive ? 'ACTIVE' : 'MATURED'}</span>`;
+                if (isCancelled) {
+                    badges += `<span class="vi-badge cancelled-badge">CANCELLED</span>`;
+                    if (inv.cancel_email_sent) {
+                        badges += `<span class="vi-badge email-sent"><i class="fas fa-check"></i> Email Sent</span>`;
+                    } else {
+                        badges += `<span class="vi-badge email-pending"><i class="fas fa-clock"></i> Email Pending</span>`;
+                    }
+                } else {
+                    badges += `<span class="vi-badge ${isActive ? 'active' : 'matured'}">${isActive ? 'ACTIVE' : 'MATURED'}</span>`;
+                }
                 if (isFree) badges += `<span class="vi-badge free">FREE</span>`;
                 if (isDup) badges += `<span class="vi-badge dup"><i class="fas fa-exclamation-triangle"></i> DUPLICATE</span>`;
-                const actionBtns = isActive ? `
+                let actionBtns = '';
+                if (isCancelled) {
+                    if (inv.cancel_email_sent) {
+                        actionBtns = `<button class="vi-btn email-btn sent" disabled><i class="fas fa-check-circle"></i> Email Sent</button>
+                            <button class="vi-btn email-btn" onclick="doSendCancelEmail('${inv.id}','${esc(inv.product_name)}',this)"><i class="fas fa-redo"></i> Resend</button>`;
+                    } else {
+                        actionBtns = `<button class="vi-btn email-btn" onclick="doSendCancelEmail('${inv.id}','${esc(inv.product_name)}',this)"><i class="fas fa-envelope"></i> Send Cancel Email</button>`;
+                    }
+                } else if (isActive) {
+                    actionBtns = `
                     <button class="vi-btn cancel" onclick="doViCancel('${inv.id}','${esc(inv.product_name)}',${capital},false,0,'${userId}')"><i class="fas fa-undo"></i> Cancel & Refund</button>
-                    <button class="vi-btn delete" onclick="doViDelete('${inv.id}','${esc(inv.product_name)}',${collected}, '${userId}')"><i class="fas fa-trash-alt"></i> Delete & Clawback${collected > 0 ? ' KES ' + fmt(collected) : ''}</button>
-                ` : `
-                    <button class="vi-btn cancel" style="opacity:0.85;" onclick="doViCancel('${inv.id}','${esc(inv.product_name)}',${capital},true,${collected},'${userId}')"><i class="fas fa-ban"></i> Cancel Matured${collected > 0 ? ' (−KES ' + fmt(collected) + ' earnings)' : ''}</button>
-                `;
-                return `<div class="vi-card${isDup ? ' dup' : ''}${isMatured ? ' matured' : ''}">
+                    <button class="vi-btn delete" onclick="doViDelete('${inv.id}','${esc(inv.product_name)}',${collected}, '${userId}')"><i class="fas fa-trash-alt"></i> Delete & Clawback${collected > 0 ? ' KES ' + fmt(collected) : ''}</button>`;
+                } else {
+                    actionBtns = `<button class="vi-btn cancel" style="opacity:0.85;" onclick="doViCancel('${inv.id}','${esc(inv.product_name)}',${capital},true,${collected},'${userId}')"><i class="fas fa-ban"></i> Cancel Matured${collected > 0 ? ' (−KES ' + fmt(collected) + ' earnings)' : ''}</button>`;
+                }
+                const cardClass = isCancelled ? 'cancelled' : (isDup ? 'dup' : (isMatured ? 'matured' : ''));
+                return `<div class="vi-card${cardClass ? ' ' + cardClass : ''}">
                     <div class="vi-card-top">
                         <div class="vi-card-name">${esc(inv.product_name)} ${badges}</div>
                     </div>
@@ -846,6 +874,19 @@
             renderStats(); applyFilter();
             doViewInvestments(userId, window._viUsername || 'user');
         } catch(e) { alert('Connection error.'); }
+    };
+
+    window.doSendCancelEmail = async function(invId, productName, btnEl) {
+        if (!confirm(`Send cancellation email for "${productName}" to this user?`)) return;
+        btnEl.disabled = true;
+        btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        try {
+            const res = await fetch(`/api/admin/investments/${invId}/send-cancel-email`, { method: 'POST', headers: { 'x-admin-key': ADMIN_KEY } });
+            const data = await res.json();
+            if (!res.ok) { alert(data.error || 'Failed to send email.'); btnEl.disabled = false; btnEl.innerHTML = '<i class="fas fa-envelope"></i> Send Cancel Email'; return; }
+            showToast(`Cancellation email sent for "${productName}".`, 'success');
+            doViewInvestments(window._viUserId, window._viUsername || 'user');
+        } catch(e) { alert('Connection error.'); btnEl.disabled = false; btnEl.innerHTML = '<i class="fas fa-envelope"></i> Send Cancel Email'; }
     };
 
     async function doLoadInvestments(userId, username) {

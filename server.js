@@ -257,6 +257,21 @@ function withdrawalRejectedEmailHtml(username, amount, reason) {
 // ─── Email helper: investment cancellation ────────────────────────────────────
 function escHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+async function getProductManagerContact() {
+  try {
+    const { rows } = await pool.query(
+      "SELECT name, phone_or_link FROM whatsapp_services WHERE type='manager' AND category='Product Manager' ORDER BY id ASC LIMIT 1"
+    );
+    if (rows.length) {
+      const mgr = rows[0];
+      const phone = mgr.phone_or_link || '';
+      const waLink = phone ? 'https://wa.me/' + phone.replace(/\s+/g, '').replace(/^\+/, '').replace(/^0/, '254') : '';
+      return mgr.name + (waLink ? '\n' + waLink : (phone ? '\n' + phone : ''));
+    }
+    return '';
+  } catch (e) { return ''; }
+}
+
 function investmentCancelledEmailHtml(username, productName, cancelReason, supportContact) {
   const safeUser = escHtml(username);
   const safeProd = escHtml(productName);
@@ -3965,11 +3980,12 @@ app.get('/api/admin/users/:id/investments', requireAnyAdmin, requirePrivilege('u
     const result = await pool.query(
       `SELECT i.id, i.product_name, i.amount, i.daily_earnings, i.start_date, i.end_date,
               i.balance_source, i.total_collected, i.units, i.status,
+              i.cancel_email_sent, i.cancel_reason,
               COALESCE(p.price, i.amount) AS product_price
        FROM investments i
        LEFT JOIN products p ON p.name = i.product_name
-       WHERE i.user_id = $1::uuid AND i.status IN ('active','matured')
-       ORDER BY i.start_date DESC`,
+       WHERE i.user_id = $1::uuid AND i.status IN ('active','matured','cancelled')
+       ORDER BY CASE i.status WHEN 'active' THEN 0 WHEN 'matured' THEN 1 ELSE 2 END, i.start_date DESC`,
       [req.params.id]
     );
     const activeByProduct = {};
@@ -4075,8 +4091,7 @@ app.post('/api/admin/investments/:id/cancel', requireAnyAdmin, requirePrivilege(
         const userRes = await pool.query('SELECT username, email FROM users WHERE id=$1', [inv.user_id]);
         if (!userRes.rows.length || !userRes.rows[0].email) return;
         const { username, email } = userRes.rows[0];
-        const scRes = await pool.query("SELECT value FROM system_settings WHERE key='support_contact'");
-        const supportContact = scRes.rows[0]?.value || '';
+        const supportContact = await getProductManagerContact();
         const sent = await sendMail({ to: email, subject: `Investment Cancelled — ${inv.product_name}`, html: investmentCancelledEmailHtml(username, inv.product_name, cancelReason, supportContact) });
         if (sent) await pool.query('UPDATE investments SET cancel_email_sent=TRUE WHERE id=$1', [inv.id]);
       } catch (emailErr) { console.error('Cancel email error:', emailErr.message); }
@@ -4161,8 +4176,7 @@ app.post('/api/admin/investments/:id/delete', requireAnyAdmin, requirePrivilege(
         const userRes = await pool.query('SELECT username, email FROM users WHERE id=$1', [inv.user_id]);
         if (!userRes.rows.length || !userRes.rows[0].email) return;
         const { username, email } = userRes.rows[0];
-        const scRes = await pool.query("SELECT value FROM system_settings WHERE key='support_contact'");
-        const supportContact = scRes.rows[0]?.value || '';
+        const supportContact = await getProductManagerContact();
         const sent = await sendMail({ to: email, subject: `Investment Cancelled — ${inv.product_name}`, html: investmentCancelledEmailHtml(username, inv.product_name, deleteReason, supportContact) });
         if (sent) await pool.query('UPDATE investments SET cancel_email_sent=TRUE WHERE id=$1', [inv.id]);
       } catch (emailErr) { console.error('Delete email error:', emailErr.message); }
@@ -4185,11 +4199,42 @@ app.post('/api/admin/investments/:id/delete', requireAnyAdmin, requirePrivilege(
   }
 });
 
+// ─── Send cancellation email for a single investment ─────────────────────────
+app.post('/api/admin/investments/:id/send-cancel-email', requireAnyAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT i.id, i.product_name, i.cancel_reason, i.cancel_email_sent, i.user_id,
+              u.username, u.email
+       FROM investments i
+       JOIN users u ON u.id = i.user_id
+       WHERE i.id = $1 AND i.status = 'cancelled'`,
+      [req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Cancelled investment not found.' });
+    const inv = rows[0];
+    if (!inv.email) return res.status(400).json({ error: 'User has no email address.' });
+    const supportContact = await getProductManagerContact();
+    const ok = await sendMail({
+      to: inv.email,
+      subject: `Investment Cancelled — ${inv.product_name}`,
+      html: investmentCancelledEmailHtml(inv.username, inv.product_name, inv.cancel_reason || 'This investment was cancelled.', supportContact)
+    });
+    if (ok) {
+      await pool.query('UPDATE investments SET cancel_email_sent=TRUE WHERE id=$1', [inv.id]);
+      res.json({ success: true, message: 'Cancellation email sent.' });
+    } else {
+      res.status(500).json({ error: 'Email delivery failed. Please try again.' });
+    }
+  } catch (e) {
+    console.error('Send single cancel email error:', e);
+    res.status(500).json({ error: 'Failed to send email.' });
+  }
+});
+
 // ─── Retroactive: send cancellation emails for all past cancelled investments ─
 app.post('/api/admin/investments/send-cancel-emails', requireSuperAdmin, async (req, res) => {
   try {
-    const scRes = await pool.query("SELECT value FROM system_settings WHERE key='support_contact'");
-    const supportContact = scRes.rows[0]?.value || '';
+    const supportContact = await getProductManagerContact();
     const { rows } = await pool.query(`
       SELECT i.id, i.product_name, i.cancel_reason, u.username, u.email
       FROM investments i
