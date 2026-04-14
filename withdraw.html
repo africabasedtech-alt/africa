@@ -371,10 +371,37 @@
 
         let currentBalance = 0;
         let currentMethod = 'mpesa';
+        var wMin = 150;
+        var wMax = 200000;
 
         function fmt(n) { return parseFloat(n).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
+        async function loadWithdrawConfig() {
+            try {
+                var res = await fetch('/api/withdraw/config');
+                if (!res.ok) return;
+                var d = await res.json();
+                wMin = d.min_withdrawal || 150;
+                wMax = d.max_withdrawal || 200000;
+                var fmtMin = Number(wMin).toLocaleString('en-KE');
+                var fmtMax = Number(wMax).toLocaleString('en-KE');
+                var tabSub = document.querySelector('#tab-mpesa .method-tab-sub');
+                if (tabSub) tabSub.textContent = 'Instant \u00B7 Min KES ' + fmtMin;
+                var tabSubBank = document.querySelector('#tab-bank .method-tab-sub');
+                if (tabSubBank) tabSubBank.textContent = '1\u20133 days \u00B7 Min KES ' + fmtMin;
+                var mpesaNotice = document.querySelector('#section-mpesa .notice');
+                if (mpesaNotice) mpesaNotice.innerHTML = '<b>Instant Payout</b> \u2014 Money is sent automatically to your M-Pesa. A <b>9.5% processing fee</b> applies. Min: KES ' + fmtMin + ' &nbsp;|&nbsp; Max: KES ' + fmtMax + '.';
+                var bankNotice = document.querySelector('#section-bank .notice');
+                if (bankNotice) bankNotice.innerHTML = '<b>Manual Processing</b> \u2014 Bank transfers are reviewed and processed within <b>1\u20133 business days</b>. A <b>9.5% processing fee</b> applies. Min: KES ' + fmtMin + ' &nbsp;|&nbsp; Max: KES ' + fmtMax + '.';
+                var mpesaInput = document.getElementById('mpesaAmount');
+                if (mpesaInput) { mpesaInput.placeholder = 'Min. ' + fmtMin; mpesaInput.min = wMin; mpesaInput.max = wMax; }
+                var bankInput = document.getElementById('bankAmount');
+                if (bankInput) { bankInput.placeholder = 'Min. ' + fmtMin; bankInput.min = wMin; bankInput.max = wMax; }
+            } catch (e) { console.warn('loadWithdrawConfig error', e); }
+        }
+
         async function init() {
+            await loadWithdrawConfig();
             await loadBalance();
             await loadPaymentProfile();
             await loadHistory();
@@ -450,7 +477,7 @@
         function updateMpesaFee() {
             var amt = parseFloat(document.getElementById('mpesaAmount').value);
             var fi = document.getElementById('mpesaFeeInfo');
-            if (isNaN(amt) || amt < 150) { fi.classList.remove('show'); validateMpesa(); return; }
+            if (isNaN(amt) || amt < wMin) { fi.classList.remove('show'); validateMpesa(); return; }
             var fee = parseFloat((amt * 0.095).toFixed(2));
             var total = parseFloat((amt + fee).toFixed(2));
             document.getElementById('mFeeAmt').textContent = 'KES ' + fmt(amt);
@@ -465,14 +492,14 @@
             var phone = (window._profileMpesaPhone || '').trim();
             var fee = amt * 0.095;
             var total = amt + fee;
-            var valid = !isNaN(amt) && amt >= 150 && amt <= 200000 && phone.length >= 9 && total <= currentBalance;
+            var valid = !isNaN(amt) && amt >= wMin && amt <= wMax && phone.length >= 9 && total <= currentBalance;
             document.getElementById('mpesaBtn').disabled = !valid;
         }
 
         function updateBankFee() {
             var amt = parseFloat(document.getElementById('bankAmount').value);
             var fi = document.getElementById('bankFeeInfo');
-            if (isNaN(amt) || amt < 500) { fi.classList.remove('show'); validateBank(); return; }
+            if (isNaN(amt) || amt < wMin) { fi.classList.remove('show'); validateBank(); return; }
             var fee = parseFloat((amt * 0.095).toFixed(2));
             var total = parseFloat((amt + fee).toFixed(2));
             document.getElementById('bFeeAmt').textContent = 'KES ' + fmt(amt);
@@ -488,7 +515,7 @@
             var accNum = document.getElementById('bankAccNum').value.trim();
             var fee = amt * 0.095;
             var total = amt + fee;
-            var valid = !isNaN(amt) && amt >= 500 && amt <= 500000 && bank && accNum.length >= 3 && total <= currentBalance;
+            var valid = !isNaN(amt) && amt >= wMin && amt <= wMax && bank && accNum.length >= 3 && total <= currentBalance;
             document.getElementById('bankBtn').disabled = !valid;
         }
 

@@ -3208,6 +3208,23 @@ app.get('/api/withdraw/history', requireAuth, async (req, res) => {
   }
 });
 
+// ─── WITHDRAWAL CONFIG (public, for UI limits) ──────────────────────────────
+app.get('/api/withdraw/config', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT key, value FROM system_settings WHERE key IN ('min_withdrawal','max_withdrawal')"
+    );
+    const m = {};
+    rows.forEach(r => { m[r.key] = r.value; });
+    res.json({
+      min_withdrawal: parseFloat(m.min_withdrawal) || 150,
+      max_withdrawal: parseFloat(m.max_withdrawal) || 200000
+    });
+  } catch (e) {
+    res.json({ min_withdrawal: 150, max_withdrawal: 200000 });
+  }
+});
+
 // ─── BANK WITHDRAWAL ──────────────────────────────────────────────────────────
 app.post('/api/withdraw/bank', requireAuth, rejectIfImpersonated, async (req, res) => {
   const { amount, bank_name, account_number, account_name, paybill } = req.body;
