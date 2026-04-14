@@ -447,3 +447,10 @@
   border-color: var(--ft-gold);
   color: var(--ft-gold);
 }
+.ft-theme-fab {
+  position: fixed;
+  bottom: 140px;
+  right: 16px;
+  z-index: 9997;
+  box-shadow: var(--ft-shadow-lg);
+}

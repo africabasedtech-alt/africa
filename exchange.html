@@ -95,10 +95,10 @@
         .modal-input {
             width: 100%;
             padding: 1rem 1.5rem;
-            background: rgba(255,255,255,0.05);
+            background: var(--ft-input-bg, rgba(255,255,255,0.05));
             border: 2px solid transparent;
             border-radius: 15px;
-            color: #fff;
+            color: var(--ft-text);
             font-size: 1.1rem;
             text-align: center;
             transition: all 0.3s ease;
@@ -152,7 +152,7 @@
         .exchange-history {
             margin-top: 2rem;
             padding: 1rem;
-            background: rgba(13,21,32,0.98);
+            background: var(--ft-card);
             border-radius: 15px;
         }
         .exchange-table {
@@ -164,11 +164,11 @@
         .exchange-table td {
             padding: 0.75rem 1rem;
             text-align: left;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid var(--ft-border);
         }
         .exchange-table th {
             font-weight: 600;
-            background: rgba(255,255,255,0.05);
+            background: var(--ft-glass, rgba(255,255,255,0.05));
         }
         .code-type {
             font-size: 0.8em;

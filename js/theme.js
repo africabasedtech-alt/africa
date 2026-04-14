@@ -54,5 +54,15 @@
 
   document.addEventListener('DOMContentLoaded', function() {
     updateToggleIcons(getTheme());
+
+    if (!document.querySelector('.ft-theme-toggle')) {
+      var fab = document.createElement('button');
+      fab.className = 'ft-theme-toggle ft-theme-fab';
+      fab.setAttribute('onclick', 'abToggleTheme()');
+      fab.setAttribute('title', 'Toggle theme');
+      fab.innerHTML = '<i class="fas fa-sun"></i>';
+      document.body.appendChild(fab);
+      updateToggleIcons(getTheme());
+    }
   });
 })();
