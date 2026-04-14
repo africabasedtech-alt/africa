@@ -15,10 +15,11 @@ Do not make changes to the file `Y`.
 The platform utilizes a modern web architecture with a focus on performance, scalability, and user experience.
 
 ### UI/UX Decisions
-The user-facing pages feature a premium gold/dark theme with a unified aesthetic.
-- **Color Scheme:** Primary colors are `--gold:#d4a017`, `--gold-bright:#f5c842`, `--bg:#06090f`, `--card-bg:#0d1520`, `--card-bg2:#111d2e`. Green accents are used for positive indicators. Deposit pages use a fully green M-Pesa-inspired theme (`#4CAF50`, `#2e7d32`, `#81c784`).
+The user-facing pages feature a premium gold theme with light/dark mode support.
+- **Theme System:** `css/fintech-theme.css` defines all design tokens as `--ft-*` CSS custom properties. Dark mode is the default (`:root`), light mode uses `[data-theme="light"]` overrides. `js/theme.js` handles auto-detection via `prefers-color-scheme`, localStorage persistence (`ab-theme` key), and exposes `abToggleTheme()`. A `.ft-theme-toggle` button in the nav bar lets users switch themes. All user-facing pages link fintech-theme.css and include theme.js. Page-specific CSS variables are remapped to `--ft-*` tokens for theme responsiveness. Admin pages remain dark-only.
+- **Color Scheme:** Primary gold `--ft-gold:#d4a017`, `--ft-gold-bright:#f0c040`. Dark: `--ft-bg:#09090b`, `--ft-card:#16161a`. Light: `--ft-bg:#f4f4f5`, `--ft-card:#ffffff`. Green accents for positive indicators. Deposit pages use a green M-Pesa-inspired theme.
 - **Typography:** Plus Jakarta Sans font from Google Fonts (weights 400–800). Modern geometric sans-serif with premium fintech aesthetic.
-- **Navigation:** A fixed 72px gold bottom tab bar on all authenticated pages (Home, Invest, Holdings, Wallet, Profile).
+- **Navigation:** A fixed bottom tab bar on all authenticated pages (Home, Invest, Holdings, Wallet, Profile). Desktop responsive layout with max-width 960px–1120px (no longer forced to 480px mobile).
 - **Landing Page:** Professional fintech layout with feature lists, payment methods grid, and styled testimonials.
 - **Modals:** Animated modals for login success and account creation.
 - **PWA Integration:** Full PWA support with `manifest.json`, service worker (`sw.js`) for caching strategies (cache-first for static assets, network-first with cache fallback for APIs), and `offline.html` for branded offline experience.

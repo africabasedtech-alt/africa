@@ -20,6 +20,7 @@
     <title>Statistics Dashboard - AfricaBased</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="/css/fintech-theme.css">
+<script src="/js/theme.js"></script>
     <script src="/js/token.js"></script>
     <script>
         if (!getABToken()) {
@@ -28,21 +29,21 @@
     </script>
     <style>
         :root {
-            --primary: #16161a;
-            --accent: #d4a017;
-            --accent-gradient: linear-gradient(135deg, #d4a017, #f0c040);
-            --secondary: #f0c040;
-            --text: #fafafa;
-            --text-dark: #fafafa;
-            --text-light: #a1a1aa;
-            --bg: #09090b;
-            --background-color: #09090b;
-            --card-color: #16161a;
-            --success-color: #d4a017;
+            --primary: var(--ft-card);
+            --accent: var(--ft-gold);
+            --accent-gradient: linear-gradient(135deg, var(--ft-gold), var(--ft-gold-bright));
+            --secondary: var(--ft-gold-bright);
+            --text: var(--ft-text);
+            --text-dark: var(--ft-text);
+            --text-light: var(--ft-text-muted);
+            --bg: var(--ft-bg);
+            --background-color: var(--ft-bg);
+            --card-color: var(--ft-card);
+            --success-color: var(--ft-gold);
             --warning-color: #f59e0b;
             --danger-color: #ef4444;
-            --text-color: #fafafa;
-            --text-color-secondary: rgba(255, 255, 255, 0.7);
+            --text-color: var(--ft-text);
+            --text-color-secondary: var(--ft-text-secondary);
             --shadow: var(--ft-shadow);
             --transition: var(--ft-transition);
         }
@@ -86,7 +87,7 @@
         }
 
         .back-button {
-            background: rgba(255,255,255,0.04);
+            background: var(--ft-glass);
             color: var(--ft-text-secondary);
             padding: 8px 16px;
             border-radius: var(--ft-radius-sm);
@@ -102,7 +103,7 @@
         }
 
         .back-button:hover {
-            background: rgba(255,255,255,0.06);
+            background: var(--ft-btn-secondary-bg);
             border-color: var(--ft-border-hover);
         }
 
@@ -231,7 +232,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <!-- Bottom Tab Bar -->
   <style>
-  .ab-tabs{position:fixed;bottom:0;left:0;right:0;height:var(--ft-tab-h);background:rgba(9,9,11,0.95);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-top:1px solid var(--ft-border);display:flex;justify-content:space-around;align-items:center;z-index:9999;padding-bottom:env(safe-area-inset-bottom,0);}
+  .ab-tabs{position:fixed;bottom:0;left:0;right:0;height:var(--ft-tab-h);background:var(--ft-tab-bg);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-top:1px solid var(--ft-border);display:flex;justify-content:space-around;align-items:center;z-index:9999;padding-bottom:env(safe-area-inset-bottom,0);}
   .ab-tabs a{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--ft-text-muted);font-size:0.62rem;font-family:var(--ft-font);font-weight:600;transition:var(--ft-transition);position:relative;padding:6px 0;}
   .ab-tabs a i{font-size:1.15rem;}
   .ab-tabs a.active{color:var(--ft-gold);}

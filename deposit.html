@@ -20,6 +20,7 @@
     <title>AfricaBased - Deposit</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="/css/fintech-theme.css">
+<script src="/js/theme.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--ft-font); }
         body { background: var(--ft-bg); color: var(--ft-text); min-height: 100vh; padding-top: 20px; padding-bottom: 90px !important; -webkit-font-smoothing: antialiased; }
@@ -29,10 +30,10 @@
         .back-link {
             display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
             color: var(--ft-text-secondary); font-size: 0.85rem; font-weight: 600;
-            padding: 8px 16px; background: rgba(255,255,255,0.04); border: 1px solid var(--ft-border);
+            padding: 8px 16px; background: var(--ft-glass); border: 1px solid var(--ft-border);
             border-radius: var(--ft-radius-sm); margin-bottom: 1.2rem; transition: var(--ft-transition);
         }
-        .back-link:hover { background: rgba(255,255,255,0.06); border-color: var(--ft-border-hover); }
+        .back-link:hover { background: var(--ft-btn-secondary-bg); border-color: var(--ft-border-hover); }
 
         .page-title {
             font-size: 1.5rem; font-weight: 800; color: var(--ft-text);
@@ -135,7 +136,7 @@
         }
         .no-channel-msg i { font-size: 2rem; color: rgba(255,255,255,0.1); margin-bottom: 12px; display: block; }
 
-        .ab-tabs{position:fixed;bottom:0;left:0;right:0;height:var(--ft-tab-h);background:rgba(9,9,11,0.95);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-top:1px solid var(--ft-border);display:flex;justify-content:space-around;align-items:center;z-index:9999;padding-bottom:env(safe-area-inset-bottom,0);}
+        .ab-tabs{position:fixed;bottom:0;left:0;right:0;height:var(--ft-tab-h);background:var(--ft-tab-bg);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-top:1px solid var(--ft-border);display:flex;justify-content:space-around;align-items:center;z-index:9999;padding-bottom:env(safe-area-inset-bottom,0);}
         .ab-tabs a{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--ft-text-muted);font-size:0.62rem;font-family:var(--ft-font);font-weight:600;transition:var(--ft-transition);position:relative;padding:6px 0;}
         .ab-tabs a i{font-size:1.15rem;}
         .ab-tabs a.active{color:var(--ft-gold);}

@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
-:root {
+:root,
+[data-theme="dark"] {
   --ft-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --ft-bg: #09090b;
   --ft-bg-elevated: #111113;
@@ -30,6 +31,44 @@
   --ft-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --ft-nav-h: 56px;
   --ft-tab-h: 68px;
+  --ft-nav-bg: rgba(9,9,11,0.85);
+  --ft-tab-bg: rgba(9,9,11,0.95);
+  --ft-overlay: rgba(0,0,0,0.6);
+  --ft-input-bg: rgba(255,255,255,0.04);
+  --ft-input-placeholder: var(--ft-text-muted);
+  --ft-btn-secondary-bg: rgba(255,255,255,0.06);
+  --ft-glass: rgba(255,255,255,0.03);
+}
+
+[data-theme="light"] {
+  --ft-bg: #f4f4f5;
+  --ft-bg-elevated: #ffffff;
+  --ft-card: #ffffff;
+  --ft-card-hover: #f9f9fb;
+  --ft-border: rgba(0,0,0,0.08);
+  --ft-border-hover: rgba(0,0,0,0.15);
+  --ft-gold: #b8860b;
+  --ft-gold-bright: #d4a017;
+  --ft-gold-dim: rgba(184,134,11,0.10);
+  --ft-gold-glow: rgba(184,134,11,0.20);
+  --ft-text: #18181b;
+  --ft-text-secondary: #52525b;
+  --ft-text-muted: #a1a1aa;
+  --ft-green: #16a34a;
+  --ft-green-dim: rgba(22,163,74,0.10);
+  --ft-red: #dc2626;
+  --ft-red-dim: rgba(220,38,38,0.10);
+  --ft-blue: #2563eb;
+  --ft-blue-dim: rgba(37,99,235,0.10);
+  --ft-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+  --ft-shadow-lg: 0 4px 6px rgba(0,0,0,0.06), 0 10px 30px rgba(0,0,0,0.08);
+  --ft-nav-bg: rgba(255,255,255,0.9);
+  --ft-tab-bg: rgba(255,255,255,0.95);
+  --ft-overlay: rgba(0,0,0,0.3);
+  --ft-input-bg: rgba(0,0,0,0.03);
+  --ft-input-placeholder: #a1a1aa;
+  --ft-btn-secondary-bg: rgba(0,0,0,0.04);
+  --ft-glass: rgba(0,0,0,0.02);
 }
 
 @keyframes ft-fadeIn {
@@ -60,7 +99,7 @@
 .ft-top-nav {
   position: fixed; top: 0; left: 0; right: 0;
   height: var(--ft-nav-h);
-  background: rgba(9,9,11,0.85);
+  background: var(--ft-nav-bg);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   display: flex; align-items: center; justify-content: space-between;
@@ -108,7 +147,7 @@
 .ft-tabs {
   position: fixed; bottom: 0; left: 0; right: 0;
   height: var(--ft-tab-h);
-  background: rgba(9,9,11,0.95);
+  background: var(--ft-tab-bg);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-top: 1px solid var(--ft-border);
@@ -213,13 +252,13 @@
 }
 
 .ft-btn-secondary {
-  background: rgba(255,255,255,0.06);
+  background: var(--ft-btn-secondary-bg);
   color: var(--ft-text);
   border: 1px solid var(--ft-border);
 }
 
 .ft-btn-secondary:hover {
-  background: rgba(255,255,255,0.1);
+  background: var(--ft-btn-secondary-bg);
   border-color: var(--ft-border-hover);
 }
 
@@ -236,7 +275,7 @@
 
 .ft-input {
   width: 100%;
-  background: rgba(255,255,255,0.04);
+  background: var(--ft-input-bg);
   border: 1px solid var(--ft-border);
   border-radius: var(--ft-radius-md);
   padding: 14px 16px;
@@ -248,7 +287,7 @@
 }
 
 .ft-input::placeholder {
-  color: var(--ft-text-muted);
+  color: var(--ft-input-placeholder);
 }
 
 .ft-input:focus {
@@ -357,7 +396,7 @@
 
 .ft-modal-overlay {
   display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: var(--ft-overlay);
   backdrop-filter: blur(4px);
   z-index: 600; align-items: flex-end; justify-content: center;
   padding: 16px;
@@ -380,11 +419,31 @@
   color: var(--ft-text); margin-bottom: 12px;
 }
 
-@media (min-width: 1024px) {
-  .ft-mobile-container {
-    max-width: 480px;
+@media (min-width: 768px) {
+  .ft-desktop-container {
+    max-width: 960px;
     margin: 0 auto;
-    box-shadow: -1px 0 0 var(--ft-border), 1px 0 0 var(--ft-border);
-    min-height: 100vh;
+    padding-left: 24px;
+    padding-right: 24px;
   }
+}
+
+@media (min-width: 1200px) {
+  .ft-desktop-container {
+    max-width: 1120px;
+  }
+}
+
+.ft-theme-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--ft-btn-secondary-bg);
+  border: 1px solid var(--ft-border);
+  color: var(--ft-text-secondary);
+  cursor: pointer; font-size: 1rem;
+  transition: var(--ft-transition);
+}
+.ft-theme-toggle:hover {
+  border-color: var(--ft-gold);
+  color: var(--ft-gold);
 }

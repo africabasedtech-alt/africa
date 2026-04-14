@@ -26,16 +26,17 @@
     <title>Invest in Products | AfricaBased</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/fintech-theme.css">
+<script src="/js/theme.js"></script>
     <script src="/js/token.js"></script>
     <style>
         :root {
-            --primary-color: #09090b;
-            --secondary-color: #111113;
-            --accent-color: #d4a017;
-            --background-dark: #09090b;
-            --text-color: #fafafa;
-            --border-color: rgba(255,255,255,0.06);
-            --hover-color: #f0c040;
+            --primary-color: var(--ft-bg);
+            --secondary-color: var(--ft-card);
+            --accent-color: var(--ft-gold);
+            --background-dark: var(--ft-bg);
+            --text-color: var(--ft-text);
+            --border-color: var(--ft-border);
+            --hover-color: var(--ft-gold-bright);
         }
     body{padding-bottom:80px !important;}
 </style>
@@ -747,7 +748,7 @@
             flex-shrink: 0;
         }
         .sector-btn:not(.active):hover {
-            background: rgba(255,255,255,0.04);
+            background: var(--ft-glass);
             border-color: var(--ft-border-hover);
             color: var(--ft-text-secondary);
         }
@@ -990,7 +991,7 @@
             margin-top: auto;
         }
         .product-detail-box {
-            background: rgba(255,255,255,0.04);
+            background: var(--ft-glass);
             border-radius: 10px;
             padding: 10px 12px;
             display: flex;
@@ -1054,7 +1055,7 @@
             margin-bottom: 8px;
         }
         .back-btn {
-            background: rgba(255,255,255,0.04);
+            background: var(--ft-glass);
             color: var(--ft-text-secondary);
             border: 1px solid var(--ft-border);
             padding: 8px 16px;
@@ -1101,7 +1102,7 @@
 
         /* Toggle Buttons */
         .btn {
-            background: rgba(255,255,255,0.04);
+            background: var(--ft-glass);
             color: var(--ft-text-secondary);
             border: 1px solid var(--ft-border);
             padding: 8px 20px;
@@ -1135,7 +1136,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <!-- Bottom Tab Bar -->
   <style>
-  .ab-tabs{position:fixed;bottom:0;left:0;right:0;height:var(--ft-tab-h);background:rgba(9,9,11,0.95);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-top:1px solid var(--ft-border);display:flex;justify-content:space-around;align-items:center;z-index:9999;padding-bottom:env(safe-area-inset-bottom,0);}
+  .ab-tabs{position:fixed;bottom:0;left:0;right:0;height:var(--ft-tab-h);background:var(--ft-tab-bg);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-top:1px solid var(--ft-border);display:flex;justify-content:space-around;align-items:center;z-index:9999;padding-bottom:env(safe-area-inset-bottom,0);}
   .ab-tabs a{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--ft-text-muted);font-size:0.62rem;font-family:var(--ft-font);font-weight:600;transition:var(--ft-transition);position:relative;padding:6px 0;}
   .ab-tabs a i{font-size:1.15rem;}
   .ab-tabs a.active{color:var(--ft-gold);}

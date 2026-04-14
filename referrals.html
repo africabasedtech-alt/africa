@@ -117,23 +117,24 @@
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/sessionUtils.js"></script>
     <link rel="stylesheet" href="/css/fintech-theme.css">
+<script src="/js/theme.js"></script>
     <style>
         :root {
-            --primary-color: #d4a017;
+            --primary-color: var(--ft-gold);
             --primary-dark: #b8890f;
-            --secondary-color: #1c1c21;
-            --accent-color: #f0c040;
-            --background-color: #09090b;
-            --card-color: #16161a;
-            --menu-bg: rgba(22,22,26,0.98);
-            --success-color: #22c55e;
+            --secondary-color: var(--ft-card-hover);
+            --accent-color: var(--ft-gold-bright);
+            --background-color: var(--ft-bg);
+            --card-color: var(--ft-card);
+            --menu-bg: var(--ft-nav-bg);
+            --success-color: var(--ft-green);
             --warning-color: #f59e0b;
             --danger-color: #ef4444;
-            --text-color: #fafafa;
-            --text-color-secondary: rgba(255, 255, 255, 0.7);
+            --text-color: var(--ft-text);
+            --text-color-secondary: var(--ft-text-secondary);
             --shadow: var(--ft-shadow);
             --transition: var(--ft-transition);
-            --gradient-accent: linear-gradient(135deg, #d4a017, #f0c040);
+            --gradient-accent: linear-gradient(135deg, var(--ft-gold), var(--ft-gold-bright));
         }
 
         * {
@@ -595,7 +596,7 @@
     </style>
 <script src="/js/token.js"></script>
   <style>
-  .ab-tabs{position:fixed;bottom:0;left:0;right:0;height:var(--ft-tab-h);background:rgba(9,9,11,0.95);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-top:1px solid var(--ft-border);display:flex;justify-content:space-around;align-items:center;z-index:9999;padding-bottom:env(safe-area-inset-bottom,0);}
+  .ab-tabs{position:fixed;bottom:0;left:0;right:0;height:var(--ft-tab-h);background:var(--ft-tab-bg);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-top:1px solid var(--ft-border);display:flex;justify-content:space-around;align-items:center;z-index:9999;padding-bottom:env(safe-area-inset-bottom,0);}
   .ab-tabs a{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--ft-text-muted);font-size:0.62rem;font-family:var(--ft-font);font-weight:600;transition:var(--ft-transition);position:relative;padding:6px 0;}
   .ab-tabs a i{font-size:1.15rem;}
   .ab-tabs a.active{color:var(--ft-gold);}

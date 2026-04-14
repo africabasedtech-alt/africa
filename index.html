@@ -22,6 +22,7 @@
     <title>AfricaBased - Africa's Investment Platform</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="/css/fintech-theme.css">
+<script src="/js/theme.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -165,7 +166,7 @@
         .welcome-logo span {
             font-size: 1.75rem;
             font-weight: 800;
-            color: #fff;
+            color: var(--ft-text);
             letter-spacing: -0.5px;
         }
 
@@ -174,7 +175,7 @@
             font-weight: 600;
             letter-spacing: 3px;
             text-transform: uppercase;
-            color: #d4a017;
+            color: var(--ft-gold);
             margin-bottom: 20px;
             opacity: 0.85;
         }
@@ -182,7 +183,7 @@
         .welcome-headline {
             font-size: 3.2rem;
             font-weight: 800;
-            color: #fff;
+            color: var(--ft-text);
             line-height: 1.12;
             letter-spacing: -2px;
             margin-bottom: 24px;
@@ -203,7 +204,7 @@
 
         .welcome-sub {
             font-size: 1.05rem;
-            color: rgba(255,255,255,0.42);
+            color: var(--ft-text-muted);
             line-height: 1.8;
             margin-bottom: 48px;
             max-width: 480px;
@@ -248,12 +249,12 @@
 
         .btn-signin {
             padding: 16px 40px;
-            background: rgba(255,255,255,0.04);
-            color: rgba(255,255,255,0.8);
+            background: var(--ft-glass);
+            color: var(--ft-text-secondary);
             font-weight: 600;
             font-size: 1rem;
             font-family: inherit;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid var(--ft-border);
             border-radius: 12px;
             cursor: pointer;
             transition: transform 0.15s, border-color 0.2s, background 0.2s, color 0.2s;
@@ -265,9 +266,9 @@
 
         .btn-signin:hover {
             transform: translateY(-2px);
-            border-color: rgba(255,255,255,0.2);
-            background: rgba(255,255,255,0.07);
-            color: #fff;
+            border-color: var(--ft-border-hover);
+            background: var(--ft-btn-secondary-bg);
+            color: var(--ft-text);
         }
 
         .btn-signin:active { transform: translateY(0); }
@@ -287,7 +288,7 @@
         .welcome-stat-item {
             flex: 0 1 auto;
             padding: 0 36px;
-            border-right: 1px solid rgba(255,255,255,0.07);
+            border-right: 1px solid var(--ft-border);
         }
 
         .welcome-stat-item:last-child { border-right: none; }
@@ -295,14 +296,14 @@
         .welcome-stat-value {
             font-size: 1.8rem;
             font-weight: 800;
-            color: #fff;
+            color: var(--ft-text);
             letter-spacing: -0.5px;
             line-height: 1;
         }
 
         .welcome-stat-label {
             font-size: 0.74rem;
-            color: rgba(255,255,255,0.32);
+            color: var(--ft-text-muted);
             margin-top: 6px;
             letter-spacing: 0.3px;
             font-weight: 500;
@@ -328,23 +329,23 @@
             text-align: center;
             padding: 20px 12px;
             border-radius: 14px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.04);
+            background: var(--ft-glass);
+            border: 1px solid var(--ft-border);
             transition: border-color 0.2s, background 0.2s;
         }
 
         .welcome-step:hover {
-            border-color: rgba(212,160,23,0.15);
-            background: rgba(212,160,23,0.03);
+            border-color: var(--ft-gold-glow);
+            background: var(--ft-gold-dim);
         }
 
         .welcome-step-icon {
             width: 40px; height: 40px;
             border-radius: 10px;
-            background: rgba(212,160,23,0.08);
-            border: 1px solid rgba(212,160,23,0.15);
+            background: var(--ft-gold-dim);
+            border: 1px solid var(--ft-gold-glow);
             display: inline-flex; align-items: center; justify-content: center;
-            color: #d4a017;
+            color: var(--ft-gold);
             font-size: 0.85rem;
             margin-bottom: 12px;
         }
@@ -352,14 +353,14 @@
         .welcome-step strong {
             display: block;
             font-size: 0.82rem;
-            color: rgba(255,255,255,0.85);
+            color: var(--ft-text);
             font-weight: 600;
             margin-bottom: 4px;
         }
 
         .welcome-step span {
             font-size: 0.72rem;
-            color: rgba(255,255,255,0.28);
+            color: var(--ft-text-muted);
             line-height: 1.5;
         }
 
@@ -376,11 +377,11 @@
             align-items: center;
             gap: 8px;
             font-size: 0.76rem;
-            color: rgba(255,255,255,0.35);
+            color: var(--ft-text-muted);
             font-weight: 500;
         }
 
-        .welcome-trust-item i { color: rgba(212,160,23,0.7); font-size: 0.72rem; }
+        .welcome-trust-item i { color: var(--ft-gold); font-size: 0.72rem; }
 
         /* ── Registration Screen ── */
         .register-screen {
@@ -431,7 +432,7 @@
         }
 
         .signup-brand h1 {
-            color: #fff;
+            color: var(--ft-text);
             font-size: 1.5rem;
             font-weight: 700;
             letter-spacing: -0.3px;
@@ -443,7 +444,7 @@
             gap: 8px;
             background: none;
             border: none;
-            color: rgba(255,255,255,0.45);
+            color: var(--ft-text-muted);
             font-size: 0.84rem;
             font-family: inherit;
             font-weight: 500;
@@ -462,14 +463,14 @@
         .form-header h2 {
             font-size: 1.55rem;
             font-weight: 700;
-            color: #fff;
+            color: var(--ft-text);
             letter-spacing: -0.5px;
             margin-bottom: 8px;
         }
 
         .form-header p {
             font-size: 0.88rem;
-            color: rgba(255,255,255,0.38);
+            color: var(--ft-text-muted);
             font-weight: 400;
         }
 
@@ -487,7 +488,7 @@
             display: block;
             font-size: 0.72rem;
             font-weight: 600;
-            color: rgba(255,255,255,0.5);
+            color: var(--ft-text-muted);
             margin-bottom: 8px;
             letter-spacing: 0.5px;
             text-transform: uppercase;
@@ -512,7 +513,7 @@
             left: 14px;
             top: 50%;
             transform: translateY(-50%);
-            color: rgba(255,255,255,0.18);
+            color: var(--ft-text-muted);
             font-size: 0.82rem;
             pointer-events: none;
             transition: color 0.2s;
@@ -521,26 +522,26 @@
         .input-wrap input {
             width: 100%;
             padding: 12px 14px 12px 40px;
-            background: rgba(255,255,255,0.035);
-            border: 1px solid rgba(255,255,255,0.07);
+            background: var(--ft-input-bg);
+            border: 1px solid var(--ft-border);
             border-radius: 10px;
-            color: #fff;
+            color: var(--ft-text);
             font-size: 0.9rem;
             font-family: inherit;
             transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
             outline: none;
         }
 
-        .input-wrap input::placeholder { color: rgba(255,255,255,0.18); }
+        .input-wrap input::placeholder { color: var(--ft-input-placeholder); }
 
         .input-wrap input:focus {
-            border-color: rgba(212,160,23,0.45);
-            background: rgba(212,160,23,0.035);
-            box-shadow: 0 0 0 3px rgba(212,160,23,0.07), 0 1px 3px rgba(0,0,0,0.1);
+            border-color: var(--ft-gold);
+            background: var(--ft-gold-dim);
+            box-shadow: 0 0 0 3px var(--ft-gold-glow), 0 1px 3px rgba(0,0,0,0.1);
         }
 
         .input-wrap:has(input:focus) .prefix-icon {
-            color: rgba(212,160,23,0.6);
+            color: var(--ft-gold);
         }
 
         .eye-btn {
@@ -550,14 +551,14 @@
             transform: translateY(-50%);
             background: none;
             border: none;
-            color: rgba(255,255,255,0.2);
+            color: var(--ft-text-muted);
             cursor: pointer;
             padding: 4px;
             font-size: 0.82rem;
             transition: color 0.2s;
         }
 
-        .eye-btn:hover { color: rgba(255,255,255,0.5); }
+        .eye-btn:hover { color: var(--ft-text-secondary); }
         .has-eye { padding-right: 40px !important; }
 
         .field-err {
@@ -570,7 +571,7 @@
 
         .strength-bar {
             height: 3px;
-            background: rgba(255,255,255,0.05);
+            background: var(--ft-border);
             border-radius: 3px;
             margin-top: 8px;
             overflow: hidden;
@@ -1431,16 +1432,16 @@
           <div style="width:64px;height:64px;background:rgba(212,160,23,0.1);border:1px solid rgba(212,160,23,0.15);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px">
             <i class="fas fa-phone-alt" style="color:#d4a017;font-size:24px"></i>
           </div>
-          <h2 style="color:#fff;font-size:20px;font-weight:700;margin:0 0 8px;letter-spacing:-0.3px;font-family:'Plus Jakarta Sans',system-ui,sans-serif" data-testid="text-phone-title">Add Your Phone Number</h2>
+          <h2 style="color:var(--ft-text);font-size:20px;font-weight:700;margin:0 0 8px;letter-spacing:-0.3px;font-family:'Plus Jakarta Sans',system-ui,sans-serif" data-testid="text-phone-title">Add Your Phone Number</h2>
           <p style="color:rgba(255,255,255,0.4);font-size:13px;margin:0;font-family:'Plus Jakarta Sans',system-ui,sans-serif;line-height:1.5">For M-Pesa, Airtel Money & mobile payments.<br>Select your country and enter your number.</p>
         </div>
 
         <label style="display:block;color:rgba(255,255,255,0.5);font-size:12px;font-weight:600;margin-bottom:6px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;text-transform:uppercase;letter-spacing:0.5px">Country</label>
-        <select id="phoneCountryCode" data-testid="select-country-code" style="width:100%;padding:13px 14px;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.08);border-radius:10px;color:#fff;font-size:15px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;outline:none;margin-bottom:14px;appearance:auto;cursor:pointer;transition:border-color 0.2s" onfocus="this.style.borderColor='rgba(212,160,23,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'"></select>
+        <select id="phoneCountryCode" data-testid="select-country-code" style="width:100%;padding:13px 14px;background:var(--ft-input-bg);border:1.5px solid var(--ft-border);border-radius:10px;color:var(--ft-text);font-size:15px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;outline:none;margin-bottom:14px;appearance:auto;cursor:pointer;transition:border-color 0.2s" onfocus="this.style.borderColor='rgba(212,160,23,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'"></select>
 
         <label style="display:block;color:rgba(255,255,255,0.5);font-size:12px;font-weight:600;margin-bottom:6px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;text-transform:uppercase;letter-spacing:0.5px">Phone Number</label>
         <div style="position:relative;margin-bottom:6px">
-          <input id="phoneNumber" type="tel" inputmode="numeric" placeholder="e.g. 712345678" data-testid="input-phone-number" style="width:100%;padding:13px 14px;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.08);border-radius:10px;color:#fff;font-size:16px;font-weight:500;font-family:'Plus Jakarta Sans',system-ui,sans-serif;outline:none;transition:border-color 0.2s,background 0.2s,box-shadow 0.2s;box-sizing:border-box" onfocus="this.style.borderColor='rgba(212,160,23,0.5)';this.style.background='rgba(212,160,23,0.04)';this.style.boxShadow='0 0 0 3px rgba(212,160,23,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
+          <input id="phoneNumber" type="tel" inputmode="numeric" placeholder="e.g. 712345678" data-testid="input-phone-number" style="width:100%;padding:13px 14px;background:var(--ft-input-bg);border:1.5px solid var(--ft-border);border-radius:10px;color:var(--ft-text);font-size:16px;font-weight:500;font-family:'Plus Jakarta Sans',system-ui,sans-serif;outline:none;transition:border-color 0.2s,background 0.2s,box-shadow 0.2s;box-sizing:border-box" onfocus="this.style.borderColor='rgba(212,160,23,0.5)';this.style.background='rgba(212,160,23,0.04)';this.style.boxShadow='0 0 0 3px rgba(212,160,23,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
         </div>
         <p id="phonePaymentHint" style="color:#d4a017;font-size:12px;font-weight:600;margin:4px 0 4px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;min-height:18px;"></p>
         <p style="color:rgba(255,255,255,0.25);font-size:11px;margin:0 0 16px;font-family:'Plus Jakarta Sans',system-ui,sans-serif">Enter without leading zero. e.g. for 0712345678, enter 712345678</p>
@@ -1463,18 +1464,18 @@
           <div style="width:64px;height:64px;background:rgba(212,160,23,0.1);border:1px solid rgba(212,160,23,0.15);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px">
             <i class="fas fa-envelope-open-text" style="color:#d4a017;font-size:24px"></i>
           </div>
-          <h2 style="color:#fff;font-size:20px;font-weight:700;margin:0 0 8px;letter-spacing:-0.3px;font-family:'Plus Jakarta Sans',system-ui,sans-serif">Check Your Email</h2>
+          <h2 style="color:var(--ft-text);font-size:20px;font-weight:700;margin:0 0 8px;letter-spacing:-0.3px;font-family:'Plus Jakarta Sans',system-ui,sans-serif">Check Your Email</h2>
           <p style="color:rgba(255,255,255,0.4);font-size:14px;margin:0;font-family:'Plus Jakarta Sans',system-ui,sans-serif">We sent a 6-digit code to</p>
           <p style="color:#d4a017;font-size:14px;font-weight:600;margin:6px 0 0;font-family:'Plus Jakarta Sans',system-ui,sans-serif" id="otpEmailDisplay"></p>
         </div>
 
         <div style="display:flex;gap:10px;justify-content:center;margin-bottom:20px">
-          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.08);border-radius:10px;color:#fff;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:'Plus Jakarta Sans',system-ui,sans-serif" onfocus="this.style.borderColor='rgba(212,160,23,0.5)';this.style.background='rgba(212,160,23,0.04)';this.style.boxShadow='0 0 0 3px rgba(212,160,23,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
-          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.08);border-radius:10px;color:#fff;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:'Plus Jakarta Sans',system-ui,sans-serif" onfocus="this.style.borderColor='rgba(212,160,23,0.5)';this.style.background='rgba(212,160,23,0.04)';this.style.boxShadow='0 0 0 3px rgba(212,160,23,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
-          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.08);border-radius:10px;color:#fff;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:'Plus Jakarta Sans',system-ui,sans-serif" onfocus="this.style.borderColor='rgba(212,160,23,0.5)';this.style.background='rgba(212,160,23,0.04)';this.style.boxShadow='0 0 0 3px rgba(212,160,23,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
-          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.08);border-radius:10px;color:#fff;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:'Plus Jakarta Sans',system-ui,sans-serif" onfocus="this.style.borderColor='rgba(212,160,23,0.5)';this.style.background='rgba(212,160,23,0.04)';this.style.boxShadow='0 0 0 3px rgba(212,160,23,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
-          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.08);border-radius:10px;color:#fff;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:'Plus Jakarta Sans',system-ui,sans-serif" onfocus="this.style.borderColor='rgba(212,160,23,0.5)';this.style.background='rgba(212,160,23,0.04)';this.style.boxShadow='0 0 0 3px rgba(212,160,23,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
-          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.08);border-radius:10px;color:#fff;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:'Plus Jakarta Sans',system-ui,sans-serif" onfocus="this.style.borderColor='rgba(212,160,23,0.5)';this.style.background='rgba(212,160,23,0.04)';this.style.boxShadow='0 0 0 3px rgba(212,160,23,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:var(--ft-input-bg);border:1.5px solid var(--ft-border);border-radius:10px;color:var(--ft-text);outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:'Plus Jakarta Sans',system-ui,sans-serif" onfocus="this.style.borderColor='rgba(212,160,23,0.5)';this.style.background='rgba(212,160,23,0.04)';this.style.boxShadow='0 0 0 3px rgba(212,160,23,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:var(--ft-input-bg);border:1.5px solid var(--ft-border);border-radius:10px;color:var(--ft-text);outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:'Plus Jakarta Sans',system-ui,sans-serif" onfocus="this.style.borderColor='rgba(212,160,23,0.5)';this.style.background='rgba(212,160,23,0.04)';this.style.boxShadow='0 0 0 3px rgba(212,160,23,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:var(--ft-input-bg);border:1.5px solid var(--ft-border);border-radius:10px;color:var(--ft-text);outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:'Plus Jakarta Sans',system-ui,sans-serif" onfocus="this.style.borderColor='rgba(212,160,23,0.5)';this.style.background='rgba(212,160,23,0.04)';this.style.boxShadow='0 0 0 3px rgba(212,160,23,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:var(--ft-input-bg);border:1.5px solid var(--ft-border);border-radius:10px;color:var(--ft-text);outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:'Plus Jakarta Sans',system-ui,sans-serif" onfocus="this.style.borderColor='rgba(212,160,23,0.5)';this.style.background='rgba(212,160,23,0.04)';this.style.boxShadow='0 0 0 3px rgba(212,160,23,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:var(--ft-input-bg);border:1.5px solid var(--ft-border);border-radius:10px;color:var(--ft-text);outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:'Plus Jakarta Sans',system-ui,sans-serif" onfocus="this.style.borderColor='rgba(212,160,23,0.5)';this.style.background='rgba(212,160,23,0.04)';this.style.boxShadow='0 0 0 3px rgba(212,160,23,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:var(--ft-input-bg);border:1.5px solid var(--ft-border);border-radius:10px;color:var(--ft-text);outline:none;transition:border-color .2s,background .2s,box-shadow .2s;font-family:'Plus Jakarta Sans',system-ui,sans-serif" onfocus="this.style.borderColor='rgba(212,160,23,0.5)';this.style.background='rgba(212,160,23,0.04)';this.style.boxShadow='0 0 0 3px rgba(212,160,23,0.08)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.03)';this.style.boxShadow='none'">
         </div>
 
         <div style="text-align:center;margin-bottom:18px">
@@ -1502,7 +1503,7 @@
         <i class="fas fa-check" style="color:#fff;"></i>
       </div>
     </div>
-    <h2 style="color:#fff;font-size:1.5rem;font-weight:800;margin-bottom:10px;letter-spacing:-0.5px;">Account Created!</h2>
+    <h2 style="color:var(--ft-text);font-size:1.5rem;font-weight:800;margin-bottom:10px;letter-spacing:-0.5px;">Account Created!</h2>
     <p style="color:rgba(255,255,255,0.5);font-size:0.95rem;margin-bottom:24px;line-height:1.6;">Welcome to AfricaBased. Your journey to daily investment returns starts now.</p>
     <div style="height:5px;border-radius:5px;background:rgba(255,255,255,0.06);overflow:hidden;">
       <div id="acProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#d4a017,#8a6d0a);border-radius:5px;transition:width 2.1s linear;"></div>

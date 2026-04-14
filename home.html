@@ -21,6 +21,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/public/icons/icon-192x192.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="/css/fintech-theme.css">
+<script src="/js/theme.js"></script>
   <script src="/js/token.js"></script>
   <script type="module" async>
     import { checkAuthState } from './js/auth.js';
@@ -42,7 +43,7 @@
 
     .top-nav{
       position:fixed;top:0;left:0;right:0;height:var(--ft-nav-h);
-      background:rgba(9,9,11,0.85);
+      background:var(--ft-nav-bg);
       backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
       display:flex;align-items:center;justify-content:space-between;
       padding:0 20px;z-index:500;
@@ -95,7 +96,7 @@
     .hc-meta span{
       font-size:.78rem;color:var(--ft-text-secondary);
       display:flex;align-items:center;gap:6px;
-      background:rgba(255,255,255,0.04);
+      background:var(--ft-glass);
       padding:6px 12px;border-radius:var(--ft-radius-sm);
     }
     .hc-meta span b{color:var(--ft-text);font-weight:600}
@@ -172,7 +173,7 @@
     .feat-badge{
       position:absolute;top:12px;left:12px;
       padding:5px 12px;border-radius:6px;
-      background:rgba(9,9,11,0.7);border:1px solid var(--ft-border);
+      background:var(--ft-overlay);border:1px solid var(--ft-border);
       backdrop-filter:blur(8px);
       font-size:.7rem;font-weight:700;color:var(--ft-text-secondary);
       text-transform:uppercase;letter-spacing:.5px;
@@ -222,7 +223,7 @@
     .btabs{
       position:fixed;bottom:0;left:0;right:0;
       height:var(--ft-tab-h);
-      background:rgba(9,9,11,0.95);
+      background:var(--ft-tab-bg);
       backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
       border-top:1px solid var(--ft-border);
       display:flex;align-items:center;padding:0;
@@ -263,12 +264,14 @@
     .modal-bx p{font-size:.88rem;color:var(--ft-text-secondary);margin-bottom:16px;line-height:1.7}
     .macts{display:flex;gap:10px}
     .macts button{flex:1;padding:12px;border-radius:var(--ft-radius-md);font-size:.88rem;font-weight:700;cursor:pointer;border:none;font-family:var(--ft-font);transition:var(--ft-transition)}
-    .mc{background:rgba(255,255,255,0.06);color:var(--ft-text-secondary)}
+    .mc{background:var(--ft-btn-secondary-bg);color:var(--ft-text-secondary)}
     .mo{background:var(--ft-green);color:#fff}
     .mo:hover{background:#16a34a}
 
     @media(min-width:700px){.plist{grid-template-columns:1fr 1fr 1fr}}
-    @media(min-width:1024px){body{max-width:480px;margin:0 auto;box-shadow:-1px 0 0 var(--ft-border),1px 0 0 var(--ft-border)}}
+    @media(min-width:768px){body{max-width:960px;margin:0 auto}}
+    @media(min-width:1200px){body{max-width:1120px}}
+    @media(min-width:700px){.hero-grid{grid-template-columns:repeat(4,1fr)}}
   </style>
 </head>
 <body>
@@ -279,6 +282,7 @@
       <span>AfricaBased</span>
     </a>
     <div class="nav-mid" id="navWelcome">Welcome</div>
+    <button class="ft-theme-toggle" onclick="abToggleTheme()" title="Toggle theme"><i class="fas fa-sun"></i></button>
     <img id="profileImageTop" class="nav-avatar"
          src="https://ui-avatars.com/api/?name=U&background=16161a&color=d4a017&size=80"
          alt="Profile" onclick="window.location.href='/profile'" data-testid="img-avatar"/>

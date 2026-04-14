@@ -21,12 +21,14 @@
   <meta name="description" content="AfricaBased Technologies - Empowering Africa's financial future through accessible investment opportunities, financial literacy, and community-driven wealth creation.">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/fintech-theme.css">
+  <script src="/js/theme.js"></script>
   <script src="/js/token.js"></script>
   <style>
     :root {
-      --gold:#d4a017;--gold-bright:#f5c842;--bg:#06090f;--card-bg:#0d1520;
-      --card-bg2:#111d2e;--text:#fff;--text-dim:rgba(255,255,255,0.5);
-      --border:rgba(212,160,23,0.12);
+      --gold:var(--ft-gold);--gold-bright:var(--ft-gold-bright);--bg:var(--ft-bg);--card-bg:var(--ft-card);
+      --card-bg2:var(--ft-card-hover);--text:var(--ft-text);--text-dim:var(--ft-text-muted);
+      --border:var(--ft-border);
     }
     *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     body{
@@ -36,7 +38,7 @@
 
     .top-bar {
       position:sticky;top:0;z-index:100;
-      background:rgba(6,9,15,0.92);backdrop-filter:blur(12px);
+      background:var(--ft-nav-bg);backdrop-filter:blur(12px);
       padding:14px 20px;display:flex;align-items:center;gap:12px;
       border-bottom:1px solid var(--border);
     }
