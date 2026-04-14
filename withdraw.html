@@ -199,9 +199,12 @@
   </style>
 </head>
 <body>
-    <a class="back-btn" onclick="window.top.location.href = '/home'">
-        <i class="fas fa-arrow-left"></i> Back to Dashboard
-    </a>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+        <a class="back-btn" onclick="window.top.location.href = '/home'" style="margin-bottom:0">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+        <button class="ft-theme-toggle" onclick="abToggleTheme()" title="Toggle theme"><i class="fas fa-sun"></i></button>
+    </div>
 
     <div class="page-title">Withdraw Funds</div>
     <div class="page-subtitle">Choose how you'd like to receive your money</div>
