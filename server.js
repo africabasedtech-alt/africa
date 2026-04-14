@@ -3915,20 +3915,31 @@ app.post('/api/admin/investments/:id/cancel', requireAnyAdmin, requirePrivilege(
   try {
     await client.query('BEGIN');
     const invRes = await client.query(
-      `SELECT * FROM investments WHERE id=$1 AND status='active'`,
+      `SELECT * FROM investments WHERE id=$1 AND status IN ('active','matured')`,
       [req.params.id]
     );
     if (!invRes.rows.length) {
       await client.query('ROLLBACK');
-      return res.status(404).json({ error: 'Active investment not found' });
+      return res.status(404).json({ error: 'Investment not found or already cancelled' });
     }
     const inv = invRes.rows[0];
-    const refundCol = inv.balance_source === 'wallet' ? 'wallet_balance' : 'account_balance';
-    const refundAmt = parseFloat(inv.amount) || 0;
+    const isMatured = inv.status === 'matured';
+    const refundCol   = inv.balance_source === 'wallet' ? 'wallet_balance' : 'account_balance';
     const refundLabel = refundCol === 'wallet_balance' ? 'Deposit Wallet' : 'Earnings balance';
-    const cancelReason = refundAmt > 0
-      ? `This investment was cancelled. Your original capital of KES ${refundAmt.toLocaleString()} has been refunded to your ${refundLabel}.`
-      : `This investment has been cancelled and removed from your account.`;
+    const refundAmt   = parseFloat(inv.amount) || 0;
+    const clawbackAmt = isMatured ? (parseFloat(inv.total_collected) || 0) : 0;
+
+    let cancelReason;
+    if (isMatured) {
+      cancelReason = `This completed investment has been cancelled. `
+        + (clawbackAmt > 0 ? `KES ${clawbackAmt.toLocaleString()} in collected earnings has been reversed from your Earnings balance. ` : '')
+        + (refundAmt > 0   ? `Your original capital of KES ${refundAmt.toLocaleString()} has been returned to your ${refundLabel}.` : '');
+    } else {
+      cancelReason = refundAmt > 0
+        ? `This investment was cancelled. Your original capital of KES ${refundAmt.toLocaleString()} has been refunded to your ${refundLabel}.`
+        : `This investment has been cancelled and removed from your account.`;
+    }
+
     await client.query(
       `UPDATE investments SET status='cancelled', cancel_reason=$1 WHERE id=$2`,
       [cancelReason, inv.id]
@@ -3940,23 +3951,44 @@ app.post('/api/admin/investments/:id/cancel', requireAnyAdmin, requirePrivilege(
         [inv.units, inv.product_name]
       );
     }
-    // Refund original capital (not earnings) to balance source
-    if (refundAmt > 0) {
-      await client.query(
-        `UPDATE profiles SET ${refundCol} = COALESCE(${refundCol},0) + $1, updated_at=NOW() WHERE user_id=$2::uuid`,
-        [refundAmt, inv.user_id]
-      );
+    // For matured: claw back earnings from account_balance (allow negative), then refund capital
+    if (isMatured) {
+      if (clawbackAmt > 0) {
+        await client.query(
+          `UPDATE profiles SET account_balance = COALESCE(account_balance,0) - $1, updated_at=NOW() WHERE user_id=$2::uuid`,
+          [clawbackAmt, inv.user_id]
+        );
+      }
+      if (refundAmt > 0) {
+        await client.query(
+          `UPDATE profiles SET ${refundCol} = COALESCE(${refundCol},0) + $1, updated_at=NOW() WHERE user_id=$2::uuid`,
+          [refundAmt, inv.user_id]
+        );
+      }
+    } else {
+      // For active: refund original capital only
+      if (refundAmt > 0) {
+        await client.query(
+          `UPDATE profiles SET ${refundCol} = COALESCE(${refundCol},0) + $1, updated_at=NOW() WHERE user_id=$2::uuid`,
+          [refundAmt, inv.user_id]
+        );
+      }
     }
+
     await client.query('COMMIT');
     const profRes = await client.query(
       'SELECT account_balance, COALESCE(wallet_balance,0) AS wallet_balance FROM profiles WHERE user_id=$1',
       [inv.user_id]
     );
     const aiC = getAdminIdentity(req);
-    logAdminActivity({ ...aiC, actionType: 'investment_action', description: `Investment "${inv.product_name}" cancelled for user ${inv.user_id} — KES ${refundAmt} refunded to ${refundCol}`, ip: req.ip, targetUserId: inv.user_id });
+    const logDesc = isMatured
+      ? `Matured investment "${inv.product_name}" cancelled for user ${inv.user_id} — KES ${clawbackAmt} earnings clawed back, KES ${refundAmt} capital refunded to ${refundCol}`
+      : `Investment "${inv.product_name}" cancelled for user ${inv.user_id} — KES ${refundAmt} refunded to ${refundCol}`;
+    logAdminActivity({ ...aiC, actionType: 'investment_action', description: logDesc, ip: req.ip, targetUserId: inv.user_id });
     res.json({
       success: true,
       refunded: refundAmt,
+      clawback: clawbackAmt,
       refund_to: refundCol,
       account_balance: profRes.rows[0]?.account_balance || 0,
       wallet_balance: profRes.rows[0]?.wallet_balance || 0

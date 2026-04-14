@@ -707,9 +707,11 @@
                 if (isFree) badges += `<span class="vi-badge free">FREE</span>`;
                 if (isDup) badges += `<span class="vi-badge dup"><i class="fas fa-exclamation-triangle"></i> DUPLICATE</span>`;
                 const actionBtns = isActive ? `
-                    <button class="vi-btn cancel" onclick="doViCancel('${inv.id}','${esc(inv.product_name)}',${capital}, '${userId}')"><i class="fas fa-undo"></i> Cancel & Refund</button>
+                    <button class="vi-btn cancel" onclick="doViCancel('${inv.id}','${esc(inv.product_name)}',${capital},false,0,'${userId}')"><i class="fas fa-undo"></i> Cancel & Refund</button>
                     <button class="vi-btn delete" onclick="doViDelete('${inv.id}','${esc(inv.product_name)}',${collected}, '${userId}')"><i class="fas fa-trash-alt"></i> Delete & Clawback${collected > 0 ? ' KES ' + fmt(collected) : ''}</button>
-                ` : `<span style="color:rgba(255,255,255,0.25);font-size:0.76rem;">Matured — no actions available</span>`;
+                ` : `
+                    <button class="vi-btn cancel" style="opacity:0.85;" onclick="doViCancel('${inv.id}','${esc(inv.product_name)}',${capital},true,${collected},'${userId}')"><i class="fas fa-ban"></i> Cancel Matured${collected > 0 ? ' (−KES ' + fmt(collected) + ' earnings)' : ''}</button>
+                `;
                 return `<div class="vi-card${isDup ? ' dup' : ''}${isMatured ? ' matured' : ''}">
                     <div class="vi-card-top">
                         <div class="vi-card-name">${esc(inv.product_name)} ${badges}</div>
@@ -732,13 +734,25 @@
         }
     }
 
-    window.doViCancel = async function(invId, productName, capital, userId) {
-        if (!confirm(`Cancel investment in "${productName}" and refund KES ${fmt(capital)} to the user's original balance source?`)) return;
+    window.doViCancel = async function(invId, productName, capital, isMatured, collected, userId) {
+        let msg;
+        if (isMatured) {
+            msg = `Cancel completed investment in "${productName}"?\n\nThis will:\n`
+                + (collected > 0 ? `• Deduct KES ${fmt(collected)} earned income from the user's Earnings balance (may go negative)\n` : '')
+                + (capital > 0   ? `• Return KES ${fmt(capital)} capital to the user's original balance source\n` : '')
+                + `\nThis cannot be undone.`;
+        } else {
+            msg = `Cancel investment in "${productName}" and refund KES ${fmt(capital)} to the user's original balance source?`;
+        }
+        if (!confirm(msg)) return;
         try {
             const res = await fetch(`/api/admin/investments/${invId}/cancel`, { method: 'POST', headers: { 'x-admin-key': ADMIN_KEY } });
             const data = await res.json();
             if (!res.ok) { alert(data.error || 'Failed to cancel investment.'); return; }
-            showToast(`"${productName}" cancelled. KES ${fmt(data.refunded)} refunded.`, 'success');
+            let toast = `"${productName}" cancelled.`;
+            if (data.clawback > 0) toast += ` KES ${fmt(data.clawback)} earnings deducted.`;
+            if (data.refunded > 0) toast += ` KES ${fmt(data.refunded)} capital refunded.`;
+            showToast(toast, 'success');
             const u = allUsers.find(u => u.id === userId);
             if (u) { u.account_balance = data.account_balance; u.wallet_balance = data.wallet_balance; }
             renderStats(); applyFilter();
