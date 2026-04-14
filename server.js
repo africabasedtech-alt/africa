@@ -3731,7 +3731,11 @@ app.get('/api/admin/users', requireAnyAdmin, requirePrivilege('user', 'user_view
         COALESCE(p.bank_account_name, '') AS bank_account_name,
         (SELECT COUNT(*) FROM users r WHERE r.referred_by = u.referral_code) AS referral_count,
         (SELECT COALESCE(SUM(i.amount),0) FROM investments i WHERE i.user_id = u.id) AS total_invested,
-        (SELECT COALESCE(SUM(d.amount),0) FROM deposits d WHERE d.user_id = u.id AND d.status = 'confirmed') AS total_deposited
+        (SELECT COALESCE(SUM(d.amount),0) FROM deposits d WHERE d.user_id = u.id AND d.status = 'confirmed') AS total_deposited,
+        (SELECT COUNT(*) FROM investments i WHERE i.user_id = u.id AND i.status = 'active')::int AS active_investment_count,
+        (SELECT COUNT(*) FROM investments i WHERE i.user_id = u.id AND i.status = 'matured')::int AS matured_investment_count,
+        (SELECT COUNT(*) FROM investments i WHERE i.user_id = u.id AND i.status IN ('active','matured'))::int AS current_investment_count,
+        (SELECT COALESCE(string_agg(DISTINCT i.product_name, ',' ORDER BY i.product_name), '') FROM investments i WHERE i.user_id = u.id AND i.status IN ('active','matured')) AS investment_products
       FROM users u
       LEFT JOIN profiles p ON p.user_id = u.id
       ORDER BY u.created_at DESC

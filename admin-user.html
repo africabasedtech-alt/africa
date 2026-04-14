@@ -264,6 +264,25 @@
         <option value="active">Active</option>
         <option value="locked">Locked</option>
     </select>
+    <select class="filter-sel" id="invCountFilter">
+        <option value="">Any # Products</option>
+        <option value="0">No products</option>
+        <option value="1">1+ products</option>
+        <option value="2">2+ products</option>
+        <option value="3">3+ products</option>
+        <option value="4">4+ products</option>
+        <option value="5">5+ products</option>
+    </select>
+    <select class="filter-sel" id="invStatusFilter">
+        <option value="">Any Inv. Status</option>
+        <option value="active">Has Active</option>
+        <option value="matured">Has Matured</option>
+        <option value="both">Has Both</option>
+        <option value="none">No Investments</option>
+    </select>
+    <select class="filter-sel" id="productFilter">
+        <option value="">Any Product</option>
+    </select>
     <button class="add-user-btn" onclick="openAddUserModal()"><i class="fas fa-user-plus"></i> Add User</button>
     <button class="refresh-btn" onclick="loadUsers()" title="Refresh"><i class="fas fa-sync-alt"></i></button>
     <button class="export-btn" onclick="exportCSV()"><i class="fas fa-file-csv"></i> CSV</button>
@@ -282,13 +301,14 @@
                 <th onclick="sortBy('total_deposited')">Deposited <span class="sort-arrow" id="sort-total_deposited"></span></th>
                 <th onclick="sortBy('total_invested')">Invested <span class="sort-arrow" id="sort-total_invested"></span></th>
                 <th onclick="sortBy('referral_count')">Referrals <span class="sort-arrow" id="sort-referral_count"></span></th>
+                <th onclick="sortBy('current_investment_count')" title="Active + Matured investments">Products <span class="sort-arrow" id="sort-current_investment_count"></span></th>
                 <th onclick="sortBy('locked')">Status <span class="sort-arrow" id="sort-locked"></span></th>
                 <th onclick="sortBy('created_at')">Joined <span class="sort-arrow" id="sort-created_at"></span></th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody id="userTableBody">
-            <tr class="empty-row"><td colspan="9">Loading...</td></tr>
+            <tr class="empty-row"><td colspan="10">Loading...</td></tr>
         </tbody>
     </table>
 </div>
@@ -346,16 +366,17 @@
 
     // ── Load ──────────────────────────────────────────────────────────────────
     async function loadUsers() {
-        document.getElementById('userTableBody').innerHTML = '<tr class="empty-row"><td colspan="9"><i class="fas fa-spinner fa-spin"></i> Loading users...</td></tr>';
+        document.getElementById('userTableBody').innerHTML = '<tr class="empty-row"><td colspan="10"><i class="fas fa-spinner fa-spin"></i> Loading users...</td></tr>';
         try {
             const res = await fetch('/api/admin/users', { headers: { 'x-admin-key': ADMIN_KEY } });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed');
             allUsers = data.users || [];
             renderStats();
+            populateProductFilter();
             applyFilter();
         } catch(e) {
-            document.getElementById('userTableBody').innerHTML = `<tr class="empty-row"><td colspan="9" style="color:#ff6b6b;">Error: ${e.message}</td></tr>`;
+            document.getElementById('userTableBody').innerHTML = `<tr class="empty-row"><td colspan="10" style="color:#ff6b6b;">Error: ${e.message}</td></tr>`;
         }
     }
 
@@ -375,16 +396,53 @@
     }
 
     function applyFilter() {
-        const q = document.getElementById('searchInput').value.toLowerCase();
-        const st = document.getElementById('statusFilter').value;
+        const q      = document.getElementById('searchInput').value.toLowerCase();
+        const st     = document.getElementById('statusFilter').value;
+        const invCnt = document.getElementById('invCountFilter').value;
+        const invSt  = document.getElementById('invStatusFilter').value;
+        const prod   = document.getElementById('productFilter').value.toLowerCase();
+
         filteredUsers = allUsers.filter(u => {
-            const matchQ = !q || [u.username, u.email, u.phone, u.mpesa_phone, u.referral_code].some(v => (v||'').toLowerCase().includes(q));
+            const matchQ  = !q || [u.username, u.email, u.phone, u.mpesa_phone, u.referral_code].some(v => (v||'').toLowerCase().includes(q));
             const matchSt = !st || (st === 'locked' ? u.locked : !u.locked);
-            return matchQ && matchSt;
+
+            const cnt        = parseInt(u.current_investment_count) || 0;
+            const activeCnt  = parseInt(u.active_investment_count)  || 0;
+            const maturedCnt = parseInt(u.matured_investment_count) || 0;
+
+            let matchCnt = true;
+            if (invCnt !== '') {
+                const n = parseInt(invCnt);
+                matchCnt = n === 0 ? cnt === 0 : cnt >= n;
+            }
+
+            let matchInvSt = true;
+            if (invSt === 'active')   matchInvSt = activeCnt > 0;
+            else if (invSt === 'matured')  matchInvSt = maturedCnt > 0;
+            else if (invSt === 'both')     matchInvSt = activeCnt > 0 && maturedCnt > 0;
+            else if (invSt === 'none')     matchInvSt = cnt === 0;
+
+            const products = (u.investment_products || '').toLowerCase();
+            const matchProd = !prod || products.split(',').some(p => p.trim() === prod);
+
+            return matchQ && matchSt && matchCnt && matchInvSt && matchProd;
         });
         sortUsers();
         currentPage = 1;
         render();
+    }
+
+    function populateProductFilter() {
+        const sel = document.getElementById('productFilter');
+        const current = sel.value;
+        const names = new Set();
+        allUsers.forEach(u => {
+            (u.investment_products || '').split(',').forEach(p => { if (p.trim()) names.add(p.trim()); });
+        });
+        const sorted = [...names].sort((a, b) => a.localeCompare(b));
+        sel.innerHTML = '<option value="">Any Product</option>'
+            + sorted.map(n => `<option value="${n.toLowerCase().replace(/"/g,'&quot;')}">${n}</option>`).join('');
+        if (current) sel.value = current;
     }
 
     function sortBy(col) {
@@ -419,7 +477,7 @@
         const page = filteredUsers.slice(start, start + PER_PAGE);
 
         if (!page.length) {
-            tbody.innerHTML = '<tr class="empty-row"><td colspan="9">No users found.</td></tr>';
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="10">No users found.</td></tr>';
         } else {
             tbody.innerHTML = page.map((u, localIdx) => {
                 const idx = start + localIdx;
@@ -443,6 +501,16 @@
                     <td>KES ${fmt(u.total_deposited)}</td>
                     <td>KES ${fmt(u.total_invested)}</td>
                     <td>${u.referral_count || 0}</td>
+                    <td>${(function(){
+                        const cnt = parseInt(u.current_investment_count)||0;
+                        const a   = parseInt(u.active_investment_count)||0;
+                        const m   = parseInt(u.matured_investment_count)||0;
+                        if (!cnt) return '<span style="color:rgba(255,255,255,0.25);">—</span>';
+                        const parts = [];
+                        if (a) parts.push(`<span style="color:#4ecdc4;font-size:0.75rem;">${a} active</span>`);
+                        if (m) parts.push(`<span style="color:#a29bfe;font-size:0.75rem;">${m} matured</span>`);
+                        return `<span style="font-weight:700;">${cnt}</span><br>${parts.join('<br>')}`;
+                    })()}</td>
                     <td>${statusBadge}</td>
                     <td>${joined}</td>
                     <td>
@@ -1053,6 +1121,9 @@
     // ── Events ────────────────────────────────────────────────────────────────
     document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; applyFilter(); });
     document.getElementById('statusFilter').addEventListener('change', () => { currentPage = 1; applyFilter(); });
+    document.getElementById('invCountFilter').addEventListener('change', () => { currentPage = 1; applyFilter(); });
+    document.getElementById('invStatusFilter').addEventListener('change', () => { currentPage = 1; applyFilter(); });
+    document.getElementById('productFilter').addEventListener('change', () => { currentPage = 1; applyFilter(); });
 
     // ── Init ──────────────────────────────────────────────────────────────────
     loadUsers();
