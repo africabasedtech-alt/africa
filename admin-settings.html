@@ -157,6 +157,21 @@
         </div>
 
     
+        <!-- Support Contact — super admin only -->
+        <div class="section" id="supportContactSection" style="display:none;">
+            <h3><i class="fas fa-headset" style="margin-right:8px;"></i>Support Contact (Product Manager)</h3>
+            <p style="color:rgba(255,255,255,0.5);font-size:0.88rem;margin-top:0;">
+                This contact appears in every cancellation email sent to users. Include phone, WhatsApp, or email — one per line.
+            </p>
+            <textarea id="supportContactInput" rows="3" style="width:100%;background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.1);color:#e0e6ed;padding:10px 14px;border-radius:8px;font-size:0.9rem;resize:vertical;font-family:inherit;" placeholder="e.g. WhatsApp: +254700000000&#10;Email: support@africabased.com"></textarea>
+            <div style="margin-top:12px;display:flex;align-items:center;gap:14px;">
+                <button id="saveSupportContactBtn" class="settings-action-btn">
+                    <i class="fas fa-save" style="margin-right:6px;"></i>Save Contact
+                </button>
+                <span id="supportContactMsg" style="font-size:0.85rem;"></span>
+            </div>
+        </div>
+
         <!-- Deposit & Withdrawal Limits — super admin only -->
         <div class="section" id="limitsSection" style="display:none;">
             <h3><i class="fas fa-sliders-h" style="margin-right:8px;"></i>Deposit &amp; Withdrawal Limits</h3>
@@ -227,9 +242,35 @@
   var ADMIN_KEY = '1540568e';
   fetch('/api/admin/me').then(function(r){return r.json();}).then(function(data){
     if (!data.isSuper) return;
+    loadSupportContactSection();
     loadLimitsSection();
     loadPinSection();
   }).catch(function(){});
+
+  function loadSupportContactSection() {
+    var sec = document.getElementById('supportContactSection');
+    if (sec) sec.style.display = 'block';
+    fetch('/api/admin/settings/support-contact', { headers: { 'x-admin-key': ADMIN_KEY } })
+      .then(function(r){ return r.json(); })
+      .then(function(d) {
+        document.getElementById('supportContactInput').value = d.support_contact || '';
+      }).catch(function(){});
+    document.getElementById('saveSupportContactBtn').addEventListener('click', function() {
+      var msg = document.getElementById('supportContactMsg');
+      var val = document.getElementById('supportContactInput').value.trim();
+      if (!val) { msg.style.color = '#ff6b6b'; msg.textContent = 'Contact cannot be empty.'; return; }
+      msg.style.color = 'rgba(255,255,255,0.4)'; msg.textContent = 'Saving…';
+      fetch('/api/admin/settings/support-contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+        body: JSON.stringify({ support_contact: val })
+      }).then(function(r){ return r.json(); })
+        .then(function(d) {
+          if (d.success) { msg.style.color = '#4ecdc4'; msg.textContent = 'Support contact saved.'; }
+          else { msg.style.color = '#ff6b6b'; msg.textContent = d.error || 'Failed.'; }
+        }).catch(function(){ msg.style.color = '#ff6b6b'; msg.textContent = 'Network error.'; });
+    });
+  }
 
   function loadLimitsSection() {
     var sec = document.getElementById('limitsSection');

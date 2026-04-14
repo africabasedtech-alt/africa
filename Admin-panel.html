@@ -549,6 +549,10 @@
                 <div class="ap-nav-icon" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);"><i class="fas fa-history"></i></div>
                 <span class="ap-nav-label">Activity Logs</span>
             </a>
+            <button class="ap-nav-btn" id="bulkCancelEmailBtn" style="display:none;border:none;cursor:pointer;text-align:center;" onclick="sendBulkCancelEmails()">
+                <div class="ap-nav-icon" style="background:linear-gradient(135deg,#c0392b,#e74c3c);"><i class="fas fa-envelope-open-text"></i></div>
+                <span class="ap-nav-label">Send Cancel Emails</span>
+            </button>
             <button class="ap-nav-btn" id="adminInstallBtn" data-testid="button-install-app" style="display:none;border:none;cursor:pointer;text-align:center;" onclick="adminInstallApp()">
                 <div class="ap-nav-icon blue"><i class="fas fa-download"></i></div>
                 <span class="ap-nav-label">Install App</span>
@@ -964,6 +968,8 @@
           }
           var logsBtn = document.getElementById('logsBtn');
           if (logsBtn) logsBtn.style.display = '';
+          var bulkBtn = document.getElementById('bulkCancelEmailBtn');
+          if (bulkBtn) bulkBtn.style.display = '';
         }
       }).catch(function(){});
     });
@@ -983,6 +989,27 @@
     if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
       var btn = document.getElementById('adminInstallBtn');
       if (btn) btn.style.display = 'none';
+    }
+
+    function sendBulkCancelEmails() {
+      if (!confirm('Send cancellation emails to ALL users whose products were cancelled but never emailed?\n\nThis includes investments cancelled before the email feature was added.\n\nContinue?')) return;
+      var emailBtn = document.getElementById('bulkCancelEmailBtn');
+      var origLabel = emailBtn ? emailBtn.querySelector('.ap-nav-label') : null;
+      if (origLabel) origLabel.textContent = 'Sending…';
+      fetch('/api/admin/investments/send-cancel-emails', {
+        method: 'POST',
+        headers: { 'x-admin-key': '1540568e' }
+      }).then(function(r){ return r.json(); }).then(function(d){
+        if (origLabel) origLabel.textContent = 'Send Cancel Emails';
+        if (d.success) {
+          alert('Done! Sent ' + d.sent + ' cancellation email(s) out of ' + d.total + ' pending.');
+        } else {
+          alert(d.error || 'Failed to send emails.');
+        }
+      }).catch(function(){
+        if (origLabel) origLabel.textContent = 'Send Cancel Emails';
+        alert('Network error. Please try again.');
+      });
     }
 </script>
 <script src="/js/admin-pin.js"></script>

@@ -254,6 +254,42 @@ function withdrawalRejectedEmailHtml(username, amount, reason) {
   </div>`;
 }
 
+// ─── Email helper: investment cancellation ────────────────────────────────────
+function escHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function investmentCancelledEmailHtml(username, productName, cancelReason, supportContact) {
+  const safeUser = escHtml(username);
+  const safeProd = escHtml(productName);
+  const safeReason = escHtml(cancelReason || 'No additional details were provided.');
+  const safeContact = escHtml(supportContact || '');
+  const supportSection = safeContact
+    ? `<div style="background:#0a1628;border-radius:8px;padding:18px;margin-top:22px">
+        <p style="margin:0 0 6px;font-weight:bold;color:#e0e0e0;font-size:14px">Need help? Contact our Product Manager:</p>
+        <p style="margin:0;font-size:14px;color:#0a9e8c;word-break:break-word">${safeContact.replace(/\n/g, '<br>')}</p>
+      </div>`
+    : '';
+  return `
+  <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;background:#0d1b2a;color:#e0e0e0;border-radius:10px;overflow:hidden">
+    <div style="background:linear-gradient(135deg,#c0392b,#962d22);padding:30px;text-align:center">
+      <h1 style="color:#fff;margin:0;font-size:24px">Investment Cancelled</h1>
+    </div>
+    <div style="padding:30px">
+      <p style="font-size:16px">Hello <strong>${safeUser}</strong>,</p>
+      <p>Your investment in <strong style="color:#ff7675">${safeProd}</strong> has been cancelled.</p>
+      <div style="background:#0a1628;border-radius:8px;padding:18px;margin:18px 0">
+        <p style="margin:0 0 6px;font-weight:bold;color:#8899aa;font-size:13px">DETAILS</p>
+        <p style="margin:0;font-size:14px;line-height:1.6">${safeReason}</p>
+      </div>
+      <p style="font-size:13px;color:#8899aa">Your account balances have been adjusted accordingly. You can view the updated balances on your dashboard.</p>
+      <div style="text-align:center;margin:28px 0">
+        <a href="https://africabasedtech.com/home" style="background:#0a9e8c;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:bold">View Dashboard</a>
+      </div>
+      ${supportSection}
+    </div>
+    <div style="background:#071624;padding:16px;text-align:center;font-size:12px;color:#666">&copy; ${new Date().getFullYear()} AfricaBased Technologies. All rights reserved.</div>
+  </div>`;
+}
+
 // ─── Registration OTP store (in-memory, keyed by email) ──────────────────────
 const regOtpStore = new Map(); // email → { otp, expires, attempts }
 
@@ -2297,6 +2333,30 @@ app.post('/api/admin/settings/limits', requireSuperAdmin, async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Failed to save limits' }); }
 });
 
+// ─── SUPPORT CONTACT (Super Admin only) ──────────────────────────────────────
+app.get('/api/admin/settings/support-contact', requireSuperAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT value FROM system_settings WHERE key='support_contact'");
+    res.json({ support_contact: rows[0]?.value || '' });
+  } catch (e) { res.status(500).json({ error: 'Failed to load support contact' }); }
+});
+
+app.post('/api/admin/settings/support-contact', requireSuperAdmin, async (req, res) => {
+  const { support_contact } = req.body;
+  if (typeof support_contact !== 'string' || !support_contact.trim()) {
+    return res.status(400).json({ error: 'Support contact cannot be empty' });
+  }
+  try {
+    await pool.query(
+      "INSERT INTO system_settings (key,value,updated_at) VALUES ('support_contact',$1,NOW()) ON CONFLICT (key) DO UPDATE SET value=$1,updated_at=NOW()",
+      [support_contact.trim()]
+    );
+    const adminInfo = req.adminSession || {};
+    logAdminActivity({ adminType: 'super', adminName: adminInfo.name || 'Super Admin', adminEmail: adminInfo.email || '', actionType: 'settings_change', description: `Support contact updated`, ip: req.ip });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Failed to save support contact' }); }
+});
+
 // ─── ACTIVITY LOGS (Super Admin only) ────────────────────────────────────────
 app.get('/api/admin/activity-logs', requireSuperAdmin, async (req, res) => {
   try {
@@ -2933,6 +2993,8 @@ app.get('/api/admin/referrals', requireSuperAdmin, async (req, res) => {
       `INSERT INTO system_settings (key,value,updated_at) VALUES ('max_deposit','500000',NOW()) ON CONFLICT (key) DO NOTHING`,
       `INSERT INTO system_settings (key,value,updated_at) VALUES ('min_withdrawal','150',NOW()) ON CONFLICT (key) DO NOTHING`,
       `INSERT INTO system_settings (key,value,updated_at) VALUES ('max_withdrawal','200000',NOW()) ON CONFLICT (key) DO NOTHING`,
+      `INSERT INTO system_settings (key,value,updated_at) VALUES ('support_contact','WhatsApp: +254700000000',NOW()) ON CONFLICT (key) DO NOTHING`,
+      `ALTER TABLE investments ADD COLUMN IF NOT EXISTS cancel_email_sent BOOLEAN DEFAULT FALSE`,
       `DROP INDEX IF EXISTS idx_investments_free_one_per_user`,
       `CREATE UNIQUE INDEX IF NOT EXISTS idx_investments_free_one_per_user ON investments (user_id, product_name) WHERE amount = 0 AND status IN ('active','matured')`,
       `ALTER TABLE investments ALTER COLUMN start_date TYPE TIMESTAMPTZ USING start_date::TIMESTAMPTZ`,
@@ -3989,6 +4051,20 @@ app.post('/api/admin/investments/:id/cancel', requireAnyAdmin, requirePrivilege(
       ? `Matured investment "${inv.product_name}" cancelled for user ${inv.user_id} — KES ${clawbackAmt} earnings clawed back, KES ${refundAmt} capital refunded to ${refundCol}`
       : `Investment "${inv.product_name}" cancelled for user ${inv.user_id} — KES ${refundAmt} refunded to ${refundCol}`;
     logAdminActivity({ ...aiC, actionType: 'investment_action', description: logDesc, ip: req.ip, targetUserId: inv.user_id });
+
+    // Fire-and-forget: send cancellation email to user
+    (async () => {
+      try {
+        const userRes = await pool.query('SELECT username, email FROM users WHERE id=$1', [inv.user_id]);
+        if (!userRes.rows.length || !userRes.rows[0].email) return;
+        const { username, email } = userRes.rows[0];
+        const scRes = await pool.query("SELECT value FROM system_settings WHERE key='support_contact'");
+        const supportContact = scRes.rows[0]?.value || '';
+        const sent = await sendMail({ to: email, subject: `Investment Cancelled — ${inv.product_name}`, html: investmentCancelledEmailHtml(username, inv.product_name, cancelReason, supportContact) });
+        if (sent) await pool.query('UPDATE investments SET cancel_email_sent=TRUE WHERE id=$1', [inv.id]);
+      } catch (emailErr) { console.error('Cancel email error:', emailErr.message); }
+    })();
+
     res.json({
       success: true,
       refunded: refundAmt,
@@ -4061,6 +4137,20 @@ app.post('/api/admin/investments/:id/delete', requireAnyAdmin, requirePrivilege(
     );
     const aiD = getAdminIdentity(req);
     logAdminActivity({ ...aiD, actionType: 'investment_action', description: `Investment "${inv.product_name}" deleted for user ${inv.user_id} — KES ${clawbackAmt} clawed back, KES ${refundAmt} refunded`, ip: req.ip, targetUserId: inv.user_id });
+
+    // Fire-and-forget: send cancellation email to user
+    (async () => {
+      try {
+        const userRes = await pool.query('SELECT username, email FROM users WHERE id=$1', [inv.user_id]);
+        if (!userRes.rows.length || !userRes.rows[0].email) return;
+        const { username, email } = userRes.rows[0];
+        const scRes = await pool.query("SELECT value FROM system_settings WHERE key='support_contact'");
+        const supportContact = scRes.rows[0]?.value || '';
+        const sent = await sendMail({ to: email, subject: `Investment Cancelled — ${inv.product_name}`, html: investmentCancelledEmailHtml(username, inv.product_name, deleteReason, supportContact) });
+        if (sent) await pool.query('UPDATE investments SET cancel_email_sent=TRUE WHERE id=$1', [inv.id]);
+      } catch (emailErr) { console.error('Delete email error:', emailErr.message); }
+    })();
+
     res.json({
       success: true,
       clawback: clawbackAmt,
@@ -4075,6 +4165,45 @@ app.post('/api/admin/investments/:id/delete', requireAnyAdmin, requirePrivilege(
     res.status(500).json({ error: 'Failed to delete investment' });
   } finally {
     client.release();
+  }
+});
+
+// ─── Retroactive: send cancellation emails for all past cancelled investments ─
+app.post('/api/admin/investments/send-cancel-emails', requireSuperAdmin, async (req, res) => {
+  try {
+    const scRes = await pool.query("SELECT value FROM system_settings WHERE key='support_contact'");
+    const supportContact = scRes.rows[0]?.value || '';
+    const { rows } = await pool.query(`
+      SELECT i.id, i.product_name, i.cancel_reason, u.username, u.email
+      FROM investments i
+      JOIN users u ON u.id = i.user_id
+      WHERE i.status = 'cancelled'
+        AND (i.cancel_email_sent IS NULL OR i.cancel_email_sent = FALSE)
+        AND u.email IS NOT NULL AND u.email != ''
+    `);
+    if (!rows.length) return res.json({ success: true, sent: 0, message: 'No unsent cancellation emails found.' });
+
+    let sent = 0;
+    for (const inv of rows) {
+      try {
+        const ok = await sendMail({
+          to: inv.email,
+          subject: `Investment Cancelled — ${inv.product_name}`,
+          html: investmentCancelledEmailHtml(inv.username, inv.product_name, inv.cancel_reason || 'This investment was cancelled.', supportContact)
+        });
+        if (ok) {
+          await pool.query('UPDATE investments SET cancel_email_sent=TRUE WHERE id=$1', [inv.id]);
+          sent++;
+        }
+      } catch (mailErr) { console.error(`Bulk cancel email failed for inv ${inv.id}:`, mailErr.message); }
+    }
+
+    const adminInfo = req.adminSession || {};
+    logAdminActivity({ adminType: 'super', adminName: adminInfo.name || 'Super Admin', adminEmail: adminInfo.email || '', actionType: 'investment_action', description: `Sent ${sent} retroactive cancellation emails out of ${rows.length} pending`, ip: req.ip });
+    res.json({ success: true, sent, total: rows.length });
+  } catch (e) {
+    console.error('Bulk cancel email error:', e);
+    res.status(500).json({ error: 'Failed to send cancellation emails' });
   }
 });
 
