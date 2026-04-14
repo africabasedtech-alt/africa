@@ -4181,7 +4181,7 @@ app.post('/api/admin/investments/send-cancel-emails', requireSuperAdmin, async (
         AND (i.cancel_email_sent IS NULL OR i.cancel_email_sent = FALSE)
         AND u.email IS NOT NULL AND u.email != ''
     `);
-    if (!rows.length) return res.json({ success: true, sent: 0, message: 'No unsent cancellation emails found.' });
+    if (!rows.length) return res.json({ success: true, sent: 0, total: 0, message: 'No unsent cancellation emails found.' });
 
     let sent = 0;
     for (const inv of rows) {
