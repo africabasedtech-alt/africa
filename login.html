@@ -752,7 +752,10 @@
             showLoginSuccessModal(data?.user?.username || 'there');
             setTimeout(() => window.location.href = '/home', 2000);
         } catch (err) {
-            errorAlert.textContent = 'Something went wrong. Please try again.';
+            console.error('[login] Unexpected exception during sign-in:', err);
+            errorAlert.textContent = (err && err.message)
+              ? `Unexpected error: ${err.message}`
+              : 'Unexpected error during sign-in. Please try again.';
             errorAlert.style.display = 'block';
             btn.disabled = false;
             btnText.textContent = 'Sign In';

@@ -40,6 +40,36 @@ async function apiFetch(path, options = {}) {
   return res;
 }
 
+// Safely parses an API response. Always returns { ok, status, data, error }
+// where `error` is a user-friendly message string (or null on success).
+// Never throws — network failures and non-JSON responses become structured errors.
+async function safeRequest(path, options = {}) {
+  let res;
+  try {
+    res = await apiFetch(path, options);
+  } catch (err) {
+    console.error('[api] Network error calling', path, err);
+    return { ok: false, status: 0, data: null,
+      error: 'Cannot reach the server. Please check your internet connection and try again.' };
+  }
+  let data = null;
+  let parseFailed = false;
+  try {
+    const text = await res.text();
+    if (text) data = JSON.parse(text);
+  } catch (err) {
+    parseFailed = true;
+    console.error('[api] Non-JSON response from', path, 'status', res.status, err);
+  }
+  if (!res.ok) {
+    const msg = (data && data.error)
+      || (parseFailed ? `Server error (${res.status}). Please try again in a moment.`
+                      : `Request failed (${res.status}).`);
+    return { ok: false, status: res.status, data, error: msg };
+  }
+  return { ok: true, status: res.status, data, error: null };
+}
+
 // ─── Idle Timeout ─────────────────────────────────────────────────────────────
 const IDLE_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
 let _idleTimer = null;
@@ -74,43 +104,39 @@ export function stopIdleGuard() {
 
 // ─── Sign Up ─────────────────────────────────────────────────────────────────
 export async function sendRegistrationOtp(username, email, password) {
-  const res = await apiFetch('/api/auth/send-otp', {
+  const r = await safeRequest('/api/auth/send-otp', {
     method: 'POST',
     body: JSON.stringify({ username, email, password })
   });
-  const data = await res.json();
-  if (!res.ok) return { error: { message: data.error } };
-  return { data };
+  if (!r.ok) return { error: { message: r.error, status: r.status } };
+  return { data: r.data };
 }
 
 export async function signUp(username, phone, email, password, otp, referral_code) {
   const body = { username, phone, email, password, otp };
   if (referral_code) body.referral_code = referral_code;
-  const res = await apiFetch('/api/auth/register', {
+  const r = await safeRequest('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify(body)
   });
-  const data = await res.json();
-  if (!res.ok) return { error: { message: data.error } };
-  setToken(data.token);
-  setUser(data.user);
+  if (!r.ok) return { error: { message: r.error, status: r.status } };
+  setToken(r.data.token);
+  setUser(r.data.user);
   startIdleGuard();
-  return { data };
+  return { data: r.data };
 }
 
 // ─── Sign In ─────────────────────────────────────────────────────────────────
 export async function signIn(identifier, password, remember) {
-  const body = { identifier, password };
-  const res = await apiFetch('/api/auth/login', {
+  const r = await safeRequest('/api/auth/login', {
     method: 'POST',
-    body: JSON.stringify(body)
+    body: JSON.stringify({ identifier, password })
   });
-  const data = await res.json();
-  if (!res.ok) return { error: { message: data.error } };
-  setToken(data.token);
-  setUser(data.user);
+  if (!r.ok) return { error: { message: r.error, status: r.status } };
+  setToken(r.data.token);
+  setUser(r.data.user);
   startIdleGuard();
-  return { data };
+  return { data: r.data };
 }
 
 // ─── Sign Out ────────────────────────────────────────────────────────────────

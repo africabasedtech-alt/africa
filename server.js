@@ -688,7 +688,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
     const { password_hash, failed_login_attempts, locked_until, device_fingerprint, ...safeUser } = user;
     res.json({ user: safeUser, token });
   } catch (err) {
-    console.error('Login error:', err);
+    console.error('Login error for identifier=%s:', identifier, err && err.stack ? err.stack : err);
     res.status(500).json({ error: 'Login failed. Please try again.' });
   }
 });

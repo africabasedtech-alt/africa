@@ -1165,7 +1165,10 @@
             btn.disabled  = false;
             btnText.textContent = 'Create Account';
         } catch (err) {
-            errorAlert.textContent  = 'Something went wrong. Please try again.';
+            console.error('[signup] Unexpected exception while requesting OTP:', err);
+            errorAlert.textContent  = (err && err.message)
+              ? `Unexpected error: ${err.message}`
+              : 'Unexpected error. Please try again.';
             errorAlert.style.display = 'block';
             btn.disabled  = false;
             btnText.textContent = 'Create Account';
