@@ -67,6 +67,10 @@ async function safeRequest(path, options = {}) {
                       : `Request failed (${res.status}).`);
     return { ok: false, status: res.status, data, error: msg };
   }
+  if (parseFailed || data === null) {
+    return { ok: false, status: res.status, data: null,
+      error: 'The server returned an unexpected response. Please try again in a moment.' };
+  }
   return { ok: true, status: res.status, data, error: null };
 }
 
@@ -120,6 +124,9 @@ export async function signUp(username, phone, email, password, otp, referral_cod
     body: JSON.stringify(body)
   });
   if (!r.ok) return { error: { message: r.error, status: r.status } };
+  if (!r.data || !r.data.token || !r.data.user) {
+    return { error: { message: 'Sign-up succeeded but the response was incomplete. Please try signing in.', status: r.status } };
+  }
   setToken(r.data.token);
   setUser(r.data.user);
   startIdleGuard();
@@ -133,6 +140,9 @@ export async function signIn(identifier, password, remember) {
     body: JSON.stringify({ identifier, password })
   });
   if (!r.ok) return { error: { message: r.error, status: r.status } };
+  if (!r.data || !r.data.token || !r.data.user) {
+    return { error: { message: 'Sign-in response was incomplete. Please try again.', status: r.status } };
+  }
   setToken(r.data.token);
   setUser(r.data.user);
   startIdleGuard();
