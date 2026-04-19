@@ -149,6 +149,26 @@ export async function signIn(identifier, password, remember) {
   return { data: r.data };
 }
 
+// ─── Forgot Password ─────────────────────────────────────────────────────────
+export async function forgotPassword(email) {
+  const r = await safeRequest('/api/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email })
+  });
+  if (!r.ok) return { error: { message: r.error, status: r.status } };
+  return { data: r.data };
+}
+
+// ─── Reset Password ──────────────────────────────────────────────────────────
+export async function resetPassword(token, password) {
+  const r = await safeRequest('/api/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, password })
+  });
+  if (!r.ok) return { error: { message: r.error, status: r.status } };
+  return { data: r.data };
+}
+
 // ─── Sign Out ────────────────────────────────────────────────────────────────
 export async function signOut() {
   stopIdleGuard();
@@ -229,5 +249,5 @@ export async function updateProfile(fields) {
 if (typeof window !== 'undefined') {
   window.apiAuth = { signUp, signIn, signOut, getCurrentUser, getSession, checkAuthState,
     getProfile, updateProfile, getToken, startIdleGuard, stopIdleGuard,
-    sendRegistrationOtp };
+    sendRegistrationOtp, forgotPassword, resetPassword };
 }
