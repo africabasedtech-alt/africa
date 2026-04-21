@@ -2754,7 +2754,7 @@ app.get('/api/referral', requireAuth, async (req, res) => {
     if (hasInvestment) {
       if (totalActiveDownlines >= 300)     membershipLevel = 'Gold';
       else if (totalActiveDownlines >= 60) membershipLevel = 'Premium';
-      else if (totalActiveDownlines >= 5)  membershipLevel = 'Basic';
+      else if (activeL1 >= 5)              membershipLevel = 'Basic';
       else                                 membershipLevel = 'Active';
     }
 
