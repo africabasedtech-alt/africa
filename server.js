@@ -1773,6 +1773,14 @@ app.get('/api/admin/products/:id/scope-preview', requireAnyAdmin, requireProduct
     const date = req.query.date || null;
     const validScopes = new Set(['new_only', 'all_users', 'current_investors', 'specific_users', 'cohort_registered_after']);
     if (!validScopes.has(type)) return res.status(400).json({ error: 'Invalid scope type' });
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (type === 'specific_users' && userIds.length) {
+      const bad = userIds.filter(u => !UUID_RE.test(u));
+      if (bad.length) return res.status(400).json({ error: 'Invalid user id format', invalid_user_ids: bad });
+    }
+    if (type === 'cohort_registered_after' && date && isNaN(Date.parse(date))) {
+      return res.status(400).json({ error: 'Invalid cohort date' });
+    }
     const prod = await pool.query('SELECT name FROM products WHERE id=$1', [productId]);
     if (!prod.rows.length) return res.status(404).json({ error: 'Product not found' });
     const productName = prod.rows[0].name;
