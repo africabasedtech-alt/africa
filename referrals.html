@@ -628,7 +628,8 @@
             <div class="stat-card">
                 <i class="fas fa-user-shield"></i>
                 <h3 id="activeReferrals">0</h3>
-                <p>Active Referrals</p>
+                <p>Active Direct Referrals</p>
+                <p style="font-size:0.7rem;color:rgba(255,255,255,0.4);margin-top:2px" id="activeReferralsSubtext">Counts toward Basic / Premium / Gold tiers</p>
             </div>
             <div class="stat-card">
                 <i class="fas fa-crown"></i>
@@ -812,16 +813,18 @@
         }
 
         // Function to get next level requirements
-        function getNextLevelRequirements(currentLevel, activeReferralsCount) {
+        // For Basic tier: progress is the active L1 (direct paid) count (matches eligibility rule)
+        // For Premium/Gold tiers: progress is the combined network active count (matches server tier rule)
+        function getNextLevelRequirements(currentLevel, activeL1Count, activeNetworkCount) {
             switch(currentLevel) {
                 case 'Inactive':
                     return { required: 0, progress: 0, next: 'Active', message: 'Invest in any product' };
                 case 'Active':
-                    return { required: 5, progress: activeReferralsCount, next: 'Basic' };
+                    return { required: 5, progress: activeL1Count, next: 'Basic' };
                 case 'Basic':
-                    return { required: 60, progress: activeReferralsCount, next: 'Premium' };
+                    return { required: 60, progress: activeNetworkCount, next: 'Premium' };
                 case 'Premium':
-                    return { required: 300, progress: activeReferralsCount, next: 'Gold' };
+                    return { required: 300, progress: activeNetworkCount, next: 'Gold' };
                 case 'Gold':
                     return { required: 300, progress: 300, next: null };
                 default:
@@ -830,8 +833,8 @@
         }
 
         // Function to update level display
-        function updateLevelDisplay(level, activeReferralsCount) {
-            const nextLevel = getNextLevelRequirements(level, activeReferralsCount);
+        function updateLevelDisplay(level, activeL1Count, activeNetworkCount) {
+            const nextLevel = getNextLevelRequirements(level, activeL1Count, activeNetworkCount);
             document.getElementById('membershipLevel').textContent = level;
             
             // Update progress display
@@ -872,6 +875,7 @@
                 const l3Users        = apiData.l3_users || [];
                 const lvls           = apiData.levels || {};
                 const activeReferrals = apiData.active_referrals || 0;
+                const activeL1        = (lvls.l1 && lvls.l1.active) || 0;
                 const hasInvestment   = apiData.has_investment || false;
                 const membershipLevel = apiData.membership_level || 'Inactive';
                 const isEligible      = apiData.is_eligible || false;
@@ -880,9 +884,11 @@
 
                 document.getElementById('totalReferrals').textContent  = l1Users.length;
                 document.getElementById('totalCommission').textContent = formatCurrency(dailyCommission) + '/day';
-                document.getElementById('activeReferrals').textContent = activeReferrals;
+                document.getElementById('activeReferrals').textContent = activeL1;
+                const subtext = document.getElementById('activeReferralsSubtext');
+                if (subtext) subtext.textContent = activeReferrals + ' active across your full network (L1+L2+L3)';
 
-                updateLevelDisplay(membershipLevel, activeReferrals);
+                updateLevelDisplay(membershipLevel, activeL1, activeReferrals);
 
                 document.querySelectorAll('.tier-item').forEach(item => {
                     const lvl = item.getAttribute('data-level');
@@ -939,8 +945,8 @@
                     : '<div style="color:rgba(255,255,255,0.5);font-size:0.875rem;text-align:center">' +
                         (!hasInvestment
                             ? '<i class="fas fa-info-circle" style="color:#ffd54f;margin-right:6px"></i>Invest in a product first to become eligible for commission.'
-                            : '<i class="fas fa-info-circle" style="color:#ffd54f;margin-right:6px"></i>You need <strong style="color:#fff">' + Math.max(0, 5 - activeReferrals) + ' more active referral' + (Math.max(0, 5 - activeReferrals) === 1 ? '' : 's') + '</strong> to reach Basic tier and start earning (B: 10%, C: 6%, D: 1%).'
-                        ) + '</div>';
+                            : '<i class="fas fa-info-circle" style="color:#ffd54f;margin-right:6px"></i>You have <strong style="color:#fff">' + activeL1 + '</strong> active direct referral' + (activeL1 === 1 ? '' : 's') + '. You need <strong style="color:#fff">' + Math.max(0, 5 - activeL1) + ' more direct referral' + (Math.max(0, 5 - activeL1) === 1 ? '' : 's') + ' with a paid investment</strong> to reach Basic tier and start earning (B: 10%, C: 6%, D: 1%).'
+                        ) + '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);font-size:0.78rem;color:rgba(255,255,255,0.45);text-align:left"><i class="fas fa-circle-info" style="color:rgba(255,213,79,0.7);margin-right:6px"></i>Only people you referred directly (Level B) who hold a <strong>paid</strong> investment count toward unlocking commission. The Free Product does not qualify a downline.</div></div>';
 
                 // ── Collect button ─────────────────────────────────────────────
                 let collectBtn = document.getElementById('collectCommissionBtn');
@@ -977,7 +983,12 @@
                     collectBtn.disabled = true;
                     collectBtn.style.opacity = '0.5';
                     collectBtn.style.cursor = 'not-allowed';
-                    if (!isEligible) collectBtn.innerHTML = '<i class="fas fa-lock"></i> Not Eligible Yet';
+                    if (!isEligible) {
+                        const reason = !hasInvestment
+                            ? 'Invest first to unlock'
+                            : 'Need ' + Math.max(0, 5 - activeL1) + ' more direct paid referral' + (Math.max(0, 5 - activeL1) === 1 ? '' : 's');
+                        collectBtn.innerHTML = '<i class="fas fa-lock"></i> ' + reason;
+                    }
                 }
 
                 // ── L1 referral list ───────────────────────────────────────────
