@@ -1153,7 +1153,7 @@
         try {
             const { data, error } = await sendRegistrationOtp(username, email, password);
             if (error) {
-                errorAlert.textContent  = error.message || 'Failed to send code. Please try again.';
+                errorAlert.textContent  = error.message;
                 errorAlert.style.display = 'block';
                 btn.disabled  = false;
                 btnText.textContent = 'Create Account';
@@ -1248,7 +1248,7 @@
         const referral = _pendingReg.referral || '';
         const { data, error } = await signUp(username, null, email, password, otp, referral);
         if (error) {
-            document.getElementById('otpErr').textContent = error.message || 'Verification failed.';
+            document.getElementById('otpErr').textContent = error.message;
             document.getElementById('otpErr').style.display = 'block';
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-check"></i> Verify & Create Account';
