@@ -496,7 +496,7 @@
               '<button class="btn btn-sm ' + (p.disabled ? 'btn-success' : 'btn-warning') + '" onclick="toggleProduct(\'' + p.id + '\',' + p.disabled + ')">' +
                 '<i class="fas fa-' + (p.disabled ? 'toggle-on' : 'toggle-off') + '"></i> ' + (p.disabled ? 'Enable' : 'Disable') +
               '</button>' : '') +
-            (myPerms.canEdit ? '<button class="btn btn-sm" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);" onclick="showAuditFor(\'' + p.id + '\')" title="View change history"><i class="fas fa-history"></i></button>' : '') +
+            (myPerms.canView ? '<button class="btn btn-sm" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);" onclick="showAuditFor(\'' + p.id + '\')" title="View change history"><i class="fas fa-history"></i></button>' : '') +
             (myPerms.canDelete ? '<button class="btn btn-danger btn-sm" onclick="confirmDelete(\'' + p.id + '\',\'' + p.name.replace(/'/g,"\\'") + '\')"><i class="fas fa-trash"></i></button>' : '') +
           '</div>' +
         '</div>' +

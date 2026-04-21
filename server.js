@@ -1659,6 +1659,18 @@ app.put('/api/admin/products/:id', requireAnyAdmin, requireProductPermission('pr
     // Insert overrides for scopes that target a subset of users.
     let overrideInserts = 0;
     if (scopeType === 'specific_users') {
+      // Confirm every targeted user actually exists, otherwise we'd silently
+      // insert override rows that match nobody.
+      const existsRes = await client.query(
+        `SELECT id::text AS id FROM users WHERE id = ANY($1::uuid[])`,
+        [scope.user_ids]
+      );
+      const existing = new Set(existsRes.rows.map(r => r.id));
+      const unknown = scope.user_ids.filter(u => !existing.has(String(u)));
+      if (unknown.length) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Some selected users do not exist.', unknown_user_ids: unknown });
+      }
       for (const uid of scope.user_ids) {
         await client.query(
           `INSERT INTO product_overrides (product_id, scope_type, scope_value, price, daily_return, duration_days, created_by)
@@ -1781,7 +1793,9 @@ app.get('/api/admin/products/:id/scope-preview', requireAnyAdmin, requireProduct
       );
       activeInvestments = r.rows[0].c; affectedUsers = r.rows[0].u;
     } else if (type === 'cohort_registered_after' && date) {
-      const r = await pool.query(`SELECT COUNT(*)::int AS c FROM users WHERE created_at > $1::timestamptz`, [date]);
+      // Inclusive >=: matches resolver semantics where the override applies when
+      // scope_value <= user_created_at (i.e. user registered on or after the cutoff).
+      const r = await pool.query(`SELECT COUNT(*)::int AS c FROM users WHERE created_at >= $1::timestamptz`, [date]);
       futureUserEstimate = r.rows[0].c;
     }
     res.json({
