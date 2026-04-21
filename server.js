@@ -1431,7 +1431,10 @@ app.post('/api/invest', requireAuth, rejectIfImpersonated, async (req, res) => {
 app.get('/api/products', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM products ORDER BY created_at DESC');
-    res.json({ products: result.rows });
+    let products = result.rows;
+    const u = await resolveOptionalUser(req);
+    if (u) products = await applyProductOverridesForUser(products, u.id, u.created_at);
+    res.json({ products });
   } catch (e) {
     res.status(500).json({ error: 'Failed to fetch products' });
   }

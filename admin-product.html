@@ -674,11 +674,20 @@
   async function loadUsersForScope() {
     try {
       var r = await fetch('/api/admin/users', { headers: { 'x-admin-key': ADMIN_KEY } });
-      if (!r.ok) return;
+      if (r.status === 403) {
+        document.getElementById('scopeUserList').innerHTML = '<div style="padding:0.6rem;color:#f87171;font-size:0.85rem;">You do not have user-view permission, so you cannot pick specific users. Ask a super admin to grant the user_view privilege, or choose a different scope.</div>';
+        return;
+      }
+      if (!r.ok) {
+        document.getElementById('scopeUserList').innerHTML = '<div style="padding:0.6rem;color:#f87171;font-size:0.85rem;">Could not load the user list. Try again.</div>';
+        return;
+      }
       var d = await r.json();
       scopeUserCache = (d.users || []).map(function(u) { return { id: u.id, label: (u.username || u.email || u.id) + ' — ' + (u.email || '') }; });
       renderScopeUsers();
-    } catch (e) {}
+    } catch (e) {
+      document.getElementById('scopeUserList').innerHTML = '<div style="padding:0.6rem;color:#f87171;font-size:0.85rem;">Connection error loading users.</div>';
+    }
   }
 
   function renderScopeUsers() {
