@@ -1370,57 +1370,103 @@ app.post('/api/invest', requireAuth, rejectIfImpersonated, async (req, res) => {
       }
     }
 
-    const profRes = await pool.query(
-      'SELECT account_balance, COALESCE(wallet_balance,0) AS wallet_balance FROM profiles WHERE user_id=$1',
-      [userId]
-    );
-    if (!profRes.rows.length) return res.status(404).json({ error: 'Profile not found' });
-    const income = parseFloat(profRes.rows[0].account_balance || 0);
-    const wallet = parseFloat(profRes.rows[0].wallet_balance || 0);
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    if (cost > 0) {
-      if (source === 'wallet') {
-        if (wallet < cost) {
-          return res.status(400).json({
-            error: `Insufficient deposited balance. You need KES ${cost.toLocaleString()} but your deposit balance is KES ${wallet.toLocaleString()}`
-          });
-        }
-        await pool.query(
-          `UPDATE profiles SET wallet_balance = COALESCE(wallet_balance,0) - $1, updated_at = NOW() WHERE user_id = $2`,
-          [cost, userId]
-        );
-      } else {
-        if (income < cost) {
-          return res.status(400).json({
-            error: `Insufficient earnings balance. You need KES ${cost.toLocaleString()} but your earnings balance is KES ${income.toLocaleString()}`
-          });
-        }
-        await pool.query(
-          `UPDATE profiles SET account_balance = account_balance - $1, updated_at = NOW() WHERE user_id = $2`,
-          [cost, userId]
-        );
+      // Lock the product row to serialize concurrent purchases of the same product.
+      const lockedProd = await client.query(
+        'SELECT id, total_units, used_units FROM products WHERE id=$1 FOR UPDATE',
+        [product.id]
+      );
+      if (!lockedProd.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'This product is not available.' });
       }
-    }
 
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + holdDays);
-    const inv = await pool.query(
-      `INSERT INTO investments (user_id, product_name, amount, daily_earnings, start_date, end_date, status, balance_source, units)
-       VALUES ($1, $2, $3, $4, NOW(), $5, 'active', $6, $7) RETURNING *`,
-      [userId, product_name, cost, dailyEarnings, endDate, source, unitCount]
-    );
-    await pool.query('UPDATE products SET used_units = used_units + $1 WHERE id = $2', [unitCount, product.id]);
-    const newBal = await pool.query(
-      'SELECT account_balance, COALESCE(wallet_balance,0) AS wallet_balance FROM profiles WHERE user_id=$1',
-      [userId]
-    );
-    refreshProfileStats(userId);
-    res.json({
-      success: true,
-      investment: inv.rows[0],
-      income_balance: parseFloat(newBal.rows[0].account_balance || 0),
-      wallet_balance: parseFloat(newBal.rows[0].wallet_balance || 0)
-    });
+      // Re-check unit availability under the lock to prevent over-selling.
+      if (totalUnits > 0) {
+        const { rows: unitRows } = await client.query(
+          "SELECT COALESCE(SUM(units),0)::int AS sold FROM investments WHERE product_name=$1 AND status='active'",
+          [product_name]
+        );
+        const computedSold = unitRows[0].sold;
+        const dbUsedUnits = parseInt(lockedProd.rows[0].used_units) || 0;
+        const soldUnits = Math.max(computedSold, dbUsedUnits);
+        const available = totalUnits - soldUnits;
+        if (unitCount > available) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({ error: available <= 0 ? 'All units for this product have been sold.' : `Only ${available} unit${available === 1 ? '' : 's'} available. You requested ${unitCount}.` });
+        }
+      }
+
+      // Lock the user's profile row before reading/updating balance.
+      const profRes = await client.query(
+        'SELECT account_balance, COALESCE(wallet_balance,0) AS wallet_balance FROM profiles WHERE user_id=$1 FOR UPDATE',
+        [userId]
+      );
+      if (!profRes.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Profile not found' });
+      }
+      const income = parseFloat(profRes.rows[0].account_balance || 0);
+      const wallet = parseFloat(profRes.rows[0].wallet_balance || 0);
+
+      if (cost > 0) {
+        if (source === 'wallet') {
+          if (wallet < cost) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({
+              error: `Insufficient deposited balance. You need KES ${cost.toLocaleString()} but your deposit balance is KES ${wallet.toLocaleString()}`
+            });
+          }
+          await client.query(
+            `UPDATE profiles SET wallet_balance = COALESCE(wallet_balance,0) - $1, updated_at = NOW() WHERE user_id = $2`,
+            [cost, userId]
+          );
+        } else {
+          if (income < cost) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({
+              error: `Insufficient earnings balance. You need KES ${cost.toLocaleString()} but your earnings balance is KES ${income.toLocaleString()}`
+            });
+          }
+          await client.query(
+            `UPDATE profiles SET account_balance = account_balance - $1, updated_at = NOW() WHERE user_id = $2`,
+            [cost, userId]
+          );
+        }
+      }
+
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + holdDays);
+      const inv = await client.query(
+        `INSERT INTO investments (user_id, product_name, amount, daily_earnings, start_date, end_date, status, balance_source, units)
+         VALUES ($1, $2, $3, $4, NOW(), $5, 'active', $6, $7) RETURNING *`,
+        [userId, product_name, cost, dailyEarnings, endDate, source, unitCount]
+      );
+      await client.query('UPDATE products SET used_units = used_units + $1 WHERE id = $2', [unitCount, product.id]);
+
+      const newBal = await client.query(
+        'SELECT account_balance, COALESCE(wallet_balance,0) AS wallet_balance FROM profiles WHERE user_id=$1',
+        [userId]
+      );
+
+      await client.query('COMMIT');
+
+      refreshProfileStats(userId);
+      res.json({
+        success: true,
+        investment: inv.rows[0],
+        income_balance: parseFloat(newBal.rows[0].account_balance || 0),
+        wallet_balance: parseFloat(newBal.rows[0].wallet_balance || 0)
+      });
+    } catch (txErr) {
+      try { await client.query('ROLLBACK'); } catch (_) {}
+      throw txErr;
+    } finally {
+      client.release();
+    }
   } catch (e) {
     console.error('Invest error:', e);
     res.status(500).json({ error: 'Investment failed. Please try again.' });
