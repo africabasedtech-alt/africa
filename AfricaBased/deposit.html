@@ -70,6 +70,7 @@
         .loading-state i { font-size: 1.8rem; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
+    <script src="/js/api-client.js"></script>
 </head>
 <body>
     <main class="container">
@@ -120,9 +121,15 @@
         }
 
         async function initDeposit() {
+            const r = await window.safeRequest('/api/deposit/config');
+            if (!r.ok) {
+                document.getElementById('loadingState').innerHTML =
+                    '<i class="fas fa-exclamation-circle" style="color:#ff6b6b;animation:none;"></i>' +
+                    '<span style="font-size:0.88rem;color:rgba(255,255,255,0.5);">' + r.error + '</span>';
+                return;
+            }
             try {
-                const res = await fetch('/api/deposit/config');
-                const cfg = await res.json();
+                const cfg = r.data || {};
                 const mode = cfg.mode || 'auto';
                 const instructions = (cfg.instructions || '').trim();
 
@@ -165,7 +172,7 @@
             } catch(e) {
                 document.getElementById('loadingState').innerHTML =
                     '<i class="fas fa-exclamation-circle" style="color:#ff6b6b;animation:none;"></i>' +
-                    '<span style="font-size:0.88rem;color:rgba(255,255,255,0.5);">Failed to load deposit options. Please refresh.</span>';
+                    '<span style="font-size:0.88rem;color:rgba(255,255,255,0.5);">Could not display deposit options. Please refresh.</span>';
             }
         }
 

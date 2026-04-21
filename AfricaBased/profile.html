@@ -655,6 +655,7 @@
             user-select: none; cursor: default;
         }
 </style>
+<script src="/js/api-client.js"></script>
 <script src="/js/token.js"></script>
 </head>
 <body>
@@ -1141,31 +1142,31 @@
         // Load user profile from API
         const loadUserProfile = async () => {
             const token = getABToken();
-            try {
-                if (token) {
-                    const res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
-                    if (res.ok) {
-                        const d = await res.json();
-                        const u = d.user || {};
-                        const p = d.profile || {};
-                        const name = u.username || p.username || '';
-                        const email = u.email || p.email || '';
-                        document.getElementById('userName').textContent = name || 'Not Set';
-                        document.getElementById('userEmail').textContent = email || 'Not Set';
-                        document.getElementById('mpesaNumber').textContent = p.mpesa_phone || 'Not Set';
-                        document.getElementById('bankType').textContent = p.bank_name || 'Not Set';
-                        document.getElementById('bankPaybill').textContent = p.bank_paybill || 'Not Set';
-                        document.getElementById('accountNumber').textContent = p.bank_account_number || 'Not Set';
-                        document.getElementById('bankAccHolderName').textContent = p.bank_account_name || 'Not Set';
-                        document.getElementById('headerName').textContent = name || '';
-                        document.getElementById('headerEmail').textContent = email || '';
-                        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-                        if (userData.photoUrl) document.getElementById('profilePhoto').src = userData.photoUrl;
-                        if (d.locked) applyLockState(d.locked);
-                        return;
-                    }
+            if (token) {
+                const r = await window.safeRequest('/api/auth/me');
+                if (r.ok) {
+                    const d = r.data;
+                    const u = d.user || {};
+                    const p = d.profile || {};
+                    const name = u.username || p.username || '';
+                    const email = u.email || p.email || '';
+                    document.getElementById('userName').textContent = name || 'Not Set';
+                    document.getElementById('userEmail').textContent = email || 'Not Set';
+                    document.getElementById('mpesaNumber').textContent = p.mpesa_phone || 'Not Set';
+                    document.getElementById('bankType').textContent = p.bank_name || 'Not Set';
+                    document.getElementById('bankPaybill').textContent = p.bank_paybill || 'Not Set';
+                    document.getElementById('accountNumber').textContent = p.bank_account_number || 'Not Set';
+                    document.getElementById('bankAccHolderName').textContent = p.bank_account_name || 'Not Set';
+                    document.getElementById('headerName').textContent = name || '';
+                    document.getElementById('headerEmail').textContent = email || '';
+                    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+                    if (userData.photoUrl) document.getElementById('profilePhoto').src = userData.photoUrl;
+                    if (d.locked) applyLockState(d.locked);
+                    return;
+                } else {
+                    showToast(r.error, 'error');
                 }
-            } catch(e) { console.warn('loadUserProfile API error', e); }
+            }
             // Fallback to localStorage
             let userData = JSON.parse(localStorage.getItem('userData')) || initialData;
             document.getElementById('userName').textContent = userData.name || 'Not Set';
@@ -1537,27 +1538,21 @@
             const token = getABToken();
             if (!token) { showToast('Not logged in', 'error'); return false; }
 
-            try {
-                const body = { username };
-                if (mpesa && mpesa !== 'Not Set') body.mpesa_phone = mpesa.replace(/[^0-9]/g, '');
-                if (bankName && bankName !== 'Not Set') body.bank_name = bankName;
-                if (bankPaybill && bankPaybill !== 'Not Set') body.bank_paybill = bankPaybill;
-                if (accountNumber && accountNumber !== 'Not Set') body.bank_account_number = accountNumber;
-                if (bankAccHolderName && bankAccHolderName !== 'Not Set') body.bank_account_name = bankAccHolderName;
+            const body = { username };
+            if (mpesa && mpesa !== 'Not Set') body.mpesa_phone = mpesa.replace(/[^0-9]/g, '');
+            if (bankName && bankName !== 'Not Set') body.bank_name = bankName;
+            if (bankPaybill && bankPaybill !== 'Not Set') body.bank_paybill = bankPaybill;
+            if (accountNumber && accountNumber !== 'Not Set') body.bank_account_number = accountNumber;
+            if (bankAccHolderName && bankAccHolderName !== 'Not Set') body.bank_account_name = bankAccHolderName;
 
-                const res = await fetch('/api/profile', {
-                    method: 'PUT',
-                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-                if (!res.ok) { showToast('Failed to save profile', 'error'); return false; }
-                document.getElementById('headerName').textContent = username;
-                showToast('Profile updated successfully', 'success');
-                return true;
-            } catch(e) {
-                showToast('Network error saving profile', 'error');
-                return false;
-            }
+            const r = await window.safeRequest('/api/profile', {
+                method: 'PUT',
+                body: JSON.stringify(body)
+            });
+            if (!r.ok) { showToast(r.error || 'Failed to save profile', 'error'); return false; }
+            document.getElementById('headerName').textContent = username;
+            showToast('Profile updated successfully', 'success');
+            return true;
         }
 
         window._profileLocked = {};
@@ -1713,12 +1708,7 @@
 
             // Logout handling functions
             window.handleLogout = async () => {
-                try {
-                    await fetch('/api/auth/logout', {
-                        method: 'POST',
-                        headers: { 'Authorization': 'Bearer ' + getABToken() }
-                    });
-                } catch(e) {}
+                await window.safeRequest('/api/auth/logout', { method: 'POST' });
                 localStorage.removeItem('ab_token');
                 localStorage.removeItem('ab_user');
                 localStorage.removeItem('isLoggedIn');
@@ -1978,11 +1968,14 @@
             const listEl = document.getElementById('biometricCredsList');
             if (!listEl) return;
             if (!token) token = getABToken();
+            const r = await window.safeRequest('/api/auth/webauthn/credentials');
+            if (!r.ok) {
+                listEl.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">' + r.error + '</div>';
+                listEl.style.display = 'block';
+                return;
+            }
             try {
-                const res = await fetch('/api/auth/webauthn/credentials', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                const data = await res.json();
+                const data = r.data || {};
                 const creds = data.credentials || [];
                 if (creds.length > 0) {
                     setBiometricToggleState(true);
@@ -2016,24 +2009,22 @@
 
             if (_bioEnabled) {
                 if (!confirm('Disable biometric login? Your saved passkeys for this app will be removed.')) return;
-                try {
-                    const res = await fetch('/api/auth/webauthn/credentials', {
-                        headers: { 'Authorization': 'Bearer ' + token }
-                    });
-                    const data = await res.json();
-                    const creds = data.credentials || [];
-                    for (const cr of creds) {
-                        await fetch(`/api/auth/webauthn/credentials/${cr.id}`, {
-                            method: 'DELETE',
-                            headers: { 'Authorization': 'Bearer ' + token },
-                        });
-                    }
-                    setBiometricToggleState(false);
-                    document.getElementById('biometricCredsList').innerHTML = '';
-                    if (msgEl) { msgEl.style.color = 'rgba(255,255,255,0.5)'; msgEl.textContent = 'Biometric login disabled.'; msgEl.style.display = 'block'; }
-                } catch(e) {
-                    if (msgEl) { msgEl.style.color = '#ff6b6b'; msgEl.textContent = 'Failed to disable. Please try again.'; msgEl.style.display = 'block'; }
+                const listR = await window.safeRequest('/api/auth/webauthn/credentials');
+                if (!listR.ok) {
+                    if (msgEl) { msgEl.style.color = '#ff6b6b'; msgEl.textContent = listR.error; msgEl.style.display = 'block'; }
+                    return;
                 }
+                const creds = (listR.data && listR.data.credentials) || [];
+                for (const cr of creds) {
+                    const delR = await window.safeRequest(`/api/auth/webauthn/credentials/${cr.id}`, { method: 'DELETE' });
+                    if (!delR.ok) {
+                        if (msgEl) { msgEl.style.color = '#ff6b6b'; msgEl.textContent = delR.error; msgEl.style.display = 'block'; }
+                        return;
+                    }
+                }
+                setBiometricToggleState(false);
+                document.getElementById('biometricCredsList').innerHTML = '';
+                if (msgEl) { msgEl.style.color = 'rgba(255,255,255,0.5)'; msgEl.textContent = 'Biometric login disabled.'; msgEl.style.display = 'block'; }
             } else {
                 const toggle = document.getElementById('biometricToggle');
                 toggle.style.pointerEvents = 'none';
@@ -2050,24 +2041,19 @@
                         });
                     }
                     const lib = window.SimpleWebAuthnBrowser;
-                    const beginRes = await fetch('/api/auth/webauthn/register/begin', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                    });
-                    const options = await beginRes.json();
-                    if (!beginRes.ok) throw new Error(options.error || 'Failed to start setup');
+                    const beginR = await window.safeRequest('/api/auth/webauthn/register/begin', { method: 'POST' });
+                    if (!beginR.ok) throw new Error(beginR.error || 'Failed to start setup');
+                    const options = beginR.data;
                     const attResp = await lib.startRegistration({ optionsJSON: options });
                     const deviceName = navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad') ? 'iPhone/iPad' :
                         navigator.userAgent.includes('Android') ? 'Android Device' :
                         navigator.userAgent.includes('Mac') ? 'Mac' :
                         navigator.userAgent.includes('Win') ? 'Windows PC' : 'My Device';
-                    const completeRes = await fetch('/api/auth/webauthn/register/complete', {
+                    const completeR = await window.safeRequest('/api/auth/webauthn/register/complete', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                        body: JSON.stringify({ response: attResp, deviceName }),
+                        body: JSON.stringify({ response: attResp, deviceName })
                     });
-                    const result = await completeRes.json();
-                    if (!completeRes.ok) throw new Error(result.error || 'Failed to save');
+                    if (!completeR.ok) throw new Error(completeR.error || 'Failed to save');
                     if (msgEl) { msgEl.style.color = '#4ecdc4'; msgEl.textContent = 'Biometric login enabled!'; msgEl.style.display = 'block'; }
                     await loadBiometricCreds(token);
                 } catch(e) {

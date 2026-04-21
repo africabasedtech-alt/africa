@@ -99,6 +99,7 @@
             padding: 12px 32px; font-weight: 800; font-size: 0.92rem; cursor: pointer;
         }
     </style>
+<script src="/js/api-client.js"></script>
 <script src="/js/token.js"></script>
 </head>
 <body>
@@ -184,9 +185,16 @@
         // ── Load instructions (only when accessed standalone, not in iframe) ──
         async function loadInstructions() {
             if (window !== window.parent) return; // inside deposit.html iframe — parent already shows them
+            const r = await window.safeRequest('/api/deposit/config');
+            if (!r.ok) {
+                const box = document.getElementById('instrBox');
+                const steps = document.getElementById('instrSteps');
+                box.style.display = 'block';
+                steps.innerHTML = '<div class="instr-plain" style="color:#ff6b6b;">' + r.error + '</div>';
+                return;
+            }
             try {
-                const res = await fetch('/api/deposit/config');
-                const cfg = await res.json();
+                const cfg = r.data || {};
                 const text = (cfg.instructions || '').trim();
                 if (!text) return;
                 const box = document.getElementById('instrBox');
@@ -234,29 +242,18 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…';
 
-            try {
-                const res = await fetch('/api/deposits/manual', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + token
-                    },
-                    body: JSON.stringify({ amount, mpesa_message, phone_or_account: phone })
-                });
-                const data = await res.json();
-
-                if (!res.ok) {
-                    showError(data.error || 'Failed to submit deposit. Please try again.');
-                } else {
-                    document.getElementById('successBody').textContent = data.message || 'Your deposit is under review. Your balance will be updated once confirmed.';
-                    document.getElementById('successOverlay').classList.add('show');
-                }
-            } catch(err) {
-                showError('Network error. Please check your connection and try again.');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Deposit';
+            const r = await window.safeRequest('/api/deposits/manual', {
+                method: 'POST',
+                body: JSON.stringify({ amount, mpesa_message, phone_or_account: phone })
+            });
+            if (!r.ok) {
+                showError(r.error || 'Failed to submit deposit. Please try again.');
+            } else {
+                document.getElementById('successBody').textContent = (r.data && r.data.message) || 'Your deposit is under review. Your balance will be updated once confirmed.';
+                document.getElementById('successOverlay').classList.add('show');
             }
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Deposit';
         });
 
         loadInstructions();

@@ -74,6 +74,7 @@
     .key-row input { flex: 1; }
     .img-preview { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-top: 0.5rem; display: none; }
   </style>
+<script src="/js/api-client.js"></script>
 </head>
 <body>
 <div class="topbar">
@@ -213,9 +214,9 @@
 
   async function loadPermissions() {
     try {
-      var res = await fetch('/api/admin/my-permissions', { headers: { 'x-admin-key': ADMIN_KEY } });
-      if (!res.ok) return false;
-      var data = await res.json();
+      var r = await window.safeRequest('/api/admin/my-permissions', { headers: { 'x-admin-key': ADMIN_KEY } });
+      if (!r.ok) return false;
+      var data = r.data;
       var pp = data.product_permissions || [];
       myPerms.isSuperAdmin = !!data.isSuperAdmin;
       if (data.isSuperAdmin) {
@@ -266,14 +267,14 @@
 
   async function loadProducts() {
     try {
-      var res = await fetch('/api/products', { headers: { 'x-admin-key': ADMIN_KEY } });
-      if (!res.ok) {
+      var r = await window.safeRequest('/api/products', { headers: { 'x-admin-key': ADMIN_KEY } });
+      if (!r.ok) {
         document.getElementById('keySection').style.display = 'block';
         document.getElementById('mainContent').style.display = 'none';
-        showToast('Invalid admin key or access denied', 'error');
+        showToast(r.error || 'Invalid admin key or access denied', 'error');
         return;
       }
-      var data = await res.json();
+      var data = r.data;
       allProducts = data.products || [];
       document.getElementById('keySection').style.display = 'none';
       document.getElementById('mainContent').style.display = 'block';
@@ -413,13 +414,13 @@
     var method = id ? 'PUT' : 'POST';
 
     try {
-      var res = await fetch(url, {
+      var r = await window.safeRequest(url, {
         method: method,
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+        headers: { 'x-admin-key': ADMIN_KEY },
         body: JSON.stringify(body)
       });
-      var data = await res.json();
-      if (!res.ok) { showToast(data.error || 'Save failed', 'error'); return; }
+      if (!r.ok) { showToast(r.error || 'Save failed', 'error'); return; }
+      var data = r.data;
 
       if (id) {
         for (var i = 0; i < allProducts.length; i++) {
@@ -439,12 +440,12 @@
 
   async function toggleProduct(id, currentlyDisabled) {
     try {
-      var res = await fetch('/api/admin/products/' + id + '/toggle', {
+      var r = await window.safeRequest('/api/admin/products/' + id + '/toggle', {
         method: 'PATCH',
         headers: { 'x-admin-key': ADMIN_KEY }
       });
-      var data = await res.json();
-      if (!res.ok) { showToast(data.error || 'Toggle failed', 'error'); return; }
+      if (!r.ok) { showToast(r.error || 'Toggle failed', 'error'); return; }
+      var data = r.data;
       for (var i = 0; i < allProducts.length; i++) {
         if (allProducts[i].id === id) { allProducts[i] = data.product; break; }
       }
@@ -467,12 +468,11 @@
   async function doDelete() {
     if (!pendingDeleteId) return;
     try {
-      var res = await fetch('/api/admin/products/' + pendingDeleteId, {
+      var r = await window.safeRequest('/api/admin/products/' + pendingDeleteId, {
         method: 'DELETE',
         headers: { 'x-admin-key': ADMIN_KEY }
       });
-      var data = await res.json();
-      if (!res.ok) { showToast(data.error || 'Delete failed', 'error'); return; }
+      if (!r.ok) { showToast(r.error || 'Delete failed', 'error'); return; }
       allProducts = allProducts.filter(function(p) { return p.id !== pendingDeleteId; });
       closeModals();
       renderStats();

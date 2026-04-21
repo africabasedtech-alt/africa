@@ -181,6 +181,7 @@
         opacity: 1;
       }
     </style>
+<script src="/js/api-client.js"></script>
 <script src="/js/token.js"></script>
 </head>
 <body>
@@ -237,17 +238,13 @@
         }
 
         // Fetch full profile for avatar
-        try {
-          const res = await fetch('/api/auth/me', {
-            headers: { 'Authorization': 'Bearer ' + getABToken() }
-          });
-          if (res.ok) {
-            const data = await res.json();
-            const profile = data.profile || data.user;
-            if (img && profile && profile.avatar_url) img.src = profile.avatar_url;
-            if (welcome && profile && profile.username) welcome.textContent = 'Welcome, ' + profile.username;
-          }
-        } catch (e) { /* use defaults already set */ }
+        const r = await window.safeRequest('/api/auth/me');
+        if (r.ok) {
+          const data = r.data;
+          const profile = data.profile || data.user;
+          if (img && profile && profile.avatar_url) img.src = profile.avatar_url;
+          if (welcome && profile && profile.username) welcome.textContent = 'Welcome, ' + profile.username;
+        }
 
       } catch (error) {
         console.error('Profile load error:', error);
@@ -294,10 +291,14 @@
 
     async function loadOpportunities() {
       const sectorButtonsDiv = document.getElementById('sectorButtons');
-      try {
-        const res = await fetch('/api/homepage/opportunities');
-        if (res.ok) _allProducts = await res.json();
-      } catch (e) { _allProducts = []; }
+      const r = await window.safeRequest('/api/homepage/opportunities');
+      if (r.ok) {
+        _allProducts = Array.isArray(r.data) ? r.data : [];
+      } else {
+        _allProducts = [];
+        const productGrid = document.getElementById('productGrid');
+        if (productGrid) productGrid.innerHTML = `<div style='color:#ff6b6b;text-align:center;font-size:1rem;padding:2rem;grid-column:1/-1;'>${r.error}</div>`;
+      }
       const uniqueCategories = [...new Set(_allProducts.map(p => p.category).filter(Boolean))];
       if (sectorButtonsDiv) {
         let html = '<button class="category-btn active" data-category="all">All Opportunities</button>';
@@ -319,11 +320,11 @@
     async function loadTestimonials() {
       const el = document.getElementById('testimonialsGrid');
       if (!el) return;
+      const r = await window.safeRequest('/api/homepage/testimonials');
+      if (!r.ok) { el.innerHTML = '<p style="text-align:center;color:#ff6b6b;">' + r.error + '</p>'; return; }
+      const items = Array.isArray(r.data) ? r.data : [];
+      if (!items.length) { el.innerHTML = '<p style="text-align:center;color:rgba(255,255,255,0.4);">No testimonials yet.</p>'; return; }
       try {
-        const res = await fetch('/api/homepage/testimonials');
-        if (!res.ok) { el.innerHTML = ''; return; }
-        const items = await res.json();
-        if (!items.length) { el.innerHTML = '<p style="text-align:center;color:rgba(255,255,255,0.4);">No testimonials yet.</p>'; return; }
         el.innerHTML = items.map(t => `
           <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:2rem;border:1px solid rgba(255,255,255,0.08);">
             <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">

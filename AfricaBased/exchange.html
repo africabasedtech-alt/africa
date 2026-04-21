@@ -5,15 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exchange - AfricaBased</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/js/api-client.js"></script>
+    <script src="/js/token.js"></script>
     <script>
         // Auth check using Replit database
         (async function checkAuth() {
             const token = getABToken();
             if (!token) { window.location.href = '/login'; return; }
-            try {
-                const res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
-                if (!res.ok) { localStorage.removeItem('ab_token'); window.location.href = '/login'; }
-            } catch(e) { /* offline — let them through */ }
+            const r = await window.safeRequest('/api/auth/me');
+            // Only redirect on real auth failure; on network failure (status 0) let them through
+            if (!r.ok && r.status !== 0) { localStorage.removeItem('ab_token'); window.location.href = '/login'; }
         })();
     </script>
     <style>
@@ -463,7 +464,6 @@
             color: #45b7af;
         }
     </style>
-<script src="/js/token.js"></script>
 </head>
 <body>
     <div class="container">
@@ -542,39 +542,37 @@
             return type || '';
         }
 
-        function updateExchangeHistory() {
+        async function updateExchangeHistory() {
             if (!TOKEN) return;
             const historyBody = document.getElementById('exchangeHistoryBody');
             historyBody.innerHTML = '<tr><td colspan="4" style="text-align:center;opacity:0.6;">Loading...</td></tr>';
-            fetch('/api/exchange/history', { headers: { 'Authorization': 'Bearer ' + TOKEN } })
-            .then(r => r.json())
-            .then(data => {
-                const history = data.history || [];
-                historyBody.innerHTML = '';
-                if (!history.length) {
-                    historyBody.innerHTML = '<tr><td colspan="4" style="text-align:center;opacity:0.6;">No exchange history yet.</td></tr>';
-                    return;
-                }
-                history.forEach(ex => {
-                    const typeClass = ex.type ? 'type-' + ex.type : '';
-                    const label = getTypeLabel(ex.type, ex.code_type);
-                    const row = document.createElement('tr');
-                    row.className = typeClass;
-                    row.innerHTML = `
-                        <td>${new Date(ex.redeemed_at).toLocaleString()}</td>
-                        <td>${ex.code} ${label ? '<span class="code-type ' + typeClass + '">' + label + '</span>' : ''}</td>
-                        <td>${parseFloat(ex.amount).toLocaleString('en-US', {minimumFractionDigits:2})} KSH</td>
-                        <td><span class="status-badge">Redeemed</span></td>
-                    `;
-                    historyBody.appendChild(row);
-                });
-            })
-            .catch(() => {
-                historyBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ff6b6b;">Failed to load history.</td></tr>';
+            const r = await window.safeRequest('/api/exchange/history');
+            if (!r.ok) {
+                historyBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ff6b6b;">' + r.error + '</td></tr>';
+                return;
+            }
+            const history = (r.data && r.data.history) || [];
+            historyBody.innerHTML = '';
+            if (!history.length) {
+                historyBody.innerHTML = '<tr><td colspan="4" style="text-align:center;opacity:0.6;">No exchange history yet.</td></tr>';
+                return;
+            }
+            history.forEach(ex => {
+                const typeClass = ex.type ? 'type-' + ex.type : '';
+                const label = getTypeLabel(ex.type, ex.code_type);
+                const row = document.createElement('tr');
+                row.className = typeClass;
+                row.innerHTML = `
+                    <td>${new Date(ex.redeemed_at).toLocaleString()}</td>
+                    <td>${ex.code} ${label ? '<span class="code-type ' + typeClass + '">' + label + '</span>' : ''}</td>
+                    <td>${parseFloat(ex.amount).toLocaleString('en-US', {minimumFractionDigits:2})} KSH</td>
+                    <td><span class="status-badge">Redeemed</span></td>
+                `;
+                historyBody.appendChild(row);
             });
         }
 
-        document.getElementById('redeemButton').addEventListener('click', function() {
+        document.getElementById('redeemButton').addEventListener('click', async function() {
             const code = document.getElementById('exchangeCode').value.trim();
             if (!code) { showStatus('Please enter an exchange code', 'error'); return; }
             if (!TOKEN) { showStatus('Please login to redeem codes', 'error'); return; }
@@ -583,28 +581,20 @@
             btn.disabled = true;
             btn.textContent = 'Redeeming...';
 
-            fetch('/api/exchange/redeem', {
+            const r = await window.safeRequest('/api/exchange/redeem', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
                 body: JSON.stringify({ code })
-            })
-            .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
-            .then(({ ok, data }) => {
-                btn.disabled = false;
-                btn.textContent = 'Redeem Code';
-                if (!ok) {
-                    showStatus(data.error || 'Failed to redeem code', 'error');
-                    return;
-                }
-                document.getElementById('exchangeCode').value = '';
-                showRedemptionSuccess(data.amount, data.new_account_balance, data.code_type);
-                updateExchangeHistory();
-            })
-            .catch(e => {
-                btn.disabled = false;
-                btn.textContent = 'Redeem Code';
-                showStatus('Network error. Please try again.', 'error');
             });
+            btn.disabled = false;
+            btn.textContent = 'Redeem Code';
+            if (!r.ok) {
+                showStatus(r.error || 'Failed to redeem code', 'error');
+                return;
+            }
+            const data = r.data;
+            document.getElementById('exchangeCode').value = '';
+            showRedemptionSuccess(data.amount, data.new_account_balance, data.code_type);
+            updateExchangeHistory();
         });
 
         function showStatus(message, type) {

@@ -182,6 +182,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api-client.js"></script>
     <script src="js/token.js"></script>
     <script>
         function formatCurrency(amount) {
@@ -194,26 +195,17 @@
         async function collectIncome(investmentId, btn) {
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Collecting...';
-            try {
-                const token = window.getABToken();
-                const res = await fetch('/api/investments/collect/' + investmentId, {
-                    method: 'POST',
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                const data = await res.json();
-                if (!res.ok) {
-                    alert(data.error || 'Collection failed');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-hand-holding-usd me-2"></i>Collect';
-                    return;
-                }
-                alert('Successfully collected KSH ' + formatCurrency(data.collected) + ' to your earnings balance.');
-                loadProducts();
-            } catch (e) {
-                alert('Error: ' + e.message);
+            const r = await window.safeRequest('/api/investments/collect/' + investmentId, {
+                method: 'POST'
+            });
+            if (!r.ok) {
+                alert(r.error || 'Collection failed');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-hand-holding-usd me-2"></i>Collect';
+                return;
             }
+            alert('Successfully collected KSH ' + formatCurrency(r.data.collected) + ' to your earnings balance.');
+            loadProducts();
         }
 
         async function loadProducts() {
@@ -228,12 +220,14 @@
                 return;
             }
 
+            const r = await window.safeRequest('/api/investments');
+            if (r.status === 401) { window.location.href = 'login.html'; return; }
+            if (!r.ok) {
+                container.innerHTML = '<div class="col-12 text-center py-4 text-danger">' + r.error + '</div>';
+                return;
+            }
             try {
-                const res = await fetch('/api/investments', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                if (res.status === 401) { window.location.href = 'login.html'; return; }
-                const data = await res.json();
+                const data = r.data || {};
                 const investments = (data.investments || []).filter(i => i.status === 'active');
 
                 if (!investments.length) {

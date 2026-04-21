@@ -387,6 +387,7 @@
             }
         }
     </style>
+<script src="/js/api-client.js"></script>
 </head>
 <body>
     <div class="container">
@@ -955,78 +956,73 @@
 
         async function saveAnnouncement() {
             const text = (document.getElementById('announcementText').value || '').trim();
-            try {
-                const res = await fetch('/api/admin/settings/modes', {
-                    method: 'PUT',
-                    headers: { 'x-admin-key': ADMIN_KEY, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        homepage_announcement: text,
-                        homepage_announcement_enabled: String(currentAnnouncementEnabled),
-                        homepage_announcement_type: currentAnnouncementType
-                    })
-                });
-                if (res.ok) {
-                    const msg = document.getElementById('annSaveMsg');
-                    msg.style.display = 'inline';
-                    setTimeout(() => { msg.style.display = 'none'; }, 3000);
-                } else {
-                    alert('Failed to save announcement.');
-                }
-            } catch (e) { alert('Network error. Please try again.'); }
+            const r = await window.safeRequest('/api/admin/settings/modes', {
+                method: 'PUT',
+                headers: { 'x-admin-key': ADMIN_KEY },
+                body: JSON.stringify({
+                    homepage_announcement: text,
+                    homepage_announcement_enabled: String(currentAnnouncementEnabled),
+                    homepage_announcement_type: currentAnnouncementType
+                })
+            });
+            if (r.ok) {
+                const msg = document.getElementById('annSaveMsg');
+                msg.style.display = 'inline';
+                setTimeout(() => { msg.style.display = 'none'; }, 3000);
+            } else {
+                alert(r.error || 'Failed to save announcement.');
+            }
         }
 
         async function loadModes() {
-            try {
-                const res = await fetch('/api/admin/settings/modes', { headers: { 'x-admin-key': ADMIN_KEY } });
-                const d = await res.json();
-                applyModeUI('deposit', d.deposit_mode || 'auto');
-                applyModeUI('withdrawal', d.withdrawal_mode || 'auto');
-                const ta = document.getElementById('depositInstructionsText');
-                if (ta && d.deposit_instructions) ta.value = d.deposit_instructions;
-                applyAnnouncementUI(d.homepage_announcement_enabled === 'true', d.homepage_announcement_type || 'info', d.homepage_announcement || '');
-            } catch (e) {}
+            const r = await window.safeRequest('/api/admin/settings/modes', { headers: { 'x-admin-key': ADMIN_KEY } });
+            if (!r.ok) return;
+            const d = r.data || {};
+            applyModeUI('deposit', d.deposit_mode || 'auto');
+            applyModeUI('withdrawal', d.withdrawal_mode || 'auto');
+            const ta = document.getElementById('depositInstructionsText');
+            if (ta && d.deposit_instructions) ta.value = d.deposit_instructions;
+            applyAnnouncementUI(d.homepage_announcement_enabled === 'true', d.homepage_announcement_type || 'info', d.homepage_announcement || '');
         }
 
         async function setMode(type, mode) {
             const body = {};
             if (type === 'deposit') body.deposit_mode = mode;
             else body.withdrawal_mode = mode;
-            try {
-                await fetch('/api/admin/settings/modes', {
-                    method: 'PUT',
-                    headers: { 'x-admin-key': ADMIN_KEY, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-                applyModeUI(type, mode);
-            } catch (e) { alert('Failed to update mode.'); }
+            const r = await window.safeRequest('/api/admin/settings/modes', {
+                method: 'PUT',
+                headers: { 'x-admin-key': ADMIN_KEY },
+                body: JSON.stringify(body)
+            });
+            if (!r.ok) { alert(r.error || 'Failed to update mode.'); return; }
+            applyModeUI(type, mode);
         }
 
         async function saveInstructions() {
             const text = (document.getElementById('depositInstructionsText').value || '').trim();
-            try {
-                const res = await fetch('/api/admin/settings/modes', {
-                    method: 'PUT',
-                    headers: { 'x-admin-key': ADMIN_KEY, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ deposit_instructions: text })
-                });
-                if (res.ok) {
-                    const msg = document.getElementById('instrSaveMsg');
-                    msg.style.display = 'inline';
-                    setTimeout(() => { msg.style.display = 'none'; }, 3000);
-                } else {
-                    alert('Failed to save instructions.');
-                }
-            } catch (e) { alert('Network error. Please try again.'); }
+            const r = await window.safeRequest('/api/admin/settings/modes', {
+                method: 'PUT',
+                headers: { 'x-admin-key': ADMIN_KEY },
+                body: JSON.stringify({ deposit_instructions: text })
+            });
+            if (r.ok) {
+                const msg = document.getElementById('instrSaveMsg');
+                msg.style.display = 'inline';
+                setTimeout(() => { msg.style.display = 'none'; }, 3000);
+            } else {
+                alert(r.error || 'Failed to save instructions.');
+            }
         }
 
         async function loadPendingCount() {
             try {
-                const [dRes, wRes] = await Promise.all([
-                    fetch('/api/admin/pending/deposits', { headers: { 'x-admin-key': ADMIN_KEY } }),
-                    fetch('/api/admin/pending/withdrawals', { headers: { 'x-admin-key': ADMIN_KEY } })
+                const [dR, wR] = await Promise.all([
+                    window.safeRequest('/api/admin/pending/deposits', { headers: { 'x-admin-key': ADMIN_KEY } }),
+                    window.safeRequest('/api/admin/pending/withdrawals', { headers: { 'x-admin-key': ADMIN_KEY } })
                 ]);
-                const dData = await dRes.json();
-                const wData = await wRes.json();
+                if (!dR.ok || !wR.ok) return;
+                const dData = dR.data || {};
+                const wData = wR.data || {};
                 const total = (dData.deposits?.length || 0) + (wData.withdrawals?.length || 0);
                 const btn = document.getElementById('pendingBadgeBtn');
                 if (btn) {

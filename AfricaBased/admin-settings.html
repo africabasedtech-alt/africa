@@ -90,6 +90,7 @@
             background: linear-gradient(45deg, #ff6b6b, #ee5253);
         }
     </style>
+<script src="/js/api-client.js"></script>
 </head>
 <body>
     <div style="margin: 24px 0 0 24px; display: flex; gap: 16px;">
@@ -198,12 +199,13 @@
   var sec = document.getElementById('pinSection');
   if (sec) sec.style.display = 'block';
   var ADMIN_KEY = '1540568e';
-  fetch('/api/admin/pins', { headers: { 'x-admin-key': ADMIN_KEY } })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
+  window.safeRequest('/api/admin/pins', { headers: { 'x-admin-key': ADMIN_KEY } })
+    .then(function(r) {
+      if (!r.ok) return;
+      var d = r.data || {};
       if (d.superPin) document.getElementById('superPinInput').value = d.superPin;
       if (d.subPin)   document.getElementById('subPinInput').value   = d.subPin;
-    }).catch(function() {});
+    });
   document.getElementById('savePinsBtn').addEventListener('click', function() {
     var sp = document.getElementById('superPinInput').value.replace(/\D/g,'').slice(0,4);
     var su = document.getElementById('subPinInput').value.replace(/\D/g,'').slice(0,4);
@@ -215,12 +217,17 @@
     }
     msg.style.color = 'rgba(255,255,255,0.4)';
     msg.textContent = 'Saving…';
-    fetch('/api/admin/pins', {
+    window.safeRequest('/api/admin/pins', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+      headers: { 'x-admin-key': ADMIN_KEY },
       body: JSON.stringify({ superPin: sp, subPin: su })
-    }).then(function(r) { return r.json(); })
-      .then(function(d) {
+    }).then(function(r) {
+        if (!r.ok) {
+          msg.style.color = '#ff6b6b';
+          msg.textContent = r.error;
+          return;
+        }
+        var d = r.data || {};
         if (d.success) {
           msg.style.color = '#4ecdc4';
           msg.textContent = 'PINs updated successfully.';

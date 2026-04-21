@@ -580,6 +580,7 @@
             transition: width 0.3s ease;
         }
     </style>
+<script src="/js/api-client.js"></script>
 <script src="/js/token.js"></script>
 </head>
 <body>
@@ -687,31 +688,31 @@
 
         // Function to generate referral link
         async function generateReferralLink() {
-            try {
-                const token = getABToken();
-                if (!token) return window.location.origin + '/register.html';
-                const res = await fetch('/api/referral', { headers: { 'Authorization': 'Bearer ' + token } });
-                if (!res.ok) throw new Error('API error');
-                const data = await res.json();
-                const link = data.referral_link;
-                localStorage.setItem('referralCode', data.referral_code);
-                localStorage.setItem('referralLink', link);
-                setTimeout(() => {
-                    const anchor = document.getElementById('referralLinkAnchor');
-                    const input  = document.getElementById('referralLink');
-                    if (anchor) { anchor.href = link; anchor.textContent = link; anchor.style.display = 'inline-block'; }
-                    if (input)  { input.value = link; }
-                }, 0);
-                return link;
-            } catch (e) {
-                console.error('Error generating referral link:', e);
+            const token = getABToken();
+            if (!token) return window.location.origin + '/register.html';
+            const r = await window.safeRequest('/api/referral');
+            if (!r.ok) {
+                console.error('Error generating referral link:', r.error);
                 const fallback = window.location.origin + '/register.html';
                 setTimeout(() => {
                     const anchor = document.getElementById('referralLinkAnchor');
                     if (anchor) { anchor.href = fallback; anchor.textContent = fallback; anchor.style.display = 'inline-block'; }
+                    const status = document.getElementById('referralStatusMsg');
+                    if (status) { status.textContent = r.error; status.style.display = 'block'; }
                 }, 0);
                 return fallback;
             }
+            const data = r.data;
+            const link = data.referral_link;
+            localStorage.setItem('referralCode', data.referral_code);
+            localStorage.setItem('referralLink', link);
+            setTimeout(() => {
+                const anchor = document.getElementById('referralLinkAnchor');
+                const input  = document.getElementById('referralLink');
+                if (anchor) { anchor.href = link; anchor.textContent = link; anchor.style.display = 'inline-block'; }
+                if (input)  { input.value = link; }
+            }, 0);
+            return link;
         }
 
         // Function to copy referral link
@@ -838,12 +839,16 @@
 
         // Function to load referrals
         async function loadReferrals() {
+            const token = getABToken();
+            if (!token) { redirectToLogin(); return; }
+            const apiR = await window.safeRequest('/api/referral');
+            if (!apiR.ok) {
+                const list = document.getElementById('referralsList');
+                if (list) list.innerHTML = '<div style="text-align:center;padding:24px;color:#ff6b6b;">' + apiR.error + '</div>';
+                return;
+            }
             try {
-                const token = getABToken();
-                if (!token) { redirectToLogin(); return; }
-                const apiRes = await fetch('/api/referral', { headers: { 'Authorization': 'Bearer ' + token } });
-                if (!apiRes.ok) throw new Error('API error ' + apiRes.status);
-                const apiData = await apiRes.json();
+                const apiData = apiR.data;
 
                 const l1Users        = apiData.referred_users || [];
                 const l2Users        = apiData.l2_users || [];
@@ -1030,26 +1035,15 @@
             if (!btn || btn.disabled) return;
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Collecting...';
-            try {
-                const token = getABToken();
-                const res = await fetch('/api/referral/collect', {
-                    method: 'POST',
-                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
-                });
-                const data = await res.json();
-                if (!res.ok) {
-                    alert(data.error || 'Failed to collect commission');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-hand-holding-dollar"></i> Collect Commission';
-                    return;
-                }
-                alert('Commission credited! KES ' + parseFloat(data.commission_credited).toFixed(2) + ' added to your Account Balance.');
-                loadReferrals();
-            } catch (e) {
-                alert('Error collecting commission. Please try again.');
+            const r = await window.safeRequest('/api/referral/collect', { method: 'POST' });
+            if (!r.ok) {
+                alert(r.error || 'Failed to collect commission');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-hand-holding-dollar"></i> Collect Commission';
+                return;
             }
+            alert('Commission credited! KES ' + parseFloat(r.data.commission_credited).toFixed(2) + ' added to your Account Balance.');
+            loadReferrals();
         }
 
         window.collectCommission = collectCommission;

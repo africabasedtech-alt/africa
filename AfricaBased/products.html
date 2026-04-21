@@ -33,14 +33,15 @@
         let _incomeBalance = 0;
 
         async function fetchBalance() {
-            try {
-                const res = await fetch('/api/balance', { headers: { 'Authorization': 'Bearer ' + AB_TOKEN } });
-                if (!res.ok) return;
-                const d = await res.json();
-                _walletBalance = parseFloat(d.wallet_balance || 0);
-                _incomeBalance = parseFloat(d.income_balance || d.balance || 0);
-                updateBalanceDisplay();
-            } catch(e) {}
+            const r = await window.safeRequest('/api/balance');
+            if (!r.ok) {
+                showMessage(r.error, 'error');
+                return;
+            }
+            const d = r.data;
+            _walletBalance = parseFloat(d.wallet_balance || 0);
+            _incomeBalance = parseFloat(d.income_balance || d.balance || 0);
+            updateBalanceDisplay();
         }
 
         function updateBalanceDisplay() {
@@ -145,9 +146,8 @@
             btn.disabled = true;
             btn.textContent = 'Investing...';
             try {
-                const res = await fetch('/api/invest', {
+                const r = await window.safeRequest('/api/invest', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + AB_TOKEN },
                     body: JSON.stringify({
                         product_name: productData.name,
                         amount: productData.price,
@@ -156,18 +156,16 @@
                         balance_source: chosenSource
                     })
                 });
-                const data = await res.json();
-                if (!res.ok) {
-                    showMessage(data.error || 'Investment failed. Please try again.', 'error');
+                if (!r.ok) {
+                    showMessage(r.error || 'Investment failed. Please try again.', 'error');
                     return;
                 }
+                const data = r.data;
                 _walletBalance = parseFloat(data.wallet_balance || 0);
                 _incomeBalance = parseFloat(data.income_balance || 0);
                 updateBalanceDisplay();
                 addProductToMyProducts(productData);
                 showMessage('Investment successful! Go to My Products page to collect income.', 'success');
-            } catch(e) {
-                showMessage('Connection error. Please try again.', 'error');
             } finally {
                 btn.disabled = false;
                 btn.textContent = productData.price === 0 ? 'Get Free' : 'Invest';
@@ -295,10 +293,14 @@
         }
 
         async function loadProductsFromDB() {
+            const r = await window.safeRequest('/api/products/active');
+            if (!r.ok) {
+                console.warn('Could not load products from DB:', r.error);
+                showMessage(r.error, 'error');
+                return;
+            }
             try {
-                const res = await fetch('/api/products/active');
-                if (!res.ok) return;
-                const data = await res.json();
+                const data = r.data || {};
                 const products = data.products || [];
                 if (!products.length) return;
 
@@ -809,6 +811,7 @@
             box-shadow: 0 4px 16px rgba(78,205,196,0.18);
         }
     </style>
+<script src="/js/api-client.js"></script>
 <script src="/js/token.js"></script>
 </head>
 <body>

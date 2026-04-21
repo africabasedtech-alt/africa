@@ -184,6 +184,7 @@
             .btn-ok, .btn-no { padding: 7px 12px; font-size: 0.78rem; }
         }
     </style>
+<script src="/js/api-client.js"></script>
 </head>
 <body>
 
@@ -328,20 +329,16 @@
         async function loadAll() { await Promise.all([loadDeps(), loadWths()]); }
 
         async function loadDeps() {
-            try {
-                const r = await fetch('/api/admin/pending/deposits', { headers: { 'x-admin-key': AKEY } });
-                const d = await r.json();
-                deps = d.deposits || [];
-            } catch { deps = []; }
+            const r = await window.safeRequest('/api/admin/pending/deposits', { headers: { 'x-admin-key': AKEY } });
+            if (r.ok) { deps = (r.data && r.data.deposits) || []; }
+            else { deps = []; toast(r.error, 'err'); }
             renderDeps();
         }
 
         async function loadWths() {
-            try {
-                const r = await fetch('/api/admin/pending/withdrawals', { headers: { 'x-admin-key': AKEY } });
-                const d = await r.json();
-                wths = d.withdrawals || [];
-            } catch { wths = []; }
+            const r = await window.safeRequest('/api/admin/pending/withdrawals', { headers: { 'x-admin-key': AKEY } });
+            if (r.ok) { wths = (r.data && r.data.withdrawals) || []; }
+            else { wths = []; toast(r.error, 'err'); }
             renderWths();
         }
 
@@ -457,23 +454,17 @@
         }
 
         async function approveDeposit(id) {
-            try {
-                const r = await fetch(`/api/admin/deposits/${id}/approve`, { method: 'POST', headers: { 'x-admin-key': AKEY } });
-                const d = await r.json();
-                if (!r.ok) { toast(d.error || 'Failed to approve deposit', 'err'); return; }
-                toast('Deposit approved — balance credited to user.', 'ok');
-                await loadDeps();
-            } catch { toast('Network error. Please try again.', 'err'); }
+            const r = await window.safeRequest(`/api/admin/deposits/${id}/approve`, { method: 'POST', headers: { 'x-admin-key': AKEY } });
+            if (!r.ok) { toast(r.error || 'Failed to approve deposit', 'err'); return; }
+            toast('Deposit approved — balance credited to user.', 'ok');
+            await loadDeps();
         }
 
         async function approveWithdrawal(id) {
-            try {
-                const r = await fetch(`/api/admin/withdrawals/${id}/approve`, { method: 'POST', headers: { 'x-admin-key': AKEY } });
-                const d = await r.json();
-                if (!r.ok) { toast(d.error || 'Failed to approve withdrawal', 'err'); return; }
-                toast('Withdrawal approved and marked completed.', 'ok');
-                await loadWths();
-            } catch { toast('Network error. Please try again.', 'err'); }
+            const r = await window.safeRequest(`/api/admin/withdrawals/${id}/approve`, { method: 'POST', headers: { 'x-admin-key': AKEY } });
+            if (!r.ok) { toast(r.error || 'Failed to approve withdrawal', 'err'); return; }
+            toast('Withdrawal approved and marked completed.', 'ok');
+            await loadWths();
         }
 
         function openReject(type, id) {
@@ -497,18 +488,15 @@
             const url = rejectType === 'deposit'
                 ? `/api/admin/deposits/${rejectId}/reject`
                 : `/api/admin/withdrawals/${rejectId}/reject`;
-            try {
-                const r = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'x-admin-key': AKEY, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ reason })
-                });
-                const d = await r.json();
-                closeReject();
-                if (!r.ok) { toast(d.error || 'Rejection failed', 'err'); return; }
-                toast(rejectType === 'deposit' ? 'Deposit rejected.' : 'Withdrawal rejected — balance refunded.', 'ok');
-                if (rejectType === 'deposit') await loadDeps(); else await loadWths();
-            } catch { toast('Network error. Please try again.', 'err'); }
+            const r = await window.safeRequest(url, {
+                method: 'POST',
+                headers: { 'x-admin-key': AKEY },
+                body: JSON.stringify({ reason })
+            });
+            closeReject();
+            if (!r.ok) { toast(r.error || 'Rejection failed', 'err'); return; }
+            toast(rejectType === 'deposit' ? 'Deposit rejected.' : 'Withdrawal rejected — balance refunded.', 'ok');
+            if (rejectType === 'deposit') await loadDeps(); else await loadWths();
         }
 
         document.getElementById('rejectOverlay').addEventListener('click', function(e) {

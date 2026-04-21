@@ -211,6 +211,7 @@
             }
         }
     </style>
+<script src="/js/api-client.js"></script>
 <script src="/js/token.js"></script>
 </head>
 <body>
@@ -575,26 +576,25 @@
 
         async function loadStats() {
             showLoading();
+            const [balR, depR, wdR, invR] = await Promise.all([
+                window.safeRequest('/api/balance'),
+                window.safeRequest('/api/deposits'),
+                window.safeRequest('/api/withdraw/history'),
+                window.safeRequest('/api/investments')
+            ]);
+
+            if (balR.status === 401) { window.location.href = '/login'; return; }
+            if (!balR.ok) { showError(balR.error); return; }
+
             try {
-                const headers = { 'Authorization': 'Bearer ' + TOKEN };
-                const [balRes, depRes, wdRes, invRes] = await Promise.all([
-                    fetch('/api/balance', { headers }),
-                    fetch('/api/deposits', { headers }),
-                    fetch('/api/withdraw/history', { headers }),
-                    fetch('/api/investments', { headers })
-                ]);
-
-                if (!balRes.ok) { window.location.href = '/login'; return; }
-
-                const balData = await balRes.json();
+                const balData = balR.data;
                 statistics.walletBalance  = parseFloat(balData.wallet_balance  || 0);
                 statistics.accountBalance = parseFloat(balData.income_balance  || balData.balance || 0);
 
-                if (depRes.ok) {
-                    const depData = await depRes.json();
+                if (depR.ok) {
+                    const depData = depR.data;
                     const confirmed = (depData.deposits || []).filter(d => d.status === 'confirmed');
                     statistics.totalDeposit = confirmed.reduce((s, d) => s + parseFloat(d.amount || 0), 0);
-                    const today = new Date().toISOString().split('T')[0];
                     const depTx = (depData.deposits || []).map(d => ({
                         date: new Date(d.deposited_at).toLocaleString(),
                         rawDate: d.deposited_at,
@@ -605,8 +605,8 @@
                     transactionHistory.push(...depTx);
                 }
 
-                if (wdRes.ok) {
-                    const wdData = await wdRes.json();
+                if (wdR.ok) {
+                    const wdData = wdR.data;
                     const completed = (wdData.withdrawals || []).filter(w => w.status === 'completed');
                     statistics.totalWithdrawal = completed.reduce((s, w) => s + parseFloat(w.amount || 0), 0);
                     const wdTx = (wdData.withdrawals || []).map(w => ({
@@ -619,8 +619,8 @@
                     transactionHistory.push(...wdTx);
                 }
 
-                if (invRes.ok) {
-                    const invData = await invRes.json();
+                if (invR.ok) {
+                    const invData = invR.data;
                     statistics.investedProduct = (invData.investments || []).reduce((s, i) => s + parseFloat(i.amount || 0), 0);
                     statistics.totalAssets = statistics.investedProduct;
                     const invTx = (invData.investments || []).map(i => ({
@@ -644,9 +644,14 @@
 
                 renderTransactionHistory();
                 updateDisplay();
+
+                const partialErrors = [depR, wdR, invR].filter(r => !r.ok).map(r => r.error);
+                if (partialErrors.length) {
+                    showError(partialErrors[0]);
+                }
             } catch (err) {
-                console.error('Failed to load statistics:', err);
-                showError('Failed to load data. Please refresh.');
+                console.error('Failed to render statistics:', err);
+                showError('Failed to display data. Please refresh.');
             }
         }
 

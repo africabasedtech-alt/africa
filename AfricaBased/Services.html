@@ -268,6 +268,7 @@
             .whatsapp-header h2 { font-size: 1.25rem; }
         }
     </style>
+<script src="/js/api-client.js"></script>
 <script src="/js/token.js"></script>
 </head>
 <body>
@@ -460,18 +461,15 @@
             const token = getABToken();
             if (!token) { window.location.href = '/login'; return; }
 
-            try {
-                const res = await fetch('/api/services/whatsapp', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                if (res.status === 401) { window.location.href = '/login'; return; }
-                const data = await res.json();
-                if (data.error) throw new Error(data.error);
-                renderServices(data.services || [], data.membership_level || 'Inactive', data.active_referrals || 0);
-            } catch(e) {
-                document.getElementById('groupsContainer').innerHTML = '<div class="empty-msg">Failed to load services. Please try again.</div>';
+            const r = await window.safeRequest('/api/services/whatsapp');
+            if (r.status === 401) { window.location.href = '/login'; return; }
+            if (!r.ok) {
+                document.getElementById('groupsContainer').innerHTML = '<div class="empty-msg">' + r.error + '</div>';
                 document.getElementById('managersContainer').innerHTML = '';
+                return;
             }
+            const data = r.data || {};
+            renderServices(data.services || [], data.membership_level || 'Inactive', data.active_referrals || 0);
         }
 
         document.addEventListener('DOMContentLoaded', loadServices);

@@ -186,6 +186,7 @@
             .toolbar, .stats-bar, .table-wrap, .pagination { padding-left: 14px; padding-right: 14px; }
         }
     </style>
+<script src="/js/api-client.js"></script>
 </head>
 <body>
 
@@ -261,9 +262,9 @@
     async function loadUsers() {
         document.getElementById('userTableBody').innerHTML = '<tr class="empty-row"><td colspan="9"><i class="fas fa-spinner fa-spin"></i> Loading users...</td></tr>';
         try {
-            const res = await fetch('/api/admin/users', { headers: { 'x-admin-key': ADMIN_KEY } });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed');
+            const r = await window.safeRequest('/api/admin/users', { headers: { 'x-admin-key': ADMIN_KEY } });
+            if (!r.ok) throw new Error(r.error || 'Failed');
+            const data = r.data;
             allUsers = data.users || [];
             renderStats();
             applyFilter();
@@ -461,12 +462,12 @@
 
     async function doImpersonate(userId) {
         try {
-            const res = await fetch(`/api/admin/users/${userId}/impersonate`, {
+            const r = await window.safeRequest(`/api/admin/users/${userId}/impersonate`, {
                 method: 'POST',
                 headers: { 'x-admin-key': ADMIN_KEY }
             });
-            const data = await res.json();
-            if (!res.ok) { setModalError(data.error || 'Failed to start impersonation.'); return; }
+            if (!r.ok) { setModalError(r.error || 'Failed to start impersonation.'); return; }
+            const data = r.data;
             closeModal();
             const userEncoded = encodeURIComponent(JSON.stringify(data.user));
             const url = `impersonate.html?token=${encodeURIComponent(data.token)}&user=${userEncoded}`;
@@ -481,13 +482,13 @@
         const amount = parseFloat(document.getElementById('balAmount').value);
         if (!amount || amount <= 0) { setModalError('Enter a valid positive amount.'); return; }
         try {
-            const res = await fetch(`/api/admin/users/${userId}/balance`, {
+            const r = await window.safeRequest(`/api/admin/users/${userId}/balance`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+                headers: { 'x-admin-key': ADMIN_KEY },
                 body: JSON.stringify({ amount, operation })
             });
-            const data = await res.json();
-            if (!res.ok) { setModalError(data.error || 'Failed'); return; }
+            if (!r.ok) { setModalError(r.error || 'Failed'); return; }
+            const data = r.data;
             closeModal();
             showToast(`Balance ${operation}ed by KES ${fmt(amount)}. New balance: KES ${fmt(data.account_balance)}`);
             // Update local data
@@ -499,13 +500,13 @@
 
     async function doLock(userId, locked) {
         try {
-            const res = await fetch(`/api/admin/users/${userId}/lock`, {
+            const r = await window.safeRequest(`/api/admin/users/${userId}/lock`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+                headers: { 'x-admin-key': ADMIN_KEY },
                 body: JSON.stringify({ locked })
             });
-            const data = await res.json();
-            if (!res.ok) { setModalError(data.error || 'Failed'); return; }
+            if (!r.ok) { setModalError(r.error || 'Failed'); return; }
+            const data = r.data;
             closeModal();
             showToast(`Account ${locked ? 'locked' : 'unlocked'} successfully.`, locked ? 'error' : 'success');
             const u = allUsers.find(u => u.id === userId);
@@ -518,13 +519,12 @@
         const pw = document.getElementById('newPw').value;
         if (!pw || pw.length < 6) { setModalError('Password must be at least 6 characters.'); return; }
         try {
-            const res = await fetch(`/api/admin/users/${userId}/password`, {
+            const r = await window.safeRequest(`/api/admin/users/${userId}/password`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+                headers: { 'x-admin-key': ADMIN_KEY },
                 body: JSON.stringify({ password: pw })
             });
-            const data = await res.json();
-            if (!res.ok) { setModalError(data.error || 'Failed'); return; }
+            if (!r.ok) { setModalError(r.error || 'Failed'); return; }
             closeModal();
             showToast('Password reset successfully.');
         } catch(e) { setModalError('Connection error.'); }
@@ -534,12 +534,11 @@
         const confirm = document.getElementById('deleteConfirm').value.trim();
         if (confirm !== 'DELETE') { setModalError('Type DELETE (uppercase) to confirm.'); return; }
         try {
-            const res = await fetch(`/api/admin/users/${userId}`, {
+            const r = await window.safeRequest(`/api/admin/users/${userId}`, {
                 method: 'DELETE',
                 headers: { 'x-admin-key': ADMIN_KEY }
             });
-            const data = await res.json();
-            if (!res.ok) { setModalError(data.error || 'Failed'); return; }
+            if (!r.ok) { setModalError(r.error || 'Failed'); return; }
             closeModal();
             showToast(`User ${username} deleted.`);
             allUsers = allUsers.filter(u => u.id !== userId);
@@ -561,13 +560,12 @@
         if (bankHolder) body.bank_account_name = bankHolder;
         if (!Object.keys(body).length) { closeModal(); return; }
         try {
-            const res = await fetch(`/api/admin/users/${userId}/profile-fields`, {
+            const r = await window.safeRequest(`/api/admin/users/${userId}/profile-fields`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+                headers: { 'x-admin-key': ADMIN_KEY },
                 body: JSON.stringify(body)
             });
-            const data = await res.json();
-            if (!res.ok) { setModalError(data.error || 'Failed to update'); return; }
+            if (!r.ok) { setModalError(r.error || 'Failed to update'); return; }
             closeModal();
             const u = allUsers.find(u => u.id === userId);
             if (u) {

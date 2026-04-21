@@ -172,6 +172,7 @@
         .form-section { display: none; }
         .form-section.active { display: block; }
     </style>
+<script src="/js/api-client.js"></script>
 <script src="/js/token.js"></script>
 </head>
 <body>
@@ -357,27 +358,31 @@
             await loadHistory();
         }
 
+        function showErrorOverlay(msg) {
+            document.getElementById('errorMsg').textContent = msg;
+            document.getElementById('errorOverlay').classList.add('active');
+        }
+
         async function loadBalance() {
-            try {
-                const res = await fetch('/api/balance', { headers: { 'Authorization': 'Bearer ' + token } });
-                if (!res.ok) return;
-                const d = await res.json();
-                currentBalance = parseFloat(d.income_balance || d.balance || 0);
-                document.getElementById('balanceDisplay').textContent = fmt(currentBalance);
-                const walletEl = document.getElementById('walletDisplay');
-                if (walletEl) walletEl.textContent = fmt(parseFloat(d.wallet_balance || 0));
-            } catch (e) {
+            const r = await window.safeRequest('/api/balance');
+            if (!r.ok) {
                 document.getElementById('balanceDisplay').textContent = '0.00';
                 const walletEl = document.getElementById('walletDisplay');
                 if (walletEl) walletEl.textContent = '0.00';
+                return;
             }
+            const d = r.data;
+            currentBalance = parseFloat(d.income_balance || d.balance || 0);
+            document.getElementById('balanceDisplay').textContent = fmt(currentBalance);
+            const walletEl = document.getElementById('walletDisplay');
+            if (walletEl) walletEl.textContent = fmt(parseFloat(d.wallet_balance || 0));
         }
 
         async function loadPaymentProfile() {
+            const r = await window.safeRequest('/api/auth/me');
+            if (!r.ok) { console.warn('loadPaymentProfile error', r.error); return; }
+            const d = r.data;
             try {
-                const res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
-                if (!res.ok) return;
-                const d = await res.json();
                 const p = d.profile || {};
 
                 const mpesa = p.mpesa_phone || '';
@@ -478,20 +483,18 @@
             document.getElementById('processingMsg').textContent = 'Sending funds to your M-Pesa. Please wait...';
             document.getElementById('processingOverlay').classList.add('active');
 
-            try {
-                var res = await fetch('/api/withdraw/mpesa', {
+            {
+                var r = await window.safeRequest('/api/withdraw/mpesa', {
                     method: 'POST',
-                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ amount: amt, phone: phone })
                 });
-                var d = await res.json();
                 document.getElementById('processingOverlay').classList.remove('active');
 
-                if (!res.ok || d.error) {
-                    document.getElementById('errorMsg').textContent = d.error || 'Withdrawal failed. Please try again.';
-                    document.getElementById('errorOverlay').classList.add('active');
+                if (!r.ok) {
+                    showErrorOverlay(r.error || 'Withdrawal failed. Please try again.');
                     return;
                 }
+                var d = r.data;
 
                 document.getElementById('successTitle').textContent = 'M-Pesa Withdrawal Sent!';
                 document.getElementById('successMsg').textContent = 'Funds have been sent to your M-Pesa number.';
@@ -508,10 +511,6 @@
                 document.getElementById('mpesaBtn').disabled = true;
                 await loadBalance();
                 await loadHistory();
-            } catch (e) {
-                document.getElementById('processingOverlay').classList.remove('active');
-                document.getElementById('errorMsg').textContent = 'Network error. Please check your connection and try again.';
-                document.getElementById('errorOverlay').classList.add('active');
             }
         }
 
@@ -527,20 +526,18 @@
             document.getElementById('processingMsg').textContent = 'Recording your bank transfer request...';
             document.getElementById('processingOverlay').classList.add('active');
 
-            try {
-                var res = await fetch('/api/withdraw/bank', {
+            {
+                var r = await window.safeRequest('/api/withdraw/bank', {
                     method: 'POST',
-                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ amount: amt, bank_name: bankName, paybill: paybill, account_number: accNum, account_name: accName })
                 });
-                var d = await res.json();
                 document.getElementById('processingOverlay').classList.remove('active');
 
-                if (!res.ok || d.error) {
-                    document.getElementById('errorMsg').textContent = d.error || 'Request failed. Please try again.';
-                    document.getElementById('errorOverlay').classList.add('active');
+                if (!r.ok) {
+                    showErrorOverlay(r.error || 'Request failed. Please try again.');
                     return;
                 }
+                var d = r.data;
 
                 document.getElementById('successTitle').textContent = 'Bank Transfer Submitted!';
                 document.getElementById('successMsg').textContent = 'Your request is under review and will be processed within 1–3 business days.';
@@ -561,18 +558,18 @@
                 document.getElementById('bankBtn').disabled = true;
                 await loadBalance();
                 await loadHistory();
-            } catch (e) {
-                document.getElementById('processingOverlay').classList.remove('active');
-                document.getElementById('errorMsg').textContent = 'Network error. Please check your connection and try again.';
-                document.getElementById('errorOverlay').classList.add('active');
             }
         }
 
         async function loadHistory() {
             var list = document.getElementById('historyList');
+            var r = await window.safeRequest('/api/withdraw/history');
+            if (!r.ok) {
+                list.innerHTML = '<div class="empty-state">' + r.error + '</div>';
+                return;
+            }
             try {
-                var res = await fetch('/api/withdraw/history', { headers: { 'Authorization': 'Bearer ' + token } });
-                var d = await res.json();
+                var d = r.data;
                 if (!d.withdrawals || !d.withdrawals.length) {
                     list.innerHTML = '<div class="empty-state">No withdrawals yet</div>';
                     return;

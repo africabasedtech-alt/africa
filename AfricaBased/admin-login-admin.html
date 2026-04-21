@@ -39,6 +39,7 @@
         .no-token i { font-size: 3rem; color: var(--danger); margin-bottom: 1rem; display: block; }
         .no-token p { color: var(--muted); font-size: 0.95rem; }
     </style>
+<script src="/js/api-client.js"></script>
 </head>
 <body>
 <div class="container" id="loginBox">
@@ -138,20 +139,19 @@
         btn.disabled = true; btn.textContent = 'Verifying...';
         document.getElementById('spinner').style.display = 'flex';
 
+        const apiR = await window.safeRequest('/api/admin/login', {
+            method: 'POST',
+            body: JSON.stringify({ token: inviteToken, email, password, api_key: apiKey, security_code: entered, expected_code: currentSecCode })
+        });
         try {
-            const res = await fetch('/api/admin/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: inviteToken, email, password, api_key: apiKey, security_code: entered, expected_code: currentSecCode })
-            });
-            const data = await res.json();
-
-            if (!res.ok) {
-                showError(data.error || 'Login failed.');
+            if (!apiR.ok) {
+                showError(apiR.error || 'Login failed.');
                 btn.disabled = false; btn.textContent = 'Login';
                 document.getElementById('spinner').style.display = 'none';
                 return;
             }
+
+            const data = apiR.data;
 
             // Store admin session
             const adminData = {

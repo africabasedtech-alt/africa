@@ -209,6 +209,7 @@
         .toast.show { transform: translateY(0); opacity: 1; }
         .toast.error { border-color: rgba(255,107,107,0.4); }
     </style>
+<script src="/js/api-client.js"></script>
 </head>
 <body>
 
@@ -333,10 +334,19 @@
 
     async function loadServices() {
         try {
-            const res = await fetch('/api/services/whatsapp', {
+            const r = await window.safeRequest('/api/services/whatsapp', {
                 headers: { 'x-admin-key': ADMIN_KEY }
             });
-            const data = await res.json();
+            if (!r.ok) {
+                const gl = document.getElementById('groupList');
+                const ml = document.getElementById('managerList');
+                gl.innerHTML = '<div class="empty-msg"></div>';
+                ml.innerHTML = '<div class="empty-msg"></div>';
+                gl.querySelector('.empty-msg').textContent = r.error;
+                ml.querySelector('.empty-msg').textContent = r.error;
+                return;
+            }
+            const data = r.data || {};
             allServices = data.services || [];
             renderLists();
         } catch(e) {
@@ -464,13 +474,12 @@
         const method = editingId ? 'PUT' : 'POST';
 
         try {
-            const res = await fetch(url, {
+            const r = await window.safeRequest(url, {
                 method,
-                headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+                headers: { 'x-admin-key': ADMIN_KEY },
                 body: JSON.stringify(body)
             });
-            const data = await res.json();
-            if (!res.ok) { showToast(data.error || 'Failed to save.', true); return; }
+            if (!r.ok) { showToast(r.error || 'Failed to save.', true); return; }
             closeModal();
             showToast(editingId ? 'Updated successfully.' : 'Added successfully.');
             await loadServices();
@@ -482,12 +491,11 @@
     async function deleteItem(id) {
         if (!confirm('Delete this entry?')) return;
         try {
-            const res = await fetch(`/api/services/whatsapp/${id}`, {
+            const r = await window.safeRequest(`/api/services/whatsapp/${id}`, {
                 method: 'DELETE',
                 headers: { 'x-admin-key': ADMIN_KEY }
             });
-            const data = await res.json();
-            if (!res.ok) { showToast(data.error || 'Failed to delete.', true); return; }
+            if (!r.ok) { showToast(r.error || 'Failed to delete.', true); return; }
             showToast('Deleted.');
             await loadServices();
         } catch(e) {

@@ -312,6 +312,7 @@
             transition: width 0.3s;
         }
     </style>
+<script src="/js/api-client.js"></script>
 </head>
 <body>
     <div style="margin: 24px 0 0 24px; display: flex; align-items: center; gap: 16px;">
@@ -626,13 +627,13 @@
             const privilege_limits = collectPrivilegeLimits();
 
             try {
-                const res = await fetch('/api/admin/invite', {
+                const apiR = await window.safeRequest('/api/admin/invite', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-admin-key': SUPER_ADMIN_KEY },
+                    headers: { 'x-admin-key': SUPER_ADMIN_KEY },
                     body: JSON.stringify({ name, email, phone, password, api_key, privileges, status, expires_at: new Date(expiry).toISOString(), exchange_limit: parseFloat(document.getElementById('adminExchangeLimit').value) || 0, privilege_limits })
                 });
-                const data = await res.json();
-                if (!res.ok) { alert('Error: ' + (data.error || 'Failed')); return; }
+                if (!apiR.ok) { alert('Error: ' + apiR.error); return; }
+                const data = apiR.data;
 
                 const invite = data.invite;
                 const link = `${window.location.origin}/admin-login-admin.html?token=${invite.token}`;
@@ -665,9 +666,10 @@
             const el = document.getElementById('adminsList');
             el.innerHTML = '<span style="color:rgba(255,255,255,0.4);">Loading...</span>';
             try {
-                const res = await fetch('/api/admin/invites', { headers: { 'x-admin-key': SUPER_ADMIN_KEY } });
-                const data = await res.json();
-                if (!res.ok || !data.admins) { el.innerHTML = '<span style="color:#ff6b6b;">Failed to load admins.</span>'; return; }
+                const apiR = await window.safeRequest('/api/admin/invites', { headers: { 'x-admin-key': SUPER_ADMIN_KEY } });
+                if (!apiR.ok) { el.innerHTML = '<span style="color:#ff6b6b;"></span>'; el.querySelector('span').textContent = apiR.error; return; }
+                const data = apiR.data || {};
+                if (!data.admins) { el.innerHTML = '<span style="color:#ff6b6b;">Failed to load admins.</span>'; return; }
                 if (!data.admins.length) { el.innerHTML = '<span style="color:rgba(255,255,255,0.4);">No admins created yet.</span>'; return; }
                 el.innerHTML = data.admins.map(a => {
                     const expired = new Date(a.expires_at) < new Date();
@@ -744,30 +746,32 @@
         async function toggleAdminStatus(id, currentStatus) {
             const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
             if (!confirm('Change status to ' + newStatus + '?')) return;
-            await fetch('/api/admin/invite/' + id, {
+            const r = await window.safeRequest('/api/admin/invite/' + id, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'x-admin-key': SUPER_ADMIN_KEY },
+                headers: { 'x-admin-key': SUPER_ADMIN_KEY },
                 body: JSON.stringify({ status: newStatus })
             });
+            if (!r.ok) { alert(r.error); return; }
             loadAdmins();
         }
 
         async function deleteAdmin(id) {
             if (!confirm('Delete this admin? They will no longer be able to log in.')) return;
-            await fetch('/api/admin/invite/' + id, {
+            const r = await window.safeRequest('/api/admin/invite/' + id, {
                 method: 'DELETE',
                 headers: { 'x-admin-key': SUPER_ADMIN_KEY }
             });
+            if (!r.ok) { alert(r.error); return; }
             loadAdmins();
         }
 
         async function resetExchangeUsage(id) {
             if (!confirm('Reset this admin\'s exchange usage back to KES 0? This gives them their full limit again.')) return;
-            const res = await fetch('/api/admin/exchange-reset/' + id, {
+            const r = await window.safeRequest('/api/admin/exchange-reset/' + id, {
                 method: 'POST',
                 headers: { 'x-admin-key': SUPER_ADMIN_KEY }
             });
-            if (res.ok) { loadAdmins(); } else { alert('Failed to reset usage.'); }
+            if (r.ok) { loadAdmins(); } else { alert(r.error || 'Failed to reset usage.'); }
         }
 
         async function updateExchangeLimit(id) {
@@ -775,12 +779,12 @@
             if (newLimit === null) return;
             const parsed = parseFloat(newLimit);
             if (isNaN(parsed) || parsed < 0) { alert('Invalid amount.'); return; }
-            const res = await fetch('/api/admin/invite/' + id, {
+            const r = await window.safeRequest('/api/admin/invite/' + id, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'x-admin-key': SUPER_ADMIN_KEY },
+                headers: { 'x-admin-key': SUPER_ADMIN_KEY },
                 body: JSON.stringify({ exchange_limit: parsed })
             });
-            if (res.ok) { loadAdmins(); } else { alert('Failed to update limit.'); }
+            if (r.ok) { loadAdmins(); } else { alert(r.error || 'Failed to update limit.'); }
         }
 
         // ── Charge modal ──────────────────────────────────────────────────────
@@ -839,13 +843,13 @@
             btn.disabled = true; btn.textContent = 'Applying...';
 
             try {
-                const res = await fetch('/api/admin/charge-sub-admin/' + chargeTargetId, {
+                const apiR = await window.safeRequest('/api/admin/charge-sub-admin/' + chargeTargetId, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-admin-key': SUPER_ADMIN_KEY },
+                    headers: { 'x-admin-key': SUPER_ADMIN_KEY },
                     body: JSON.stringify({ amount: amt, type: chargeType, reason })
                 });
-                const data = await res.json();
-                if (!res.ok) { alert('Error: ' + (data.error || 'Failed')); return; }
+                if (!apiR.ok) { alert('Error: ' + apiR.error); return; }
+                const data = apiR.data;
 
                 const action = chargeType === 'credit' ? 'credited' : 'debited';
                 alert('Successfully ' + action + ' KES ' + amt.toLocaleString() + ' to ' + data.name + '.\nNew exchange limit: KES ' + parseFloat(data.new_limit).toLocaleString());
@@ -867,11 +871,11 @@
             histModal.style.display = 'flex';
 
             try {
-                const res = await fetch('/api/admin/charge-history/' + chargeTargetId, {
+                const apiR = await window.safeRequest('/api/admin/charge-history/' + chargeTargetId, {
                     headers: { 'x-admin-key': SUPER_ADMIN_KEY }
                 });
-                const data = await res.json();
-                if (!res.ok) { content.innerHTML = '<p style="color:#ff6b6b;">Failed to load history.</p>'; return; }
+                if (!apiR.ok) { content.innerHTML = '<p style="color:#ff6b6b;"></p>'; content.querySelector('p').textContent = apiR.error; return; }
+                const data = apiR.data;
 
                 if (!data.charges.length) {
                     content.innerHTML = '<p style="text-align:center;color:rgba(255,255,255,0.3);padding:24px 0;">No charges recorded yet.</p>';

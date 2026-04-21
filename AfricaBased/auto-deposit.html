@@ -46,6 +46,7 @@
         /* Back button */
         .back-btn { background:linear-gradient(90deg,#232c43,#4ecdc4); color:#fff; padding:10px 22px; border-radius:10px; font-weight:600; border:1px solid #4ecdc4; box-shadow:0 2px 8px rgba(78,205,196,0.10); margin-bottom:18px; cursor:pointer; }
     </style>
+<script src="/js/api-client.js"></script>
 <script src="/js/token.js"></script>
 </head>
 <body>
@@ -157,12 +158,19 @@
 
         pollInterval = setInterval(async () => {
             attempts++;
+            const r = await window.safeRequest(`/api/mpesa/status/${checkoutId}`);
+            if (!r.ok) {
+                // Transient error — keep polling until maxAttempts; if last attempt, surface error.
+                if (attempts >= maxAttempts) {
+                    clearInterval(pollInterval);
+                    document.getElementById('waitingModal').classList.remove('active');
+                    document.getElementById('failedMsg').textContent = r.error;
+                    document.getElementById('failedModal').classList.add('active');
+                }
+                return;
+            }
+            const data = r.data;
             try {
-                const res = await fetch(`/api/mpesa/status/${checkoutId}`, {
-                    headers: { Authorization: `Bearer ${getABToken()}` }
-                });
-                const data = await res.json();
-
                 if (data.status === 'completed') {
                     clearInterval(pollInterval);
                     document.getElementById('waitingModal').classList.remove('active');
@@ -180,7 +188,7 @@
                     document.getElementById('failedModal').classList.add('active');
                 }
             } catch (e) {
-                console.error('Poll error:', e);
+                console.error('Poll handling error:', e);
             }
         }, 3000);
     }
@@ -202,28 +210,26 @@
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner"></div> Sending prompt…';
 
-        try {
-            const res = await fetch('/api/mpesa/stkpush', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ phone, amount: Number(amount) })
-            });
-            const data = await res.json();
-
-            if (!res.ok || !data.success) {
-                showError(data.error || 'Failed to initiate M-Pesa payment. Please try again.');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-lock"></i> Pay with M-Pesa';
-                return;
-            }
-
-            currentCheckoutId = data.invoiceId;
-            startPolling(currentCheckoutId);
-        } catch (err) {
-            showError('Network error. Please check your connection and try again.');
+        const r = await window.safeRequest('/api/mpesa/stkpush', {
+            method: 'POST',
+            body: JSON.stringify({ phone, amount: Number(amount) })
+        });
+        if (!r.ok) {
+            showError(r.error || 'Failed to initiate M-Pesa payment. Please try again.');
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-lock"></i> Pay with M-Pesa';
+            return;
         }
+        const data = r.data;
+        if (!data.success) {
+            showError(data.error || 'Failed to initiate M-Pesa payment. Please try again.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-lock"></i> Pay with M-Pesa';
+            return;
+        }
+
+        currentCheckoutId = data.invoiceId;
+        startPolling(currentCheckoutId);
     });
 </script>
 </body>

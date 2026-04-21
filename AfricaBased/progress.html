@@ -38,6 +38,7 @@
         .loading-state i{font-size:24px;color:var(--accent);animation:spin 1s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
     </style>
+<script src="/js/api-client.js"></script>
 <script src="/js/token.js"></script>
 </head>
 <body>
@@ -168,10 +169,14 @@
             const token = getABToken();
             if (!token) { redirectToLogin(); return; }
 
+            const r = await window.safeRequest('/api/referral');
+            if (!r.ok) {
+                const ls = document.getElementById('loadingState');
+                if (ls) ls.textContent = r.error;
+                return;
+            }
             try {
-                const res = await fetch('/api/referral', { headers: { 'Authorization': 'Bearer ' + token } });
-                if (!res.ok) throw new Error('API error ' + res.status);
-                const data = await res.json();
+                const data = r.data;
 
                 document.getElementById('loadingState').style.display = 'none';
                 document.getElementById('progressContent').style.display = '';

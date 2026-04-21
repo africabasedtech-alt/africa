@@ -59,6 +59,7 @@
         .muted-block{color:var(--muted);font-size:13px}
         .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     </style>
+<script src="/js/api-client.js"></script>
 <script src="/js/token.js"></script>
 </head>
 <body>
@@ -193,19 +194,21 @@
                 // Eligibility check — fetches live from API
         // Requirements: 50+ active referrals, KES 5,000 total commission earned, active investment
         async function checkPromotionEligibility(){
+            const token = getABToken();
+            if (!token) return { eligible: false, data: null };
+            const r = await window.safeRequest('/api/referral');
+            if (!r.ok) {
+                console.warn('Eligibility check failed:', r.error);
+                return { eligible: false, data: null, error: r.error };
+            }
             try {
-                const token = getABToken();
-                if (!token) return { eligible: false, data: null };
-                const res = await fetch('/api/referral', { headers: { 'Authorization': 'Bearer ' + token } });
-                if (!res.ok) throw new Error('API error');
-                const data = await res.json();
+                const data = r.data;
                 const activeRefs          = data.active_referrals || 0;
                 const totalCommEarned     = data.total_commission_earned || 0;
                 const hasActiveInvestment = data.has_investment || false;
                 const eligible = (activeRefs >= 50) && (totalCommEarned >= 5000) && hasActiveInvestment;
                 return { eligible, data, activeRefs, totalCommEarned, hasActiveInvestment };
             } catch(e) {
-                console.warn('Eligibility check failed', e);
                 return { eligible: false, data: null };
             }
         }
