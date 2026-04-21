@@ -1470,8 +1470,15 @@ async function resolveOptionalUser(req) {
   } catch { return null; }
 }
 
-// Apply per-user product overrides (price / daily_return / duration_days)
-// Precedence: user-specific > cohort_registered_after > base product.
+// Apply per-user product overrides (price / daily_return / duration_days).
+// Precedence (most specific first):
+//   1. user                       — override targeted at exactly this user_id
+//   2. cohort_registered_after    — override for users registered after a cutoff date
+//   3. all_users                  — global override row (forward-compatible; today
+//                                   "all users" changes are written directly into the
+//                                   base product row, so this tier is reserved.)
+//   4. base product               — the products table row itself
+// Within a tier the most-recently-effective override wins.
 async function applyProductOverridesForUser(products, userId, userCreatedAt) {
   if (!userId || !products || !products.length) return products;
   const ids = products.map(p => p.id).filter(Boolean);
@@ -1485,6 +1492,7 @@ async function applyProductOverridesForUser(products, userId, userCreatedAt) {
           AND (
             (scope_type = 'user' AND scope_value = $2)
             OR (scope_type = 'cohort_registered_after' AND scope_value::timestamptz <= $3::timestamptz)
+            OR (scope_type = 'all_users')
           )`,
       [ids, String(userId), userCreatedAt]
     );
@@ -1495,7 +1503,7 @@ async function applyProductOverridesForUser(products, userId, userCreatedAt) {
   }
   if (!overrides.length) return products;
   const sorted = overrides.slice().sort((a, b) => {
-    const order = { user: 0, cohort_registered_after: 1 };
+    const order = { user: 0, cohort_registered_after: 1, all_users: 2 };
     if (order[a.scope_type] !== order[b.scope_type]) return order[a.scope_type] - order[b.scope_type];
     return new Date(b.effective_from) - new Date(a.effective_from);
   });
@@ -1620,6 +1628,9 @@ app.put('/api/admin/products/:id', requireAnyAdmin, requireProductPermission('pr
   if (isNaN(newPrice) || isNaN(newDaily) || isNaN(newDur)) {
     return res.status(400).json({ error: 'Price, daily return, and duration must be numbers.' });
   }
+  // 'all_users' is, by definition, immediate-and-retroactive: every active investment
+  // gets rewritten so the new economics line up with what the product card now shows.
+  if (scopeType === 'all_users' && scope) scope.retroactive = true;
 
   const client = await pool.connect();
   try {
@@ -1664,15 +1675,24 @@ app.put('/api/admin/products/:id', requireAnyAdmin, requireProductPermission('pr
     let affectedUserCount = 0;
     if (scope && scope.retroactive && (scopeType === 'all_users' || scopeType === 'current_investors' || scopeType === 'specific_users')) {
       const filter = buildInvestmentScopeFilter(before.name, scope, 1);
-      const params = [...filter.params, newDaily, newDur];
+      const params = [...filter.params, newDaily, newDur, newPrice];
       const dailyParamIdx = filter.params.length + 1;
       const durParamIdx = filter.params.length + 2;
-      // Update daily_earnings to (units * new_daily_return) and end_date to (start_date + new_duration_days).
-      // Then any active investment whose new end_date is in the past flips to 'matured'.
+      const priceParamIdx = filter.params.length + 3;
+      // Recompute each investment's daily earnings as amount * (new_daily / new_price) so the
+      // invested capital is preserved and the ROI scales the same way for every investor,
+      // regardless of how many units they bought. The original `amount` is NEVER touched.
+      // For zero-price (free) products the formula degrades to units * new_daily.
+      // The end_date is reset to start_date + new_duration_days; any investment whose new
+      // end_date is already in the past flips to 'matured'.
       const upd = await client.query(
         `WITH src AS (SELECT i.* FROM investments i WHERE ${filter.sql})
          UPDATE investments x
-            SET daily_earnings = COALESCE(x.units, 1) * $${dailyParamIdx},
+            SET daily_earnings = CASE
+                                   WHEN $${priceParamIdx}::numeric > 0
+                                     THEN ROUND(x.amount * ($${dailyParamIdx}::numeric / $${priceParamIdx}::numeric), 2)
+                                   ELSE COALESCE(x.units, 1) * $${dailyParamIdx}::numeric
+                                 END,
                 end_date       = x.start_date + ($${durParamIdx} || ' days')::interval,
                 status         = CASE
                                    WHEN x.start_date + ($${durParamIdx} || ' days')::interval < NOW()

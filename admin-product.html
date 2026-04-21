@@ -656,7 +656,10 @@
       var v = e.target.value;
       document.getElementById('scopeUsersBox').style.display = (v === 'specific_users') ? 'block' : 'none';
       document.getElementById('scopeDateBox').style.display = (v === 'cohort_registered_after') ? 'block' : 'none';
-      document.getElementById('scopeRetroBox').style.display = (v === 'all_users' || v === 'current_investors' || v === 'specific_users') ? 'block' : 'none';
+      // 'all_users' is, by definition, immediate-and-retroactive, so we don't expose
+      // the toggle for it (server enforces the same rule).
+      document.getElementById('scopeRetroBox').style.display = (v === 'current_investors' || v === 'specific_users') ? 'block' : 'none';
+      if (v === 'all_users') document.getElementById('scopeRetro').checked = true;
       if (v === 'specific_users' && !scopeUserCache.length) loadUsersForScope();
       refreshScopePreview();
     }
