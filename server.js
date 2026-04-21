@@ -1628,9 +1628,12 @@ app.put('/api/admin/products/:id', requireAnyAdmin, requireProductPermission('pr
   if (isNaN(newPrice) || isNaN(newDaily) || isNaN(newDur)) {
     return res.status(400).json({ error: 'Price, daily return, and duration must be numbers.' });
   }
-  // 'all_users' is, by definition, immediate-and-retroactive: every active investment
-  // gets rewritten so the new economics line up with what the product card now shows.
-  if (scopeType === 'all_users' && scope) scope.retroactive = true;
+  // These three scopes are inherently retroactive — the whole point of picking
+  // them is to update existing investments. We enforce that on the server so the
+  // UI cannot turn it off and produce a "scope chosen but no rewrite" no-op.
+  if (scope && (scopeType === 'all_users' || scopeType === 'current_investors' || scopeType === 'specific_users')) {
+    scope.retroactive = true;
+  }
 
   const client = await pool.connect();
   try {
