@@ -1302,17 +1302,26 @@ app.post('/api/invest', requireAuth, rejectIfImpersonated, async (req, res) => {
   if (!product_name || amount == null || isNaN(Number(amount)) || Number(amount) < 0) {
     return res.status(400).json({ error: 'Product name and a valid amount are required' });
   }
-  const cost = parseFloat(amount);
   const source = (balance_source === 'income') ? 'income' : 'wallet';
   try {
-    const prodCheck = await pool.query('SELECT id, invest_limit, total_units, max_units_per_user, used_units, price FROM products WHERE name=$1 AND disabled=FALSE', [product_name]);
+    const prodCheck = await pool.query('SELECT id, invest_limit, total_units, max_units_per_user, used_units, price, daily_return, duration_days FROM products WHERE name=$1 AND disabled=FALSE', [product_name]);
     if (!prodCheck.rows.length) {
       return res.status(400).json({ error: 'This product is not available.' });
     }
-    const product = prodCheck.rows[0];
-    const investLimit = parseInt(product.invest_limit) || 0;
-    const totalUnits = parseInt(product.total_units) || 0;
-    const maxPerUser = parseInt(product.max_units_per_user) || 1;
+    const baseProduct = prodCheck.rows[0];
+    // Resolve per-user effective price/daily_return/duration so admin overrides apply.
+    const effective = await getEffectiveProductForUser(baseProduct, userId, req.user.created_at);
+    const product = effective || baseProduct;
+    const investLimit = parseInt(baseProduct.invest_limit) || 0;
+    const totalUnits = parseInt(baseProduct.total_units) || 0;
+    const maxPerUser = parseInt(baseProduct.max_units_per_user) || 1;
+    // Server-side authoritative cost / earnings / hold based on the user's effective product.
+    const cost = parseFloat(product.price) * unitCount;
+    const dailyEarnings = parseFloat(product.daily_return) * unitCount;
+    const holdDays = parseInt(product.duration_days) || 30;
+    if (Number(amount) > 0 && Math.abs(cost - Number(amount)) > 0.5) {
+      return res.status(400).json({ error: 'This product price has changed. Please refresh the page and try again.' });
+    }
 
     if (parseFloat(product.price) === 0) {
       const { rows: freeCheck } = await pool.query(
@@ -1393,13 +1402,12 @@ app.post('/api/invest', requireAuth, rejectIfImpersonated, async (req, res) => {
       }
     }
 
-    const holdDays = parseInt(hold_period) || 30;
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + holdDays);
     const inv = await pool.query(
       `INSERT INTO investments (user_id, product_name, amount, daily_earnings, start_date, end_date, status, balance_source, units)
        VALUES ($1, $2, $3, $4, NOW(), $5, 'active', $6, $7) RETURNING *`,
-      [userId, product_name, cost, parseFloat(daily_earnings) || 0, endDate, source, unitCount]
+      [userId, product_name, cost, dailyEarnings, endDate, source, unitCount]
     );
     await pool.query('UPDATE products SET used_units = used_units + $1 WHERE id = $2', [unitCount, product.id]);
     const newBal = await pool.query(
@@ -1447,6 +1455,78 @@ app.get('/api/products/min-price', async (req, res) => {
   }
 });
 
+// Resolve a logged-in user from a Bearer token without rejecting if missing/invalid.
+async function resolveOptionalUser(req) {
+  try {
+    const auth = req.headers.authorization;
+    if (!auth || !auth.startsWith('Bearer ')) return null;
+    const token = auth.slice(7);
+    jwt.verify(token, JWT_SECRET);
+    const r = await pool.query(
+      'SELECT u.id, u.created_at FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token = $1 AND s.expires_at > NOW()',
+      [token]
+    );
+    return r.rows[0] || null;
+  } catch { return null; }
+}
+
+// Apply per-user product overrides (price / daily_return / duration_days)
+// Precedence: user-specific > cohort_registered_after > base product.
+async function applyProductOverridesForUser(products, userId, userCreatedAt) {
+  if (!userId || !products || !products.length) return products;
+  const ids = products.map(p => p.id).filter(Boolean);
+  if (!ids.length) return products;
+  let overrides;
+  try {
+    const r = await pool.query(
+      `SELECT product_id::text AS product_id, scope_type, scope_value, price, daily_return, duration_days, effective_from
+         FROM product_overrides
+        WHERE product_id = ANY($1::uuid[])
+          AND (
+            (scope_type = 'user' AND scope_value = $2)
+            OR (scope_type = 'cohort_registered_after' AND scope_value::timestamptz <= $3::timestamptz)
+          )`,
+      [ids, String(userId), userCreatedAt]
+    );
+    overrides = r.rows;
+  } catch (e) {
+    console.warn('product overrides lookup failed:', e.message);
+    return products;
+  }
+  if (!overrides.length) return products;
+  const sorted = overrides.slice().sort((a, b) => {
+    const order = { user: 0, cohort_registered_after: 1 };
+    if (order[a.scope_type] !== order[b.scope_type]) return order[a.scope_type] - order[b.scope_type];
+    return new Date(b.effective_from) - new Date(a.effective_from);
+  });
+  const eff = {};
+  for (const o of sorted) {
+    const t = eff[o.product_id] = eff[o.product_id] || {};
+    if (o.price != null && t.price == null) t.price = o.price;
+    if (o.daily_return != null && t.daily_return == null) t.daily_return = o.daily_return;
+    if (o.duration_days != null && t.duration_days == null) t.duration_days = o.duration_days;
+  }
+  return products.map(p => {
+    const o = eff[p.id];
+    if (!o) return p;
+    return {
+      ...p,
+      price: o.price != null ? o.price : p.price,
+      daily_return: o.daily_return != null ? o.daily_return : p.daily_return,
+      duration_days: o.duration_days != null ? o.duration_days : p.duration_days,
+      has_personal_pricing: true
+    };
+  });
+}
+
+// Compute the effective product values (price / daily_return / duration_days) for a single user.
+// Returns { price, daily_return, duration_days, source: 'user'|'cohort'|'base' }.
+async function getEffectiveProductForUser(product, userId, userCreatedAt) {
+  if (!product) return null;
+  const list = await applyProductOverridesForUser([product], userId, userCreatedAt);
+  return list[0];
+}
+
 app.get('/api/products/active', async (req, res) => {
   try {
     const result = await pool.query(
@@ -1461,7 +1541,10 @@ app.get('/api/products/active', async (req, res) => {
        WHERE p.disabled = FALSE
        ORDER BY p.price ASC`
     );
-    res.json({ products: result.rows });
+    let products = result.rows;
+    const u = await resolveOptionalUser(req);
+    if (u) products = await applyProductOverridesForUser(products, u.id, u.created_at);
+    res.json({ products });
   } catch (e) {
     res.status(500).json({ error: 'Failed to fetch products' });
   }
@@ -1484,17 +1567,221 @@ app.post('/api/admin/products', requireAnyAdmin, requireProductPermission('produ
   }
 });
 
+// Helper: build a SQL filter (and params) for selecting investments affected by a scope.
+// Returns { sql, params } that can be placed after `FROM investments i WHERE `.
+function buildInvestmentScopeFilter(productName, scope, startParamIndex = 1) {
+  const params = [productName];
+  let sql = `i.product_name = $${startParamIndex} AND i.status = 'active'`;
+  if (!scope || scope.type === 'new_only' || scope.type === 'cohort_registered_after') {
+    return { sql: '1=0 AND ' + sql, params };
+  }
+  if (scope.type === 'all_users' || scope.type === 'current_investors') {
+    return { sql, params };
+  }
+  if (scope.type === 'specific_users') {
+    const ids = Array.isArray(scope.user_ids) ? scope.user_ids.filter(Boolean) : [];
+    if (!ids.length) return { sql: '1=0 AND ' + sql, params };
+    sql += ` AND i.user_id = ANY($${startParamIndex + 1}::uuid[])`;
+    params.push(ids);
+    return { sql, params };
+  }
+  return { sql: '1=0 AND ' + sql, params };
+}
+
 app.put('/api/admin/products/:id', requireAnyAdmin, requireProductPermission('product_edit'), async (req, res) => {
-  const { name, description, price, daily_return, duration_days, image_url, category, invest_limit, total_units, max_units_per_user, used_units } = req.body;
+  const { name, description, price, daily_return, duration_days, image_url, category, invest_limit, total_units, max_units_per_user, used_units, scope } = req.body;
+  const productId = req.params.id;
+  const newPrice = parseFloat(price);
+  const newDaily = parseFloat(daily_return);
+  const newDur = parseInt(duration_days);
+  const scopeType = (scope && scope.type) || 'new_only';
+  const validScopes = new Set(['new_only', 'all_users', 'current_investors', 'specific_users', 'cohort_registered_after']);
+  if (!validScopes.has(scopeType)) {
+    return res.status(400).json({ error: 'Invalid scope type' });
+  }
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (scopeType === 'specific_users') {
+    if (!Array.isArray(scope.user_ids) || !scope.user_ids.length) {
+      return res.status(400).json({ error: 'Pick at least one user for the specific-users scope' });
+    }
+    for (const uid of scope.user_ids) {
+      if (typeof uid !== 'string' || !UUID_RE.test(uid)) {
+        return res.status(400).json({ error: 'One of the selected user IDs is invalid. Please refresh and pick the users again.' });
+      }
+    }
+  }
+  let cohortDateIso = null;
+  if (scopeType === 'cohort_registered_after') {
+    if (!scope.date) return res.status(400).json({ error: 'Pick a registration cutoff date for the new-registered-users scope' });
+    const parsed = new Date(scope.date);
+    if (isNaN(parsed.getTime())) return res.status(400).json({ error: 'The cutoff date is not a valid date.' });
+    cohortDateIso = parsed.toISOString();
+  }
+  if (isNaN(newPrice) || isNaN(newDaily) || isNaN(newDur)) {
+    return res.status(400).json({ error: 'Price, daily return, and duration must be numbers.' });
+  }
+
+  const client = await pool.connect();
   try {
-    const result = await pool.query(
+    await client.query('BEGIN');
+    const existing = await client.query('SELECT * FROM products WHERE id=$1 FOR UPDATE', [productId]);
+    if (!existing.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Product not found' }); }
+    const before = existing.rows[0];
+
+    // Decide whether the base product's pricing fields update.
+    const updateBasePricing = (scopeType === 'new_only' || scopeType === 'all_users');
+    const finalPrice = updateBasePricing ? newPrice : parseFloat(before.price);
+    const finalDaily = updateBasePricing ? newDaily : parseFloat(before.daily_return);
+    const finalDur = updateBasePricing ? newDur : parseInt(before.duration_days);
+
+    const updated = await client.query(
       `UPDATE products SET name=$1, description=$2, price=$3, daily_return=$4, duration_days=$5, image_url=$6, category=$7, invest_limit=$8, total_units=$9, max_units_per_user=$10, used_units=$11 WHERE id=$12 RETURNING *`,
-      [name, description || '', parseFloat(price), parseFloat(daily_return), parseInt(duration_days), image_url || '', category || 'General', parseInt(invest_limit) || 0, parseInt(total_units) || 0, parseInt(max_units_per_user) || 1, parseInt(used_units) || 0, req.params.id]
+      [name, description || '', finalPrice, finalDaily, finalDur, image_url || '', category || 'General', parseInt(invest_limit) || 0, parseInt(total_units) || 0, parseInt(max_units_per_user) || 1, parseInt(used_units) || 0, productId]
     );
-    if (!result.rows.length) return res.status(404).json({ error: 'Product not found' });
-    res.json({ success: true, product: result.rows[0] });
+
+    // Insert overrides for scopes that target a subset of users.
+    let overrideInserts = 0;
+    if (scopeType === 'specific_users') {
+      for (const uid of scope.user_ids) {
+        await client.query(
+          `INSERT INTO product_overrides (product_id, scope_type, scope_value, price, daily_return, duration_days, created_by)
+           VALUES ($1::uuid, 'user', $2, $3, $4, $5, $6)`,
+          [productId, String(uid), newPrice, newDaily, newDur, (req.subAdmin && req.subAdmin.email) || 'super-admin']
+        );
+        overrideInserts++;
+      }
+    } else if (scopeType === 'cohort_registered_after') {
+      await client.query(
+        `INSERT INTO product_overrides (product_id, scope_type, scope_value, price, daily_return, duration_days, created_by)
+         VALUES ($1::uuid, 'cohort_registered_after', $2, $3, $4, $5, $6)`,
+        [productId, cohortDateIso, newPrice, newDaily, newDur, (req.subAdmin && req.subAdmin.email) || 'super-admin']
+      );
+      overrideInserts++;
+    }
+
+    // Retroactive rewrites: only affects daily_earnings + end_date (NEVER amount).
+    let rewrittenInvestments = 0;
+    let affectedUserCount = 0;
+    if (scope && scope.retroactive && (scopeType === 'all_users' || scopeType === 'current_investors' || scopeType === 'specific_users')) {
+      const filter = buildInvestmentScopeFilter(before.name, scope, 1);
+      const params = [...filter.params, newDaily, newDur];
+      const dailyParamIdx = filter.params.length + 1;
+      const durParamIdx = filter.params.length + 2;
+      // Update daily_earnings to (units * new_daily_return) and end_date to (start_date + new_duration_days).
+      // Then any active investment whose new end_date is in the past flips to 'matured'.
+      const upd = await client.query(
+        `WITH src AS (SELECT i.* FROM investments i WHERE ${filter.sql})
+         UPDATE investments x
+            SET daily_earnings = COALESCE(x.units, 1) * $${dailyParamIdx},
+                end_date       = x.start_date + ($${durParamIdx} || ' days')::interval,
+                status         = CASE
+                                   WHEN x.start_date + ($${durParamIdx} || ' days')::interval < NOW()
+                                     THEN 'matured'
+                                   ELSE x.status
+                                 END,
+                updated_at     = NOW()
+           FROM src
+          WHERE x.id = src.id
+          RETURNING x.id, x.user_id`,
+        params
+      );
+      rewrittenInvestments = upd.rows.length;
+      affectedUserCount = new Set(upd.rows.map(r => String(r.user_id))).size;
+    }
+
+    // Audit log
+    const changedFields = {};
+    if (Math.abs(parseFloat(before.price) - newPrice) > 0.005) changedFields.price = { from: parseFloat(before.price), to: newPrice };
+    if (Math.abs(parseFloat(before.daily_return) - newDaily) > 0.005) changedFields.daily_return = { from: parseFloat(before.daily_return), to: newDaily };
+    if (parseInt(before.duration_days) !== newDur) changedFields.duration_days = { from: parseInt(before.duration_days), to: newDur };
+    await client.query(
+      `INSERT INTO product_change_audit (product_id, admin_id, admin_name, scope_summary, changed_fields, affected_user_count, affected_investment_count)
+       VALUES ($1::uuid, $2, $3, $4::jsonb, $5::jsonb, $6, $7)`,
+      [
+        productId,
+        String((req.subAdmin && req.subAdmin.id) || 'super'),
+        (req.subAdmin && (req.subAdmin.email || req.subAdmin.name)) || 'Super Admin',
+        JSON.stringify({ type: scopeType, retroactive: !!(scope && scope.retroactive), user_ids: (scope && scope.user_ids) || null, date: (scope && scope.date) || null, override_rows_inserted: overrideInserts }),
+        JSON.stringify(changedFields),
+        affectedUserCount,
+        rewrittenInvestments
+      ]
+    );
+
+    await client.query('COMMIT');
+    res.json({
+      success: true,
+      product: updated.rows[0],
+      scope_applied: scopeType,
+      rewritten_investments: rewrittenInvestments,
+      affected_user_count: affectedUserCount,
+      override_rows_inserted: overrideInserts
+    });
   } catch (e) {
+    try { await client.query('ROLLBACK'); } catch {}
+    console.error('Product update failed:', e);
     res.status(500).json({ error: 'Failed to update product' });
+  } finally {
+    client.release();
+  }
+});
+
+// Preview how many users / investments a scope would touch before saving.
+app.get('/api/admin/products/:id/scope-preview', requireAnyAdmin, requireProductPermission('product_edit'), async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const type = req.query.type;
+    const userIds = req.query.user_ids ? String(req.query.user_ids).split(',').filter(Boolean) : [];
+    const date = req.query.date || null;
+    const validScopes = new Set(['new_only', 'all_users', 'current_investors', 'specific_users', 'cohort_registered_after']);
+    if (!validScopes.has(type)) return res.status(400).json({ error: 'Invalid scope type' });
+    const prod = await pool.query('SELECT name FROM products WHERE id=$1', [productId]);
+    if (!prod.rows.length) return res.status(404).json({ error: 'Product not found' });
+    const productName = prod.rows[0].name;
+
+    let activeInvestments = 0;
+    let affectedUsers = 0;
+    let futureUserEstimate = null;
+    if (type === 'all_users' || type === 'current_investors') {
+      const r = await pool.query(
+        `SELECT COUNT(*)::int AS c, COUNT(DISTINCT user_id)::int AS u FROM investments WHERE product_name=$1 AND status='active'`,
+        [productName]
+      );
+      activeInvestments = r.rows[0].c; affectedUsers = r.rows[0].u;
+    } else if (type === 'specific_users' && userIds.length) {
+      const r = await pool.query(
+        `SELECT COUNT(*)::int AS c, COUNT(DISTINCT user_id)::int AS u FROM investments WHERE product_name=$1 AND status='active' AND user_id = ANY($2::uuid[])`,
+        [productName, userIds]
+      );
+      activeInvestments = r.rows[0].c; affectedUsers = r.rows[0].u;
+    } else if (type === 'cohort_registered_after' && date) {
+      const r = await pool.query(`SELECT COUNT(*)::int AS c FROM users WHERE created_at > $1::timestamptz`, [date]);
+      futureUserEstimate = r.rows[0].c;
+    }
+    res.json({
+      scope: type,
+      active_investments_in_scope: activeInvestments,
+      users_in_scope: affectedUsers,
+      future_user_estimate: futureUserEstimate,
+      base_product_pricing_will_change: (type === 'new_only' || type === 'all_users')
+    });
+  } catch (e) {
+    console.error('scope-preview failed:', e);
+    res.status(500).json({ error: 'Failed to compute preview' });
+  }
+});
+
+// Admin: history of scoped changes for a product.
+app.get('/api/admin/products/:id/audit', requireAnyAdmin, requireProductPermission('product_view'), async (req, res) => {
+  try {
+    const r = await pool.query(
+      `SELECT id, admin_id, admin_name, scope_summary, changed_fields, affected_user_count, affected_investment_count, created_at
+         FROM product_change_audit WHERE product_id=$1::uuid ORDER BY created_at DESC LIMIT 100`,
+      [req.params.id]
+    );
+    res.json({ entries: r.rows });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to load audit' });
   }
 });
 
@@ -3040,7 +3327,32 @@ app.get('/api/admin/referrals', requireSuperAdmin, async (req, res) => {
         instructions TEXT,
         is_active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMPTZ DEFAULT NOW()
-      )`
+      )`,
+      `CREATE TABLE IF NOT EXISTS product_overrides (
+        id SERIAL PRIMARY KEY,
+        product_id UUID NOT NULL,
+        scope_type VARCHAR(40) NOT NULL,
+        scope_value TEXT,
+        price NUMERIC(14,2),
+        daily_return NUMERIC(14,2),
+        duration_days INTEGER,
+        effective_from TIMESTAMPTZ DEFAULT NOW(),
+        created_by VARCHAR(255),
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_product_overrides_lookup ON product_overrides(product_id, scope_type, scope_value)`,
+      `CREATE TABLE IF NOT EXISTS product_change_audit (
+        id SERIAL PRIMARY KEY,
+        product_id UUID NOT NULL,
+        admin_id VARCHAR(255),
+        admin_name VARCHAR(255),
+        scope_summary JSONB,
+        changed_fields JSONB,
+        affected_user_count INTEGER DEFAULT 0,
+        affected_investment_count INTEGER DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_product_change_audit_product ON product_change_audit(product_id, created_at DESC)`
     ];
     for (const sql of migrations) {
       try { await client.query(sql); }

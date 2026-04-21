@@ -421,7 +421,7 @@
 
         async function loadProductsFromDB() {
             try {
-                const res = await fetch('/api/products/active');
+                const res = await fetch('/api/products/active', AB_TOKEN ? { headers: { 'Authorization': 'Bearer ' + AB_TOKEN } } : {});
                 if (!res.ok) { document.getElementById('products-loading').textContent = 'Failed to load products.'; return; }
                 const data = await res.json();
                 const products = data.products || [];

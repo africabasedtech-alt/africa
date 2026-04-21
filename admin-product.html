@@ -258,6 +258,74 @@
   </div>
 </div>
 
+<div id="scopeModal" class="modal-overlay" style="z-index:10000;">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <h3 style="margin:0;color:var(--gold);"><i class="fas fa-users-cog" style="margin-right:0.4rem;"></i>Who should this change apply to?</h3>
+      <button class="modal-close" onclick="closeScopeModal()">&times;</button>
+    </div>
+    <p style="color:rgba(255,255,255,0.7);font-size:0.9rem;margin-bottom:0.8rem;">
+      You changed the price, daily return, or duration. Choose who is affected.
+      Money is never moved automatically &mdash; only the daily earnings amount and end date on existing investments may be rewritten.
+    </p>
+    <div id="scopeOptions" style="display:flex;flex-direction:column;gap:0.6rem;">
+      <label class="scope-opt"><input type="radio" name="scope" value="new_only" checked> <strong>Only new investments going forward</strong><div class="scope-desc">Updates the product card. Existing investors are not touched.</div></label>
+      <label class="scope-opt"><input type="radio" name="scope" value="all_users"> <strong>Everyone (current investors get rewritten)</strong><div class="scope-desc">Updates the product card AND rewrites daily earnings + end date for all active investments in this product.</div></label>
+      <label class="scope-opt"><input type="radio" name="scope" value="current_investors"> <strong>Only current investors of this product</strong><div class="scope-desc">Leaves the product card unchanged. Rewrites existing active investments only. New buyers still see the old values.</div></label>
+      <label class="scope-opt"><input type="radio" name="scope" value="specific_users"> <strong>Specific users I pick</strong><div class="scope-desc">Stores a personal price for the chosen users (and rewrites their existing investments).</div></label>
+      <label class="scope-opt"><input type="radio" name="scope" value="cohort_registered_after"> <strong>Only newly-registered users (from a date)</strong><div class="scope-desc">Users who register after the chosen date will see the new price. Nobody&rsquo;s existing investment changes.</div></label>
+    </div>
+
+    <div id="scopeUsersBox" style="display:none;margin-top:0.8rem;">
+      <label style="display:block;color:rgba(255,255,255,0.7);font-size:0.85rem;margin-bottom:0.3rem;">Pick users (search by name / email)</label>
+      <input type="text" id="scopeUserSearch" placeholder="Type to search&hellip;" style="width:100%;margin-bottom:0.4rem;">
+      <div id="scopeUserList" style="max-height:160px;overflow-y:auto;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:0.4rem;background:rgba(0,0,0,0.2);"></div>
+      <div id="scopeSelectedUsers" style="margin-top:0.4rem;font-size:0.8rem;color:var(--gold);"></div>
+    </div>
+
+    <div id="scopeDateBox" style="display:none;margin-top:0.8rem;">
+      <label style="display:block;color:rgba(255,255,255,0.7);font-size:0.85rem;margin-bottom:0.3rem;">Apply to users registered after</label>
+      <input type="date" id="scopeDate" style="width:100%;">
+    </div>
+
+    <label id="scopeRetroBox" style="display:none;margin-top:0.8rem;color:rgba(255,255,255,0.85);">
+      <input type="checkbox" id="scopeRetro" checked> Rewrite existing active investments (recommended for this scope)
+      <div class="scope-desc">Only the daily earnings amount and end date change &mdash; the original investment amount is never touched.</div>
+    </label>
+
+    <div id="scopePreviewBox" style="margin-top:0.8rem;padding:0.6rem;background:rgba(212,160,23,0.1);border:1px solid rgba(212,160,23,0.3);border-radius:8px;color:rgba(255,255,255,0.85);font-size:0.85rem;">
+      <i class="fas fa-info-circle"></i> Pick a scope to see how many users / investments will be affected.
+    </div>
+
+    <div class="modal-actions" style="margin-top:1rem;">
+      <button class="btn" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);" onclick="closeScopeModal()">Cancel</button>
+      <button class="btn btn-primary" id="scopeConfirmBtn" onclick="confirmScopeAndSave()"><i class="fas fa-check" style="margin-right:0.3rem;"></i>Apply Change</button>
+    </div>
+  </div>
+</div>
+
+<div id="auditModal" class="modal-overlay" style="z-index:10001;">
+  <div class="modal" style="max-width:700px;">
+    <div class="modal-header">
+      <h3 style="margin:0;color:var(--gold);"><i class="fas fa-history" style="margin-right:0.4rem;"></i>Change history</h3>
+      <button class="modal-close" onclick="document.getElementById('auditModal').classList.remove('open')">&times;</button>
+    </div>
+    <div id="auditList" style="max-height:60vh;overflow-y:auto;"></div>
+  </div>
+</div>
+
+<style>
+  .scope-opt { display:block; padding:0.6rem; border:1px solid rgba(255,255,255,0.1); border-radius:8px; cursor:pointer; transition:all 0.15s; }
+  .scope-opt:hover { background:rgba(212,160,23,0.08); border-color:rgba(212,160,23,0.4); }
+  .scope-opt input[type=radio] { margin-right:0.4rem; }
+  .scope-desc { color:rgba(255,255,255,0.55); font-size:0.8rem; margin-top:0.2rem; margin-left:1.4rem; }
+  .scope-user-row { display:flex; align-items:center; padding:0.3rem; border-radius:4px; cursor:pointer; }
+  .scope-user-row:hover { background:rgba(255,255,255,0.05); }
+  .scope-user-row input { margin-right:0.4rem; }
+  .audit-entry { padding:0.6rem; border-bottom:1px solid rgba(255,255,255,0.08); font-size:0.85rem; color:rgba(255,255,255,0.85); }
+  .audit-entry .audit-when { color:rgba(255,255,255,0.5); font-size:0.75rem; }
+</style>
+
 <div id="toast" class="toast" style="opacity:0;pointer-events:none;"></div>
 
 <script>
@@ -428,6 +496,7 @@
               '<button class="btn btn-sm ' + (p.disabled ? 'btn-success' : 'btn-warning') + '" onclick="toggleProduct(\'' + p.id + '\',' + p.disabled + ')">' +
                 '<i class="fas fa-' + (p.disabled ? 'toggle-on' : 'toggle-off') + '"></i> ' + (p.disabled ? 'Enable' : 'Disable') +
               '</button>' : '') +
+            (myPerms.canEdit ? '<button class="btn btn-sm" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);" onclick="showAuditFor(\'' + p.id + '\')" title="View change history"><i class="fas fa-history"></i></button>' : '') +
             (myPerms.canDelete ? '<button class="btn btn-danger btn-sm" onclick="confirmDelete(\'' + p.id + '\',\'' + p.name.replace(/'/g,"\\'") + '\')"><i class="fas fa-trash"></i></button>' : '') +
           '</div>' +
         '</div>' +
@@ -516,21 +585,21 @@
     if (url) { prev.src = url; prev.style.display = 'block'; } else { prev.style.display = 'none'; }
   }
 
-  async function saveProduct() {
-    var id = document.getElementById('editProductId').value;
-    if (id && !myPerms.canEdit) { showToast('You do not have permission to edit products', 'error'); return; }
-    if (!id && !myPerms.canAdd) { showToast('You do not have permission to add products', 'error'); return; }
+  var pendingSaveBody = null;
+  var pendingSaveId = null;
+  var scopeUserCache = [];
+  var scopeSelected = new Set();
+
+  function buildSaveBody() {
     var name = document.getElementById('f_name').value.trim();
     var price = document.getElementById('f_price').value;
     var daily = document.getElementById('f_daily').value;
     var duration = document.getElementById('f_duration').value;
-
     if (!name || price === '' || !daily || !duration) {
       showToast('Please fill in all required fields', 'error');
-      return;
+      return null;
     }
-
-    var body = {
+    return {
       name: name,
       description: document.getElementById('f_desc').value.trim(),
       category: document.getElementById('f_category').value,
@@ -543,10 +612,167 @@
       max_units_per_user: parseInt(document.getElementById('f_max_per_user').value) || 1,
       image_url: document.getElementById('f_image').value.trim()
     };
+  }
 
+  async function saveProduct() {
+    var id = document.getElementById('editProductId').value;
+    if (id && !myPerms.canEdit) { showToast('You do not have permission to edit products', 'error'); return; }
+    if (!id && !myPerms.canAdd) { showToast('You do not have permission to add products', 'error'); return; }
+    var body = buildSaveBody();
+    if (!body) return;
+
+    // For new products OR when no pricing field changed, save with default scope.
+    var pricingChanged = false;
+    if (id) {
+      var orig = null;
+      for (var i = 0; i < allProducts.length; i++) { if (allProducts[i].id == id) { orig = allProducts[i]; break; } }
+      if (orig) {
+        if (Math.abs(parseFloat(orig.price) - body.price) > 0.005) pricingChanged = true;
+        if (Math.abs(parseFloat(orig.daily_return) - body.daily_return) > 0.005) pricingChanged = true;
+        if (parseInt(orig.duration_days) !== body.duration_days) pricingChanged = true;
+      }
+    }
+
+    if (!id || !pricingChanged) {
+      await sendSave(id, body, { type: 'new_only' });
+      return;
+    }
+
+    // Open scope picker.
+    pendingSaveBody = body;
+    pendingSaveId = id;
+    scopeSelected = new Set();
+    document.getElementById('scopeUsersBox').style.display = 'none';
+    document.getElementById('scopeDateBox').style.display = 'none';
+    document.getElementById('scopeRetroBox').style.display = 'none';
+    document.querySelector('input[name="scope"][value="new_only"]').checked = true;
+    document.getElementById('scopePreviewBox').innerHTML = '<i class="fas fa-info-circle"></i> Pick a scope to see how many users / investments will be affected.';
+    document.getElementById('scopeModal').classList.add('open');
+    refreshScopePreview();
+  }
+
+  document.addEventListener('change', function(e) {
+    if (e.target && e.target.name === 'scope') {
+      var v = e.target.value;
+      document.getElementById('scopeUsersBox').style.display = (v === 'specific_users') ? 'block' : 'none';
+      document.getElementById('scopeDateBox').style.display = (v === 'cohort_registered_after') ? 'block' : 'none';
+      document.getElementById('scopeRetroBox').style.display = (v === 'all_users' || v === 'current_investors' || v === 'specific_users') ? 'block' : 'none';
+      if (v === 'specific_users' && !scopeUserCache.length) loadUsersForScope();
+      refreshScopePreview();
+    }
+    if (e.target && (e.target.id === 'scopeDate' || e.target.id === 'scopeRetro')) refreshScopePreview();
+  });
+
+  document.addEventListener('input', function(e) {
+    if (e.target && e.target.id === 'scopeUserSearch') renderScopeUsers();
+  });
+
+  async function loadUsersForScope() {
+    try {
+      var r = await fetch('/api/admin/users', { headers: { 'x-admin-key': ADMIN_KEY } });
+      if (!r.ok) return;
+      var d = await r.json();
+      scopeUserCache = (d.users || []).map(function(u) { return { id: u.id, label: (u.username || u.email || u.id) + ' — ' + (u.email || '') }; });
+      renderScopeUsers();
+    } catch (e) {}
+  }
+
+  function renderScopeUsers() {
+    var q = (document.getElementById('scopeUserSearch').value || '').toLowerCase();
+    var list = scopeUserCache.filter(function(u) { return !q || u.label.toLowerCase().includes(q); }).slice(0, 50);
+    var html = list.map(function(u) {
+      return '<label class="scope-user-row"><input type="checkbox" data-uid="' + u.id + '" ' + (scopeSelected.has(u.id) ? 'checked' : '') + ' onchange="toggleScopeUser(\'' + u.id + '\', this.checked)"> ' + u.label + '</label>';
+    }).join('');
+    document.getElementById('scopeUserList').innerHTML = html || '<div style="padding:0.5rem;color:rgba(255,255,255,0.5);">No matches</div>';
+    updateScopeSelectedSummary();
+  }
+
+  window.toggleScopeUser = function(uid, on) {
+    if (on) scopeSelected.add(uid); else scopeSelected.delete(uid);
+    updateScopeSelectedSummary();
+    refreshScopePreview();
+  };
+
+  function updateScopeSelectedSummary() {
+    var n = scopeSelected.size;
+    document.getElementById('scopeSelectedUsers').textContent = n ? (n + ' user' + (n === 1 ? '' : 's') + ' selected') : 'No users selected yet';
+  }
+
+  var previewTimer = null;
+  function refreshScopePreview() {
+    if (!pendingSaveId) return;
+    if (previewTimer) clearTimeout(previewTimer);
+    previewTimer = setTimeout(doScopePreview, 250);
+  }
+
+  async function doScopePreview() {
+    var type = (document.querySelector('input[name="scope"]:checked') || {}).value;
+    if (!type) return;
+    var qs = new URLSearchParams({ type: type });
+    if (type === 'specific_users') qs.set('user_ids', Array.from(scopeSelected).join(','));
+    if (type === 'cohort_registered_after') {
+      var d = document.getElementById('scopeDate').value;
+      if (d) qs.set('date', d);
+    }
+    try {
+      var r = await fetch('/api/admin/products/' + pendingSaveId + '/scope-preview?' + qs.toString(), { headers: { 'x-admin-key': ADMIN_KEY } });
+      if (!r.ok) {
+        document.getElementById('scopePreviewBox').innerHTML = '<i class="fas fa-info-circle"></i> Pick a valid scope to see preview.';
+        return;
+      }
+      var d = await r.json();
+      var lines = [];
+      if (d.base_product_pricing_will_change) lines.push('Product card will show the new values.');
+      else lines.push('Product card stays unchanged.');
+      if (type === 'cohort_registered_after') {
+        lines.push((d.future_user_estimate || 0) + ' user(s) already match this date filter; future registrants will too.');
+      } else if (type === 'new_only') {
+        lines.push('No existing investments are touched.');
+      } else {
+        var retro = document.getElementById('scopeRetro').checked;
+        if (retro) lines.push(d.active_investments_in_scope + ' active investment(s) across ' + d.users_in_scope + ' user(s) will be rewritten (daily earnings + end date only).');
+        else lines.push(d.active_investments_in_scope + ' active investment(s) match this scope but will NOT be rewritten because the retroactive option is off.');
+      }
+      document.getElementById('scopePreviewBox').innerHTML = '<i class="fas fa-info-circle"></i> ' + lines.join('<br>');
+    } catch (e) {}
+  }
+
+  function closeScopeModal() {
+    document.getElementById('scopeModal').classList.remove('open');
+    pendingSaveBody = null;
+    pendingSaveId = null;
+    scopeSelected = new Set();
+  }
+
+  async function confirmScopeAndSave() {
+    if (!pendingSaveBody || !pendingSaveId) return;
+    var type = (document.querySelector('input[name="scope"]:checked') || {}).value;
+    var scope = { type: type };
+    if (type === 'specific_users') {
+      if (!scopeSelected.size) { showToast('Pick at least one user', 'error'); return; }
+      scope.user_ids = Array.from(scopeSelected);
+    }
+    if (type === 'cohort_registered_after') {
+      var d = document.getElementById('scopeDate').value;
+      if (!d) { showToast('Pick a registration cutoff date', 'error'); return; }
+      scope.date = d;
+    }
+    if (type === 'all_users' || type === 'current_investors' || type === 'specific_users') {
+      scope.retroactive = document.getElementById('scopeRetro').checked;
+    }
+    var btn = document.getElementById('scopeConfirmBtn');
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Applying…';
+    try {
+      await sendSave(pendingSaveId, pendingSaveBody, scope);
+    } finally {
+      btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Apply Change';
+    }
+  }
+
+  async function sendSave(id, body, scope) {
     var url = id ? ('/api/admin/products/' + id) : '/api/admin/products';
     var method = id ? 'PUT' : 'POST';
-
+    if (id && scope) body.scope = scope;
     try {
       var res = await fetch(url, {
         method: method,
@@ -555,7 +781,6 @@
       });
       var data = await res.json();
       if (!res.ok) { showToast(data.error || 'Save failed', 'error'); return; }
-
       if (id) {
         for (var i = 0; i < allProducts.length; i++) {
           if (allProducts[i].id == id) { allProducts[i] = data.product; break; }
@@ -564,13 +789,38 @@
         allProducts.unshift(data.product);
       }
       closeModals();
+      closeScopeModal();
       renderStats();
       renderProducts();
-      showToast(id ? 'Product updated!' : 'Product added!', 'success');
+      var msg = id ? 'Product updated!' : 'Product added!';
+      if (data.rewritten_investments > 0) msg += ' Rewrote ' + data.rewritten_investments + ' investment(s) for ' + data.affected_user_count + ' user(s).';
+      else if (data.override_rows_inserted > 0) msg += ' Personal pricing saved for ' + data.override_rows_inserted + ' target(s).';
+      showToast(msg, 'success');
     } catch (e) {
       showToast('Connection error', 'error');
     }
   }
+
+  async function showAuditFor(id) {
+    try {
+      var r = await fetch('/api/admin/products/' + id + '/audit', { headers: { 'x-admin-key': ADMIN_KEY } });
+      var d = r.ok ? await r.json() : { entries: [] };
+      var html = (d.entries || []).map(function(e) {
+        var sc = e.scope_summary || {};
+        var ch = e.changed_fields || {};
+        var chParts = Object.keys(ch).map(function(k) { return k + ': ' + ch[k].from + ' → ' + ch[k].to; });
+        return '<div class="audit-entry">' +
+          '<div><strong>' + (e.admin_name || 'Admin') + '</strong> &middot; scope: <strong>' + sc.type + '</strong>' + (sc.retroactive ? ' (retroactive)' : '') + '</div>' +
+          (chParts.length ? '<div>Changed: ' + chParts.join(', ') + '</div>' : '') +
+          (e.affected_investment_count ? '<div>Rewrote ' + e.affected_investment_count + ' investment(s) for ' + e.affected_user_count + ' user(s).</div>' : '') +
+          '<div class="audit-when">' + new Date(e.created_at).toLocaleString() + '</div>' +
+        '</div>';
+      }).join('') || '<div style="padding:0.8rem;color:rgba(255,255,255,0.5);">No changes recorded yet.</div>';
+      document.getElementById('auditList').innerHTML = html;
+      document.getElementById('auditModal').classList.add('open');
+    } catch (e) { showToast('Failed to load history', 'error'); }
+  }
+  window.showAuditFor = showAuditFor;
 
   async function toggleProduct(id, currentlyDisabled) {
     try {
