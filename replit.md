@@ -48,6 +48,7 @@ The user-facing pages feature a premium gold theme with light/dark mode support.
 - **Announcement Ticker:** Admin-enabled announcements displayed as a scrolling marquee on `home.html`.
 - **Email Broadcast:** Super admins can send broadcast emails to all users.
 - **OTP System:** Auto-verification for OTPs and email verification links with auto-fill functionality.
+- **Self-Bootstrapping DB:** Startup migrations (in `server.js` `runStartupMigrations()`) now include `CREATE TABLE IF NOT EXISTS` for ALL core tables: `users`, `sessions`, `profiles`, `products`, `deposits`, `withdrawals`, `exchange_codes`, `system_settings`. This ensures the app works on any fresh Supabase DB without needing to manually run `db_setup.sql`. The `sessions` table (for JWT auth) has a UNIQUE constraint on the `token` column required for `ON CONFLICT (token)` upserts.
 
 ### Feature Specifications
 - **PWA:** Installable, offline functionality for static pages, network-first with cache fallback for dynamic content.
