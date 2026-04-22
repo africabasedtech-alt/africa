@@ -6,13 +6,21 @@ if [ -z "$GITHUB_PERSONAL_ACCESS_TOKEN" ]; then
   exit 1
 fi
 
-REPO="https://${GITHUB_PERSONAL_ACCESS_TOKEN}@github.com/africabasedtech-alt/africa.git"
+# Disable Replit's git credential interceptor so the token in the URL is used directly
+unset GIT_ASKPASS
+unset SSH_ASKPASS
+export GIT_TERMINAL_PROMPT=0
+
+REPO="https://oauth2:${GITHUB_PERSONAL_ACCESS_TOKEN}@github.com/africabasedtech-alt/africa.git"
 
 echo "==> Removing stale lock file (if any)..."
 rm -f .git/index.lock
 
 echo "==> Setting authenticated remote URL..."
 git remote set-url origin "$REPO"
+
+echo "==> Configuring credential helper to use token..."
+git config credential.helper ""
 
 echo "==> Pulling latest remote changes (rebase)..."
 git pull --rebase origin main
